@@ -1,2 +1,625 @@
-[InternetShortcut]
-URL=https://www.zcat.cn/web/0fff77406d79fd867057d8a6b6b86155b89c4426710be762f3cb917d6288fc54
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>线段旋转探究：路径与面积 (所见即所算)</title>
+  <style>
+    :root {
+      --bg-color: #f0f4f8;
+      --card-bg: #ffffff;
+      --primary: #4285F4;
+      --success: #34A853;
+      --warning: #FBBC05;
+      --danger: #EA4335;
+      --text-main: #333;
+      --text-sub: #666;
+    }
+    body {
+      margin: 0; padding: 20px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      background: var(--bg-color);
+      display: flex; flex-direction: column; align-items: center;
+      color: var(--text-main);
+    }
+    h2 { margin-bottom: 10px; color: var(--primary); text-align: center; }
+    .main-container {
+      display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+      max-width: 1400px; width: 100%;
+    }
+    .canvas-card {
+      background: var(--card-bg); border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 10px;
+      position: relative;
+    }
+    canvas { border-radius: 8px; background: #fff; cursor: crosshair; touch-action: none; display: block; }
+    .control-panel {
+      background: var(--card-bg); border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 20px;
+      min-width: 340px; max-width: 460px; flex: 1;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .info-box {
+      background: #e8f0fe; border-left: 5px solid var(--primary);
+      padding: 12px 14px; border-radius: 4px; font-size: 14px; line-height: 1.5; color: #1a73e8;
+    }
+    .control-group { display: flex; flex-direction: column; gap: 5px; }
+    label { font-weight: bold; font-size: 14px; color: var(--text-sub); }
+    select, button {
+      padding: 10px 12px; border-radius: 8px; border: 1px solid #ddd;
+      font-size: 14px; outline: none; transition: 0.2s; background: #fff; cursor: pointer;
+    }
+    select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(66,133,244,0.2); }
+    .btn-primary { background: var(--primary); color: #fff; border: none; font-weight: bold; box-shadow: 0 4px 6px rgba(66,133,244,0.3); }
+    .btn-primary:hover { background: #3367d6; transform: translateY(-1px); }
+    .btn-record { background: var(--success); color: #fff; border: none; font-weight: bold; box-shadow: 0 4px 6px rgba(52,168,83,0.3); }
+    .btn-record:hover { background: #2d9049; transform: translateY(-1px); }
+    .btn-analyze { 
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); 
+      color: #fff; border: none; font-weight: bold; 
+      box-shadow: 0 4px 15px rgba(37, 117, 252, 0.4);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    .btn-analyze:hover { filter: brightness(1.1); transform: translateY(-2px); }
+    
+    .btn-clear-trace { background: var(--warning); color: #333; border: none; font-weight: bold; box-shadow: 0 4px 6px rgba(251,188,5,0.3); }
+    .btn-clear-trace:hover { background: #e0a800; transform: translateY(-1px); }
+    .btn-reset-all { background: var(--danger); color: #fff; border: none; font-weight: bold; box-shadow: 0 4px 6px rgba(234,67,53,0.3); }
+    .btn-reset-all:hover { background: #d93025; transform: translateY(-1px); }
+    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; margin-top: 6px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; background: var(--primary); }
+    .data-section { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .table-wrapper { overflow-y: auto; max-height: 320px; border: 1px solid #eee; border-radius: 8px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 620px; }
+    th { background: #f8f9fa; position: sticky; top: 0; z-index: 10; padding: 6px 3px; color: var(--text-sub); font-weight: 600; border-bottom: 2px solid #ddd; white-space: nowrap; text-align: center; }
+    td { padding: 4px 3px; text-align: center; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    tr:hover { background: #f9fbff; }
+    .highlight-total { font-weight: bold; color: #222; background: rgba(0,0,0,0.03); }
+    .status-toast {
+      position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px;
+      border-radius: 20px; font-size: 14px; pointer-events: none;
+      opacity: 0; transition: opacity 0.3s; z-index: 200;
+    }
+    .status-toast.show { opacity: 1; }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      display: none; justify-content: center; align-items: center;
+      backdrop-filter: blur(2px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: #fff; border-radius: 16px; padding: 30px;
+      max-width: 600px; width: 90%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      position: relative; animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header { font-size: 20px; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
+    .modal-body { font-size: 16px; line-height: 1.8; color: #333; }
+    .conclusion-point { margin-bottom: 15px; padding: 10px; background: #f9fbff; border-left: 4px solid var(--success); border-radius: 4px; }
+    .conclusion-highlight { color: var(--danger); font-weight: bold; }
+    .modal-close {
+      position: absolute; top: 15px; right: 15px;
+      background: none; border: none; font-size: 24px;
+      cursor: pointer; color: #999; padding: 0; line-height: 1;
+    }
+    .modal-close:hover { color: #333; }
+  </style>
+</head>
+<body>
+  <h2>📐 线段旋转探究：路径与面积 (1 格=1cm, π=3.14)</h2>
+  <div class="main-container">
+    <div class="canvas-card">
+      <div id="toast" class="status-toast"></div>
+      <canvas id="simCanvas" width="800" height="600"></canvas>
+    </div>
+    <div class="control-panel">
+      <div class="info-box">
+        <strong>💡 操作说明</strong><br>
+        1️⃣ 拖动 <span style='color:#EA4335'>●A</span>/<span style='color:#34A853'>●B</span> 改变线段<br>
+        2️⃣ 拖动 <span style='color:#333'>●O</span> 在 AB 上移动<br>
+        3️⃣ 选择角度与方向，点击执行旋转<br>
+        4️⃣ 记录 5 组数据后，点击“🔍 分析结论”发现规律
+      </div>
+      <div class="control-group">
+        <label for="angleSelect">旋转角度</label>
+        <select id="angleSelect">
+          <option value="90">90°</option>
+          <option value="180">180°</option>
+          <option value="270">270°</option>
+          <option value="360">360°</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="directionSelect">旋转方向</label>
+        <select id="directionSelect">
+          <option value="cw">顺时针 ↻</option>
+          <option value="ccw">逆时针 ↺</option>
+        </select>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <button class="btn-primary" onclick="startRotation()">▶ 执行旋转</button>
+        <button class="btn-record" onclick="manualRecord()">📝 记录数据</button>
+      </div>
+      
+      <!-- 动态插入的分析按钮容器 -->
+      <div id="analyzeBtnContainer" style="display:none; grid-column: span 2;">
+        <button class="btn-analyze" style="width:100%" onclick="showConclusion()">🔍 分析结论 (已记录 5+ 组)</button>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <button class="btn-clear-trace" onclick="clearTracesOnly()">🧹 清除轨迹</button>
+        <button class="btn-reset-all" onclick="resetSimulation()">🗑️ 全部重置</button>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background:#EA4335"></span> A 路径 (SA)</div>
+        <div class="legend-item"><span class="dot" style="background:#34A853"></span> B 路径 (SB)</div>
+        <div class="legend-item"><span class="dot" style="background:rgba(66,133,244,0.6)"></span> OA 面积 (ArA)</div>
+        <div class="legend-item"><span class="dot" style="background:rgba(251,188,5,0.6)"></span> OB 面积 (ArB)</div>
+      </div>
+      <div class="data-section">
+        <label>📊 实验数据记录表 (已记录 <span id="recCount">0</span> 组)</label>
+        <div class="table-wrapper">
+          <table id="dataTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>OA<br>(cm)</th>
+                <th>OB<br>(cm)</th>
+                <th>角度</th>
+                <th style="color:#EA4335">SA<br>(cm)</th>
+                <th style="color:#34A853">SB<br>(cm)</th>
+                <th class="highlight-total">总路径<br>(cm)</th>
+                <th style="color:#4285F4">ArA<br>(cm²)</th>
+                <th style="color:#FBBC05">ArB<br>(cm²)</th>
+                <th class="highlight-total">总面积<br>(cm²)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 结论模态框 -->
+  <div id="conclusionModal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeConclusion()">×</button>
+      <div class="modal-header">🎯 实验结论分析</div>
+      <div class="modal-body" id="modalBody">
+        <!-- 内容将由 JS 动态生成 -->
+      </div>
+    </div>
+  </div>
+
+<script>
+  (function() {
+    // ---------- 常量 ----------
+    const PI = 3.14;                  // 使用指定π值
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const GRID_SIZE = 40;             // 像素/格
+    const PIXELS_PER_CM = GRID_SIZE;
+    const SNAP_RADIUS = 20;
+
+    // ---------- 状态 ----------
+    const points = {
+      A: { x: 320, y: 300 },
+      B: { x: 560, y: 300 },
+      O: { x: 440, y: 300 }
+    };
+    
+    // 【核心修改】全局状态变量，存储当前画布上显示的半径值（保留 1 位小数）
+    let displayedOA = 0.0;
+    let displayedOB = 0.0;
+
+    let dragState = { isDragging: false, target: null };
+    let records = [];                 // 已完成的历史旋转数据
+    let recordCount = 0;
+    let isAnimating = false;
+    let animData = null;
+
+    // ---------- 工具函数 ----------
+    const dist = (p1, p2) => Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    const snap = (p) => { p.x = Math.round(p.x / GRID_SIZE) * GRID_SIZE; p.y = Math.round(p.y / GRID_SIZE) * GRID_SIZE; };
+    const constrainO = () => {
+      const A = points.A, B = points.B, O = points.O;
+      const dx = B.x - A.x, dy = B.y - A.y;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) { O.x = A.x; O.y = A.y; return; }
+      const t = Math.max(0, Math.min(1, ((O.x - A.x) * dx + (O.y - A.y) * dy) / lenSq));
+      O.x = A.x + t * dx;
+      O.y = A.y + t * dy;
+    };
+
+    const getAngle = (p, c) => Math.atan2(p.y - c.y, p.x - c.x);
+    const rotate = (p, c, ang) => {
+      const cos = Math.cos(ang), sin = Math.sin(ang);
+      const dx = p.x - c.x, dy = p.y - c.y;
+      return { x: c.x + dx * cos - dy * sin, y: c.y + dx * sin + dy * cos };
+    };
+
+    // ---------- 绘图 ----------
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGrid();
+      records.forEach(drawStaticRecord);
+      if (isAnimating && animData) drawDynamicFrame(animData);
+      drawCurrentScene();
+    }
+
+    function drawGrid() {
+      ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1;
+      for (let x = 0; x <= canvas.width; x += GRID_SIZE) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y <= canvas.height; y += GRID_SIZE) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+      ctx.fillStyle = '#ccc'; ctx.font = '10px Arial';
+      ctx.textAlign = 'right';
+      for (let y = 0; y <= canvas.height; y += GRID_SIZE) {
+        if (y % 80 === 0) ctx.fillText((y / GRID_SIZE).toFixed(0), 15, y + 4);
+      }
+      ctx.textAlign = 'left';
+      for (let x = 0; x <= canvas.width; x += GRID_SIZE) {
+        if (x % 80 === 0) ctx.fillText((x / GRID_SIZE).toFixed(0), x + 2, 15);
+      }
+    }
+
+    function drawCurrentScene() {
+      // AB 线段
+      ctx.beginPath();
+      ctx.moveTo(points.A.x, points.A.y);
+      ctx.lineTo(points.B.x, points.B.y);
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke();
+      
+      // 辅助虚线
+      ctx.setLineDash([5, 5]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(points.O.x, points.O.y); ctx.lineTo(points.A.x, points.A.y);
+      ctx.strokeStyle = 'rgba(66,133,244,0.5)'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(points.O.x, points.O.y); ctx.lineTo(points.B.x, points.B.y);
+      ctx.strokeStyle = 'rgba(251,188,5,0.6)'; ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // 控制点
+      drawPoint(points.A, 'A', '#EA4335');
+      drawPoint(points.B, 'B', '#34A853');
+      drawPoint(points.O, 'O', '#333');
+      
+      // 【关键修改】更新全局显示状态，并绘制标签
+      updateDisplayedLengths();
+      drawLabel(points.O, points.A, 'OA');
+      drawLabel(points.O, points.B, 'OB');
+    }
+
+    // 【新增】专门用于更新全局显示状态的函数
+    function updateDisplayedLengths() {
+      const rA_raw = dist(points.A, points.O) / PIXELS_PER_CM;
+      const rB_raw = dist(points.B, points.O) / PIXELS_PER_CM;
+      // 强制保留 1 位小数，存入全局变量
+      displayedOA = parseFloat(rA_raw.toFixed(1));
+      displayedOB = parseFloat(rB_raw.toFixed(1));
+    }
+
+    function drawPoint(p, label, color) {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, 2 * Math.PI);
+      ctx.fillStyle = color; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#333'; ctx.font = 'bold 14px "Microsoft YaHei"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(label, p.x, p.y - 14);
+      if (dragState.isDragging && dragState.target === label) {
+        ctx.fillStyle = '#555'; ctx.font = '12px Arial';
+        ctx.fillText(`(${(p.x/GRID_SIZE).toFixed(1)}, ${(p.y/GRID_SIZE).toFixed(1)})`, p.x, p.y + 14);
+      }
+    }
+
+    function drawLabel(p1, p2, prefix) {
+      const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2 + 14;
+      // 直接从全局状态读取数值，确保显示和内部逻辑一致
+      const cm = prefix === 'OA' ? displayedOA.toFixed(1) : displayedOB.toFixed(1);
+      const text = prefix + '=' + cm;
+      ctx.font = 'bold 12px "Microsoft YaHei"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const w = ctx.measureText(text).width + 8, h = 18;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillRect(midX - w/2, midY - h/2, w, h);
+      ctx.fillStyle = '#333';
+      ctx.fillText(text, midX, midY);
+    }
+
+    function drawStaticRecord(rec) {
+      const { startO, startA, startB, angleRad, direction, rA_px, rB_px } = rec;
+      const effAng = angleRad * direction;
+      const endA = rotate(startA, startO, effAng);
+      const endB = rotate(startB, startO, effAng);
+      const ccw = direction === -1;
+      drawSector(startO, rA_px, getAngle(startA, startO), getAngle(endA, startO), ccw, 'rgba(66,133,244,0.2)', 'rgba(66,133,244,0.4)');
+      drawSector(startO, rB_px, getAngle(startB, startO), getAngle(endB, startO), ccw, 'rgba(251,188,5,0.3)', 'rgba(251,188,5,0.5)');
+      drawArc(startO, rA_px, getAngle(startA, startO), getAngle(endA, startO), ccw, '#EA4335', 2);
+      drawArc(startO, rB_px, getAngle(startB, startO), getAngle(endB, startO), ccw, '#34A853', 2);
+    }
+
+    function drawDynamicFrame(data) {
+      const { startO, startA, startB, currentAngle, direction, rA_px, rB_px } = data;
+      const curA = rotate(startA, startO, currentAngle);
+      const curB = rotate(startB, startO, currentAngle);
+      const ccw = direction === -1;
+      const sA = getAngle(startA, startO), sB = getAngle(startB, startO);
+      drawSector(startO, rA_px, sA, sA + currentAngle, ccw, 'rgba(66,133,244,0.3)', 'rgba(66,133,244,0.6)');
+      drawSector(startO, rB_px, sB, sB + currentAngle, ccw, 'rgba(251,188,5,0.4)', 'rgba(251,188,5,0.6)');
+      drawArc(startO, rA_px, sA, sA + currentAngle, ccw, '#EA4335', 2);
+      drawArc(startO, rB_px, sB, sB + currentAngle, ccw, '#34A853', 2);
+      ctx.beginPath(); ctx.moveTo(curA.x, curA.y); ctx.lineTo(curB.x, curB.y);
+      ctx.strokeStyle = '#888'; ctx.lineWidth = 2; ctx.setLineDash([5,5]); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    function drawSector(c, r, a1, a2, ccw, fill, stroke) {
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.arc(c.x, c.y, r, a1, a2, ccw); ctx.closePath();
+      ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = stroke; ctx.stroke();
+    }
+    function drawArc(c, r, a1, a2, ccw, color, w) {
+      ctx.beginPath(); ctx.arc(c.x, c.y, r, a1, a2, ccw);
+      ctx.strokeStyle = color; ctx.lineWidth = w; ctx.stroke();
+    }
+
+    // ---------- 事件 ----------
+    function bindEvents() {
+      const mousePos = e => {
+        const r = canvas.getBoundingClientRect();
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: cx - r.left, y: cy - r.top };
+      };
+      const onDown = e => {
+        if (isAnimating) return; e.preventDefault();
+        const m = mousePos(e);
+        if (dist(m, points.O) < SNAP_RADIUS) { dragState.isDragging = true; dragState.target = 'O'; }
+        else if (dist(m, points.A) < SNAP_RADIUS) { dragState.isDragging = true; dragState.target = 'A'; }
+        else if (dist(m, points.B) < SNAP_RADIUS) { dragState.isDragging = true; dragState.target = 'B'; }
+      };
+      const onMove = e => {
+        if (!dragState.isDragging || isAnimating) return; e.preventDefault();
+        const m = mousePos(e);
+        if (dragState.target === 'A') { points.A.x = m.x; points.A.y = m.y; snap(points.A); constrainO(); }
+        else if (dragState.target === 'B') { points.B.x = m.x; points.B.y = m.y; snap(points.B); constrainO(); }
+        else if (dragState.target === 'O') { points.O.x = m.x; points.O.y = m.y; constrainO(); }
+        draw();
+      };
+      const onUp = () => { dragState.isDragging = false; dragState.target = null; draw(); };
+      canvas.addEventListener('mousedown', onDown);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      canvas.addEventListener('touchstart', onDown, { passive: false });
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onUp);
+    }
+
+    // ---------- 数据计算（核心修改处）----------
+    function calculateData() {
+      const angleDeg = parseInt(document.getElementById('angleSelect').value);
+      const dirStr = document.getElementById('directionSelect').value;
+      const direction = dirStr === 'cw' ? 1 : -1;
+      // 用自定义 PI 转换弧度
+      const angleRad = (angleDeg * PI) / 180;
+
+      // 【关键修改】直接使用全局状态中存储的“显示值”进行计算
+      const rA_cm = displayedOA;
+      const rB_cm = displayedOB;
+      
+      // 为了绘图需要，反推回像素
+      const rA_px = rA_cm * PIXELS_PER_CM;
+      const rB_px = rB_cm * PIXELS_PER_CM;
+
+      // 弧长 = 半径 * 角度 (弧度)
+      const arcA = rA_cm * angleRad;
+      const arcB = rB_cm * angleRad;
+      const totalArc = arcA + arcB;
+      
+      // 扇形面积 = 0.5 * 半径^2 * 角度 (弧度)
+      const areaA = 0.5 * rA_cm * rA_cm * angleRad;
+      const areaB = 0.5 * rB_cm * rB_cm * angleRad;
+      const totalArea = areaA + areaB;
+
+      return {
+        startO: { ...points.O },
+        startA: { ...points.A },
+        startB: { ...points.B },
+        angleRad, direction,
+        rA_px, rB_px,
+        rA: rA_cm, rB: rB_cm,
+        arcA, arcB, totalArc,
+        areaA, areaB, totalArea,
+        angleDeg
+      };
+    }
+
+    // ---------- 动画 & 记录 ----------
+    function startRotation() {
+      if (isAnimating) return;
+      const data = calculateData();
+      animData = { ...data, currentAngle: 0 };
+      isAnimating = true;
+      const start = performance.now(), duration = 1500;
+      function step(now) {
+        const p = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        animData.currentAngle = data.angleRad * data.direction * ease;
+        draw();
+        if (p < 1) requestAnimationFrame(step);
+        else finish();
+      }
+      function finish() {
+        isAnimating = false; animData = null;
+        records.push(data); recordCount++;
+        addTableRow(data, recordCount);
+        updateRecordCount();
+        checkAnalyzeButton(); // 检查是否显示分析按钮
+        showToast('旋转完成，数据已记录');
+        draw();
+      }
+      requestAnimationFrame(step);
+    }
+
+    function manualRecord() {
+      if (isAnimating) return;
+      const data = calculateData();
+      records.push(data); recordCount++;
+      addTableRow(data, recordCount);
+      updateRecordCount();
+      checkAnalyzeButton(); // 检查是否显示分析按钮
+      showToast('数据已手动记录');
+      draw();
+    }
+
+    function clearTracesOnly() {
+      if (isAnimating) return;
+      records = [];
+      draw();
+      showToast('轨迹已清除');
+    }
+
+    function resetSimulation() {
+      if (isAnimating) return;
+      records = []; recordCount = 0;
+      document.querySelector('#dataTable tbody').innerHTML = '';
+      updateRecordCount();
+      points.A = { x: 320, y: 300 };
+      points.B = { x: 560, y: 300 };
+      points.O = { x: 440, y: 300 };
+      updateDisplayedLengths();
+      draw();
+      checkAnalyzeButton(); // 重置时隐藏按钮
+      showToast('已全部重置');
+    }
+
+    // ---------- 表格操作 ----------
+    function addTableRow(rec, idx) {
+      const tbody = document.querySelector('#dataTable tbody');
+      const tr = document.createElement('tr');
+      const f = v => v.toFixed(2);
+      tr.innerHTML = `
+        <td style="font-weight:bold; color:#666">${idx}</td>
+        <td>${rec.rA.toFixed(1)}</td>
+        <td>${rec.rB.toFixed(1)}</td>
+        <td>${rec.angleDeg}°</td>
+        <td style="color:#EA4335">${f(rec.arcA)}</td>
+        <td style="color:#34A853">${f(rec.arcB)}</td>
+        <td class="highlight-total">${f(rec.totalArc)}</td>
+        <td style="color:#4285F4">${f(rec.areaA)}</td>
+        <td style="color:#FBBC05">${f(rec.areaB)}</td>
+        <td class="highlight-total">${f(rec.totalArea)}</td>
+      `;
+      tbody.appendChild(tr);
+      const wrap = document.querySelector('.table-wrapper');
+      wrap.scrollTop = wrap.scrollHeight;
+    }
+
+    function updateRecordCount() {
+      document.getElementById('recCount').textContent = recordCount;
+    }
+
+    // ---------- 结论分析逻辑 ----------
+    function checkAnalyzeButton() {
+      const btnContainer = document.getElementById('analyzeBtnContainer');
+      if (recordCount >= 5) {
+        btnContainer.style.display = 'block';
+      } else {
+        btnContainer.style.display = 'none';
+      }
+    }
+
+    function showConclusion() {
+      if (records.length < 5) return;
+      
+      // 提取数据进行分析
+      const totalArcs = records.map(r => r.totalArc);
+      const totalAreas = records.map(r => r.totalArea);
+      const radiiDiffs = records.map(r => Math.abs(r.rA - r.rB)); // |OA - OB|，差值越大越靠近端点
+      
+      // 找出总路径的最大最小值差异（应该很小）
+      const minArc = Math.min(...totalArcs);
+      const maxArc = Math.max(...totalArcs);
+      const arcDiff = maxArc - minArc;
+      
+      // 找出总面积的最大最小值
+      const minArea = Math.min(...totalAreas);
+      const maxArea = Math.max(...totalAreas);
+      
+      // 寻找规律：半径差值最大（最靠近端点）的那一组，面积是否最大？
+      let maxDiffIndex = 0;
+      let maxDiffVal = -1;
+      radiiDiffs.forEach((val, idx) => {
+        if (val > maxDiffVal) {
+          maxDiffVal = val;
+          maxDiffIndex = idx;
+        }
+      });
+      
+      const bestAreaRec = records[maxDiffIndex];
+      const worstAreaRec = records.find(r => Math.abs(r.totalArea - minArea) < 0.01) || records[0];
+
+      const modalBody = document.getElementById('modalBody');
+      modalBody.innerHTML = `
+        <div class="conclusion-point">
+          <strong>1️⃣ 关于路径和：</strong><br>
+          无论点 O 在线段 AB 的什么位置，A 点和 B 点经过的路径长度之和（总路径）<span class="conclusion-highlight">基本保持不变</span>。<br>
+          <small>（数据显示：最大值 ${maxArc.toFixed(2)}cm，最小值 ${minArc.toFixed(2)}cm，差异极小）</small>
+        </div>
+        <div class="conclusion-point">
+          <strong>2️⃣ 关于面积和：</strong><br>
+          点 O 的位置会影响扫过的总面积。当点 O <span class="conclusion-highlight">越靠近线段端点</span>（即 OA 与 OB 长度相差越大）时，形成的两个扇形面积之和<span class="conclusion-highlight">越大</span>。<br>
+          <small>（例如：第${maxDiffIndex+1}组数据中，OA=${bestAreaRec.rA}, OB=${bestAreaRec.rB}，差异较大，总面积达到 ${bestAreaRec.totalArea.toFixed(2)}cm²）</small>
+        </div>
+        <div style="text-align:center; margin-top:20px; font-weight:bold; color:var(--primary);">
+          🎉 结论：O 无论在线段什么位置，路径和长度不变；越靠近端点，面积和越大。
+        </div>
+      `;
+      
+      document.getElementById('conclusionModal').classList.add('active');
+    }
+
+    function closeConclusion() {
+      document.getElementById('conclusionModal').classList.remove('active');
+    }
+
+    // 点击遮罩层关闭
+    document.getElementById('conclusionModal').addEventListener('click', function(e) {
+      if (e.target === this) closeConclusion();
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._tid);
+      t._tid = setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    // ---------- 挂载全局 & 启动 ----------
+    window.startRotation = startRotation;
+    window.manualRecord = manualRecord;
+    window.clearTracesOnly = clearTracesOnly;
+    window.resetSimulation = resetSimulation;
+    window.showConclusion = showConclusion;
+    window.closeConclusion = closeConclusion;
+
+    bindEvents();
+    updateDisplayedLengths();
+    draw();
+  })();
+</script>
+</body>
+</html>
