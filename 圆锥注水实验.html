@@ -1,0 +1,363 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>非匀速变化探究：圆锥注水实验</title>
+    <script src="https://data.zcat.cn/cdn/npm/@tailwindcss/3.4.17.js"></script>
+    <link rel="stylesheet" href="https://data.zcat.cn/cdn/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: "Microsoft YaHei", sans-serif; background-color: #F5F7FB; }
+        .card { background-color: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .glass-btn { transition: all 0.2s; }
+        .glass-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .glass-btn:active { transform: translateY(0); }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; background: #4285F4; cursor: pointer; margin-top: -10px; box-shadow: 0 2px 6px rgba(66, 133, 244, 0.5); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #E5E7EB; border-radius: 4px; }
+        input[type=range]:focus { outline: none; }
+        .water-layer, .time-label, .delta-label { transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 text-gray-800 flex flex-col items-center">
+
+    <!-- 头部标题区 -->
+    <header class="w-full max-w-6xl mb-6 text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-[#4285F4] mb-2">
+            水面上升的奥秘：圆锥注水实验（流速均匀）</h1>
+        
+    </header>
+
+    <!-- 核心互动区 -->
+    <main class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- 左侧：竖切面 -->
+        <div class="card p-6 flex flex-col items-center relative">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center">
+                <i class="fa-solid fa-play text-[#FBBC05] mr-2"></i>竖切面视角
+            </h2>
+            <div class="relative w-full flex justify-center h-[350px]">
+                <svg id="sideSvg" width="100%" height="100%" viewBox="0 0 240 320" class="overflow-visible">
+                    <g id="waterGroups"></g>
+                    <g id="timeLabels"></g>   <!-- 时间标签组（内部） -->
+                    <g id="deltaLabels"></g>  <!-- 高度增量标签组（右侧外部） -->
+                    <g id="connectors"></g>  <!-- 连接线组 -->
+                    <!-- 容器轮廓（无刻度） -->
+                    <polygon points="120,20 20,280 220,280" fill="none" stroke="#9CA3AF" stroke-width="4" stroke-linejoin="round"></polygon>
+                </svg>
+            </div>
+            
+            <!-- 高度 ÷ 时间 验证区 -->
+            <div class="mt-4 bg-yellow-50 rounded-lg p-3 border border-yellow-200 relative overflow-hidden w-full">
+                <div class="absolute top-0 left-0 w-1 h-full bg-[#FBBC05]"></div>
+                <div class="flex justify-between items-center pl-2">
+                    <span class="text-gray-700 font-bold">高度 ÷ 时间 <span class="text-xs text-gray-400 font-normal cursor-pointer hover:text-blue-500">(h/t)</span></span>
+                    <span class="font-bold text-[#EA4335] font-mono text-xl" id="ratioHT">1.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中间：横切面 (圆形) -->
+        <div class="card p-6 flex flex-col items-center">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center">
+                <i class="fa-solid fa-bullseye text-[#EA4335] mr-2"></i>横切面视角 (俯视)
+            </h2>
+            <div class="relative w-full flex justify-center items-center h-[350px] bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                <svg id="topSvg" width="200" height="200" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="95" fill="none" stroke="#D1D5DB" stroke-width="2" stroke-dasharray="5,5"></circle>
+                    <circle id="waterCircle" cx="100" cy="100" r="0" fill="#4285F4" stroke="#2563EB" stroke-width="3" style="transition: r 0.3s ease;"></circle>
+                </svg>
+                <div class="absolute bottom-4 text-center w-full text-[#4285F4] font-bold" id="radiusLabel">当前水面半径: 0.00 cm</div>
+            </div>
+            
+            <!-- 体积 ÷ 高度 验证区 -->
+            <div class="mt-4 bg-yellow-50 rounded-lg p-3 border border-yellow-200 relative overflow-hidden w-full">
+                <div class="absolute top-0 left-0 w-1 h-full bg-[#FBBC05]"></div>
+                <div class="flex justify-between items-center pl-2">
+                    <span class="text-gray-700 font-bold">体积 ÷ 高度 <span class="text-xs text-gray-400 font-normal">(V/h)</span></span>
+                    <span class="font-bold text-[#EA4335] font-mono text-xl" id="ratioVH">10.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：控制与数据面板 -->
+        <div class="card p-6 flex flex-col justify-between">
+            <div class="">
+                <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center">
+                    <i class="fa-solid fa-chart-line text-[#34A853] mr-2"></i>实时数据与验证
+                </h2>
+                
+                <!-- 时间控制 -->
+                <div class="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-bold text-gray-700">时间 (秒)</span>
+                        <span id="timeVal" class="bg-[#4285F4] text-white px-3 py-1 rounded-full font-bold text-lg shadow-sm">10 s</span>
+                    </div>
+                    <input type="range" id="timeSlider" min="0" max="10" step="1" value="0" class="w-full">
+                    <div class="flex justify-between text-xs text-gray-400 mt-2 px-1">
+                        <span class="">0</span><span class="">2</span><span class="">4</span><span class="">6</span><span class="">8</span><span class="">10</span>
+                    </div>
+                    
+                    <button id="playBtn" class="glass-btn mt-4 w-full bg-[#34A853] hover:bg-[#2E964A] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"> 重新演示</button>
+                </div>
+
+                <!-- 数据指标 -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <span class="text-gray-600">注入体积 <span class="text-xs italic text-gray-400">(V)</span></span>
+                        <span class="font-bold text-blue-600 font-mono text-lg" id="valV">100.0 cm³</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-100">
+                        <span class="text-gray-600">当前高度 <span class="text-xs italic text-gray-400">(h)</span></span>
+                        <span class="font-bold text-green-600 font-mono text-lg" id="valH">10.00 cm</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <p class="text-xs text-red-500 mt-1 text-center font-bold" id="conclusionText">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i>拖动滑块，观察比值是否固定。
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- 物理参数 ---
+        const MAX_TIME = 10;
+        const TOTAL_HEIGHT = 10.0;     // cm
+        const TOTAL_VOLUME = 100.0;    // cm³ (→ 注水速度 10 cm³/s)
+        const MAX_RADIUS = 5.0;        // cm
+
+        // --- SVG 参数 ---
+        const SVG_TOP_Y = 20;
+        const SVG_BOTTOM_Y = 280;
+        const SVG_HEIGHT = SVG_BOTTOM_Y - SVG_TOP_Y;
+        const SVG_CENTER_X = 120;
+        const SVG_MAX_WIDTH = 200;
+
+        // --- DOM 引用 ---
+        const timeSlider = document.getElementById('timeSlider');
+        const playBtn = document.getElementById('playBtn');
+        const waterGroups = document.getElementById('waterGroups');
+        const timeLabels = document.getElementById('timeLabels');
+        const deltaLabels = document.getElementById('deltaLabels');
+        const connectors = document.getElementById('connectors');
+        const waterCircle = document.getElementById('waterCircle');
+        
+        const timeVal = document.getElementById('timeVal');
+        const valV = document.getElementById('valV');
+        const valH = document.getElementById('valH');
+        const ratioVH = document.getElementById('ratioVH');
+        const ratioHT = document.getElementById('ratioHT');
+        const radiusLabel = document.getElementById('radiusLabel');
+        const conclusionText = document.getElementById('conclusionText');
+
+        let isPlaying = false;
+        let playInterval = null;
+
+        // --- 实时计算函数 ---
+        function getFrameData(t) {
+            if (t === 0) return { t: 0, V: 0, h: 0 };
+            const V = (TOTAL_VOLUME / MAX_TIME) * t;
+            const h = TOTAL_HEIGHT * (1 - Math.cbrt(1 - (t / MAX_TIME)));
+            return { t, V, h };
+        }
+
+        function getDeltaH(i) {
+            if (i <= 0 || i > MAX_TIME) return 0;
+            const curr = getFrameData(i);
+            const prev = getFrameData(i - 1);
+            return curr.h - prev.h;
+        }
+
+        // --- 初始化 SVG ---
+        function initSVG() {
+            for (let t = 1; t <= MAX_TIME; t++) {
+                // 1. 梯形水层
+                const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                poly.setAttribute("points", "0,0 0,0 0,0 0,0");
+                poly.setAttribute("fill", t % 2 === 0 ? "#60A5FA" : "#3B82F6");
+                poly.setAttribute("stroke", "white");
+                poly.setAttribute("stroke-width", "0.5");
+                poly.setAttribute("class", "water-layer opacity-0");
+                poly.id = `layer-${t}`;
+                waterGroups.appendChild(poly);
+
+                // 2. 时间标签（内部，白色）
+                const timeLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                timeLabel.setAttribute("x", SVG_CENTER_X - 8);
+                timeLabel.setAttribute("y", SVG_BOTTOM_Y);
+                timeLabel.setAttribute("font-size", "11");
+                timeLabel.setAttribute("fill", "white");
+                timeLabel.setAttribute("class", "time-label opacity-0 font-bold");
+                timeLabel.id = `timeLabel-${t}`;
+                timeLabel.textContent = `${t}s`;
+                timeLabels.appendChild(timeLabel);
+
+                // 3. Δh 标签（右侧外部，红色）
+                const deltaLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                deltaLabel.setAttribute("x", "235"); // 稍微右移，给连线留空间
+                deltaLabel.setAttribute("y", SVG_BOTTOM_Y);
+                deltaLabel.setAttribute("font-size", "11");
+                deltaLabel.setAttribute("fill", "#EF4444"); // 红色
+                deltaLabel.setAttribute("class", "delta-label opacity-0 font-bold");
+                deltaLabel.id = `deltaLabel-${t}`;
+                deltaLabel.textContent = "--"; // 初始占位
+                deltaLabels.appendChild(deltaLabel);
+
+                // 4. 连接线（红虚线）
+                const connector = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                connector.setAttribute("x1", "220"); // 水层右侧边缘
+                connector.setAttribute("y1", SVG_BOTTOM_Y);
+                connector.setAttribute("x2", "232"); // 连接到标签左侧
+                connector.setAttribute("y2", SVG_BOTTOM_Y);
+                connector.setAttribute("stroke", "#EF4444");
+                connector.setAttribute("stroke-width", "1");
+                connector.setAttribute("stroke-dasharray", "3,2"); // 虚线
+                connector.setAttribute("class", "delta-label opacity-0");
+                connector.id = `connector-${t}`;
+                connectors.appendChild(connector);
+            }
+        }
+
+        // --- 更新UI ---
+        function updateUI(t) {
+            const data = getFrameData(t);
+            const currentHeight = data.h;
+
+            // 更新主数据显示
+            timeVal.textContent = t + " s";
+            valV.innerHTML = `${data.V.toFixed(1)} <span class="text-sm">cm³</span>`;
+            valH.innerHTML = `${currentHeight.toFixed(2)} <span class="text-sm">cm</span>`;
+
+            // 更新比值
+            if (t === 0) {
+                ratioVH.textContent = "-";
+                ratioHT.textContent = "-";
+                conclusionText.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1 text-gray-500"></i>拖动滑块，开始实验。`;
+                conclusionText.className = "text-sm text-gray-500 mt-2 text-center font-bold";
+            } else {
+                const rVH = (data.V / currentHeight).toFixed(2);
+                const rHT = (currentHeight / t).toFixed(2);
+                ratioVH.textContent = rVH;
+                ratioHT.textContent = rHT;
+                conclusionText.innerHTML = `<i class="fa-solid fa-bolt mr-1"></i>结论：比值在不断变化！均不是正比例。`;
+                conclusionText.className = "text-sm text-[#EA4335] mt-2 text-center font-bold animate-pulse";
+            }
+
+            // 更新图形和标签
+            for (let i = 1; i <= MAX_TIME; i++) {
+                const layer = document.getElementById(`layer-${i}`);
+                const timeLabel = document.getElementById(`timeLabel-${i}`);
+                const deltaLabel = document.getElementById(`deltaLabel-${i}`);
+                const connector = document.getElementById(`connector-${i}`);
+
+                if (i <= t) {
+                    const currData = getFrameData(i);
+                    const prevData = getFrameData(i-1);
+                    
+                    const scaleY = SVG_HEIGHT / TOTAL_HEIGHT;
+                    const currY = SVG_BOTTOM_Y - currData.h * scaleY;
+                    const prevY = SVG_BOTTOM_Y - prevData.h * scaleY;
+                    const currW = SVG_MAX_WIDTH * (1 - currData.h / TOTAL_HEIGHT);
+                    const prevW = SVG_MAX_WIDTH * (1 - prevData.h / TOTAL_HEIGHT);
+
+                    // 更新梯形
+                    layer.setAttribute("points", `
+                        ${SVG_CENTER_X - prevW/2},${prevY}
+                        ${SVG_CENTER_X + prevW/2},${prevY}
+                        ${SVG_CENTER_X + currW/2},${currY}
+                        ${SVG_CENTER_X - currW/2},${currY}
+                    `.trim());
+                    
+                    // 更新时间标签（内部）
+                    const midY = (currY + prevY) / 2;
+                    timeLabel.setAttribute("y", midY + 4);
+                    
+                    // 更新Δh标签（右侧）
+                    deltaLabel.setAttribute("y", midY + 4);
+                    const dh = getDeltaH(i);
+                    deltaLabel.textContent = dh.toFixed(3); // 仅数值，三位小数
+
+                    // 更新连接线：起点为当前水层右侧边缘
+                    const waterRightX = SVG_CENTER_X + currW / 2;
+                    connector.setAttribute("x1", waterRightX);
+                    connector.setAttribute("y1", midY + 4);
+                    connector.setAttribute("y2", midY + 4);
+
+                    // 显示
+                    layer.classList.remove("opacity-0");
+                    layer.classList.add("opacity-100");
+                    timeLabel.classList.remove("opacity-0");
+                    timeLabel.classList.add("opacity-100");
+                    deltaLabel.classList.remove("opacity-0");
+                    deltaLabel.classList.add("opacity-100");
+                    connector.classList.remove("opacity-0");
+                    connector.classList.add("opacity-100");
+                } else {
+                    layer.classList.remove("opacity-100");
+                    layer.classList.add("opacity-0");
+                    timeLabel.classList.remove("opacity-100");
+                    timeLabel.classList.add("opacity-0");
+                    deltaLabel.classList.remove("opacity-100");
+                    deltaLabel.classList.add("opacity-0");
+                    connector.classList.remove("opacity-100");
+                    connector.classList.add("opacity-0");
+                }
+            }
+
+            // 更新横切面
+            if (t === 0) {
+                waterCircle.setAttribute("r", 0);
+            } else {
+                const currentRadius = MAX_RADIUS * (1 - currentHeight / TOTAL_HEIGHT);
+                const svgRadius = 95 * (currentRadius / MAX_RADIUS);
+                waterCircle.setAttribute("r", svgRadius);
+                radiusLabel.textContent = `当前水面半径: ${currentRadius.toFixed(2)} cm`;
+            }
+        }
+
+        // --- 控制逻辑 ---
+        timeSlider.addEventListener('input', (e) => {
+            if(isPlaying) togglePlay();
+            updateUI(parseInt(e.target.value));
+        });
+
+        function togglePlay() {
+            if (isPlaying) {
+                clearInterval(playInterval);
+                playBtn.innerHTML = '<i class="fa-solid fa-play"></i> <span>继续演示</span>';
+                playBtn.classList.replace("bg-[#EA4335]", "bg-[#34A853]");
+                playBtn.classList.replace("hover:bg-red-600", "hover:bg-[#2E964A]");
+                isPlaying = false;
+            } else {
+                if(parseInt(timeSlider.value) >= MAX_TIME) {
+                    timeSlider.value = 0;
+                    updateUI(0);
+                }
+                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>暂停</span>';
+                playBtn.classList.replace("bg-[#34A853]", "bg-[#EA4335]");
+                playBtn.classList.replace("hover:bg-[#2E964A]", "hover:bg-red-600");
+                isPlaying = true;
+                playInterval = setInterval(() => {
+                    let nextTime = parseInt(timeSlider.value) + 1;
+                    if (nextTime <= MAX_TIME) {
+                        timeSlider.value = nextTime;
+                        updateUI(nextTime);
+                    } else {
+                        togglePlay();
+                        playBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> <span>重新演示</span>';
+                    }
+                }, 1000);
+            }
+        }
+
+        playBtn.addEventListener('click', togglePlay);
+
+        // --- 初始化 ---
+        window.onload = () => {
+            initSVG();
+            updateUI(0);
+        };
+    </script>
+
+</body></html>
