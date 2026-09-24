@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>反比例意义探究 | 底面积×高=定值</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: linear-gradient(145deg, #eef5f9 0%, #d9e4ec 100%);
+            font-family: 'Segoe UI', Roboto, 'Noto Sans', system-ui, sans-serif;
+            padding: 25px 20px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .main-card {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(4px);
+            border-radius: 56px;
+            box-shadow: 0 20px 40px rgba(0,20,30,0.25);
+            padding: 25px 30px 35px;
+            border: 1px solid rgba(255,255,255,0.7);
+            position: relative;
+        }
+        /* 作者署名 - 右上角 */
+        .author {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 1rem;
+            color: #2b5e7a;
+            background: rgba(255,255,255,0.75);
+            padding: 4px 16px;
+            border-radius: 40px;
+            border: 1px solid #9dc1d4;
+            font-style: italic;
+            box-shadow: 0 2px 6px rgba(0,30,40,0.1);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+        }
+        .author::before {
+            content: "✎ ";
+            font-style: normal;
+            opacity: 0.7;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            color: #1f4a62;
+            margin: 0 0 20px;
+            font-weight: 600;
+        }
+        .cylinder-panel {
+            background: #fefefe;
+            border-radius: 48px;
+            padding: 20px 18px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 2px solid white;
+            margin-bottom: 25px;
+        }
+        .cylinder-panel h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.3rem;
+            color: #1e556f;
+        }
+        canvas {
+            display: block;
+            margin: 10px auto;
+            background: #fffef7;
+            border-radius: 28px;
+            box-shadow: inset 0 0 0 1px #cbdae3, 0 6px 12px rgba(0,0,0,0.08);
+        }
+        .control-bar {
+            background: #e2f0f5;
+            border-radius: 48px;
+            padding: 18px 22px;
+            margin: 20px 0;
+            border: 2px solid white;
+        }
+        .slider-area {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .slider-label {
+            font-weight: 700;
+            background: white;
+            border-radius: 40px;
+            padding: 6px 18px;
+            color: #1f4a62;
+        }
+        input[type=range] {
+            flex: 3;
+            min-width: 200px;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #b1cfdf;
+            border-radius: 20px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #2f6d8c;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .data-badge {
+            background: #1f4a62;
+            color: white;
+            border-radius: 60px;
+            padding: 8px 20px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .flex-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        button {
+            background: #2c6e9e;
+            border: none;
+            border-radius: 48px;
+            padding: 8px 22px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: 0.1s;
+            font-size: 0.9rem;
+            box-shadow: 0 3px 0 #1d4c6e;
+        }
+        button:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+        button.secondary {
+            background: #e67e22;
+            box-shadow: 0 3px 0 #b45f1b;
+        }
+        button.danger {
+            background: #8b5a2b;
+        }
+        .record-table {
+            background: #fef7e0;
+            border-radius: 40px;
+            padding: 16px;
+            margin: 20px 0;
+            border: 2px solid white;
+        }
+        .table-wrapper {
+            max-height: 180px;
+            overflow-y: auto;
+            border-radius: 28px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: monospace;
+            background: white;
+            border-radius: 28px;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: center;
+            border-bottom: 1px solid #cbdae3;
+        }
+        th {
+            background: #cfe3ef;
+            color: #1f4a62;
+        }
+        .graph-area {
+            background: white;
+            border-radius: 48px;
+            padding: 18px;
+            margin-top: 20px;
+            border: 2px solid white;
+        }
+        canvas#graphCanvas {
+            background: #ffffff;
+            width: 100%;
+            height: auto;
+            max-width: 700px;
+            aspect-ratio: 6/4;
+            display: block;
+            margin: 0 auto;
+            border-radius: 28px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .footer {
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 20px;
+            color: #4f6f82;
+        }
+        .warning-tip {
+            background: #fff3cd;
+            border-radius: 30px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            color: #856404;
+        }
+        @media (max-width: 800px) {
+            .main-card { padding: 18px; }
+            .slider-area { flex-direction: column; align-items: stretch; }
+            .author { position: static; text-align: right; margin-bottom: 10px; display: inline-block; width: auto; float: right; }
+            h1 { clear: both; }
+        }
+    </style>
+</head>
+<body>
+<div class="main-card">
+    <div class="author">龚能庆</div>
+    <h1>📐 反比例意义探究</h1>
+
+    <!-- 圆柱容器 -->
+    <div class="cylinder-panel">
+        <h3>💧 圆柱形容器 (水量恒定1000ml)</h3>
+        <canvas id="rightCylinder" width="300" height="280" style="width:300px; height:280px"></canvas>
+        <p style="margin:8px 0 0; font-weight:500;" id="waterInfo">水量: 1000 mL  |  水位: -- cm</p>
+        <p style="font-size:0.8rem;">底面积可调 · 容器高40cm · 水量固定1000ml，高度 = 1000 ÷ 底面积</p>
+    </div>
+
+    <!-- 控制栏 -->
+    <div class="control-bar">
+        <div class="slider-area">
+            <span class="slider-label">📏 容器底面积 (cm²)</span>
+            <input type="range" id="areaSlider" min="25" max="300" step="25" value="100">
+            <span class="data-badge" id="areaValue">100 cm²</span>
+        </div>
+        <div class="slider-area">
+            <span class="slider-label">💧 当前水位高度</span>
+            <span class="data-badge" id="heightValue">10.00 cm</span>
+            <span class="slider-label">🔷 底面积×高 = </span>
+            <span class="data-badge" id="productValue">1000</span>
+        </div>
+        <div class="flex-buttons">
+            <button id="recordBtn">📝 记录当前数据</button>
+            <button id="clearRecordBtn" class="danger">🗑️ 清空记录</button>
+            <button id="plotBtn">📈 生成图像 (描点)</button>
+            <button id="curveBtn">📉 绘制反比例曲线</button>
+        </div>
+        <div class="warning-tip">
+            💡 探究：水量固定为1000ml，底面积扩大 → 高度减小，底面积 × 高度 = 1000 (定值)。记录多组数据后点击「生成图像」描点，再点击「绘制反比例曲线」可看到点落在理论曲线上。
+        </div>
+    </div>
+
+    <!-- 记录数据表格 -->
+    <div class="record-table">
+        <div style="font-weight:bold; margin-bottom:8px;">📋 记录列表 (底面积, 高度) — 乘积 = 水量 (1000ml)</div>
+        <div class="table-wrapper">
+            <table id="dataTable">
+                <thead>
+                    <tr><th>底面积 (cm²)</th><th>高度 (cm)</th><th>乘积 (水量 mL)</th></tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="3" style="text-align:center;">暂无数据，拖动滑块改变底面积→点击记录</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 反比例图像 -->
+    <div class="graph-area">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap:wrap;">
+            <h3 style="margin:0 0 8px 0;">📉 反比例图像 (底面积 — 高度)</h3>
+            <button id="resetGraphBtn" class="danger" style="background:#6c757d;">🗑️ 清除图像</button>
+        </div>
+        <canvas id="graphCanvas" width="600" height="400" style="width:100%; height:auto; max-width:700px; aspect-ratio:6/4; margin:0 auto; display:block;"></canvas>
+        <p style="margin-top:12px; font-size:0.8rem; text-align:center;">横轴：底面积 (cm²) &nbsp;&nbsp;|&nbsp;&nbsp; 纵轴：高度 (cm) &nbsp;&nbsp;|&nbsp;&nbsp; 红色曲线为理论反比例函数 (xy=1000)</p>
+    </div>
+    <div class="footer">
+        💡 水量恒定1000ml ⇒ 底面积 × 高度 = 1000，成反比例关系。拖动滑块可观察水位变化，记录数据并描点验证。
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------------- 固定参数 -----------------
+        const TOTAL_VOLUME = 1000;      // 固定水量 1000 ml
+        const MAX_HEIGHT = 40;           // 容器最大高度 40 cm (视觉限制)
+        
+        // DOM 元素
+        const areaSlider = document.getElementById('areaSlider');
+        const areaValueSpan = document.getElementById('areaValue');
+        const heightValueSpan = document.getElementById('heightValue');
+        const productValueSpan = document.getElementById('productValue');
+        const waterInfo = document.getElementById('waterInfo');
+        
+        const rightCanvas = document.getElementById('rightCylinder');
+        const ctxRight = rightCanvas.getContext('2d');
+        
+        // 表格与记录
+        const tableBody = document.getElementById('tableBody');
+        let records = [];          // 存储 { area, height }
+        
+        // 图像相关
+        const graphCanvas = document.getElementById('graphCanvas');
+        const ctxGraph = graphCanvas.getContext('2d');
+        
+        // 当前状态
+        let currentArea = 100;      // 初始底面积 100 cm² (高度=10cm)
+        
+        // ---------------- 辅助函数: 根据底面积计算半径映射(像素) ----------------
+        function getCylinderRadius(area) {
+            const minArea = 25, maxArea = 300;
+            const minR = 35, maxR = 85;     // 视觉半径范围 (像素)
+            let t = (area - minArea) / (maxArea - minArea);
+            t = Math.min(1, Math.max(0, t));
+            return minR + t * (maxR - minR);
+        }
+        
+        // 根据当前底面积获取高度
+        function getCurrentHeight() {
+            if (currentArea <= 0) return 0;
+            return TOTAL_VOLUME / currentArea;
+        }
+        
+        // 更新右边显示 (动态半径 + 水位)
+        function drawRightCylinder() {
+            ctxRight.clearRect(0, 0, rightCanvas.width, rightCanvas.height);
+            const w = rightCanvas.width, h = rightCanvas.height;
+            const bodyHeight = 200;           // 圆柱可视高度 (px)
+            const startY = 40;
+            const radiusX = getCylinderRadius(currentArea);
+            
+            // 背景
+            ctxRight.fillStyle = "#fefcf5";
+            ctxRight.fillRect(0, 0, w, h);
+            
+            // 容器轮廓 (圆柱)
+            ctxRight.beginPath();
+            ctxRight.ellipse(w/2, startY, radiusX, 16, 0, 0, Math.PI*2);
+            ctxRight.fillStyle = "#e9f2f9";
+            ctxRight.fill();
+            ctxRight.beginPath();
+            ctxRight.rect(w/2 - radiusX, startY, radiusX*2, bodyHeight);
+            ctxRight.fill();
+            ctxRight.beginPath();
+            ctxRight.ellipse(w/2, startY+bodyHeight, radiusX, 16, 0, 0, Math.PI*2);
+            ctxRight.fill();
+            ctxRight.strokeStyle = "#2f607b";
+            ctxRight.lineWidth = 2;
+            ctxRight.beginPath();
+            ctxRight.ellipse(w/2, startY, radiusX, 16, 0, 0, Math.PI*2);
+            ctxRight.stroke();
+            ctxRight.beginPath();
+            ctxRight.rect(w/2 - radiusX, startY, radiusX*2, bodyHeight);
+            ctxRight.stroke();
+            ctxRight.beginPath();
+            ctxRight.ellipse(w/2, startY+bodyHeight, radiusX, 16, 0, 0, Math.PI*2);
+            ctxRight.stroke();
+            
+            // 水位
+            const currentHeight = getCurrentHeight();
+            const waterPercent = Math.min(1, currentHeight / MAX_HEIGHT);
+            if (waterPercent > 0) {
+                let waterPx = waterPercent * bodyHeight;
+                let waterTopY = startY + bodyHeight - waterPx;
+                ctxRight.fillStyle = "rgba(80, 190, 255, 0.82)";
+                ctxRight.fillRect(w/2 - radiusX, waterTopY, radiusX*2, waterPx);
+                ctxRight.fillStyle = "rgba(50, 150, 230, 0.5)";
+                ctxRight.fillRect(w/2 - radiusX + 5, waterTopY, radiusX*2 - 10, waterPx);
+                // 水面高光
+                ctxRight.beginPath();
+                ctxRight.rect(w/2 - radiusX + 5, waterTopY, radiusX*2 - 10, 4);
+                ctxRight.fillStyle = "rgba(255,255,245,0.8)";
+                ctxRight.fill();
+            }
+            
+            // 文字标注
+            ctxRight.font = "12px monospace";
+            ctxRight.fillStyle = "#2c607b";
+            ctxRight.fillText(`底面积 ${currentArea.toFixed(0)} cm²`, w/2-55, startY-8);
+            ctxRight.fillText(`水量: ${TOTAL_VOLUME} mL`, w/2-48, startY+bodyHeight+18);
+            ctxRight.fillStyle = "#7c9bad";
+            ctxRight.fillText(`高 ${currentHeight.toFixed(2)} cm`, w/2-40, startY+bodyHeight+32);
+            ctxRight.fillStyle = "#b0a790";
+            ctxRight.fillText(`max 40cm`, w/2-25, startY-5);
+        }
+        
+        // 更新所有数据展示
+        function updateDisplay() {
+            const height = getCurrentHeight();
+            heightValueSpan.innerText = height.toFixed(2) + " cm";
+            productValueSpan.innerText = (currentArea * height).toFixed(1);
+            waterInfo.innerText = `水量: 1000 mL  |  水位: ${height.toFixed(2)} cm`;
+            areaValueSpan.innerText = currentArea.toFixed(2) + " cm²";
+            drawRightCylinder();
+        }
+        
+        // 滑块改变时: 更新底面积，高度自动重新计算
+        function onAreaChange() {
+            const newArea = parseFloat(areaSlider.value);
+            currentArea = newArea;
+            updateDisplay();
+        }
+        
+        // 记录当前数据 (底面积, 高度)
+        function recordCurrentData() {
+            const area = currentArea;
+            const height = getCurrentHeight();
+            records.push({ area, height });
+            updateRecordTable();
+        }
+        
+        function updateRecordTable() {
+            tableBody.innerHTML = '';
+            if (records.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">暂无数据，拖动滑块改变底面积→点击记录</td></tr>';
+                return;
+            }
+            for (let rec of records) {
+                const row = tableBody.insertRow();
+                row.insertCell(0).innerText = rec.area.toFixed(2);
+                row.insertCell(1).innerText = rec.height.toFixed(2);
+                row.insertCell(2).innerText = (rec.area * rec.height).toFixed(1);
+            }
+        }
+        
+        function clearRecords() {
+            records = [];
+            updateRecordTable();
+            redrawGraph(false, false);
+        }
+        
+        // ---------- 反比例图像 (平滑曲线 xy = 1000) ----------
+        const graphWidth = graphCanvas.width;
+        const graphHeight = graphCanvas.height;
+        const padding = { left: 55, right: 30, top: 30, bottom: 45 };
+        const plotArea = { xMin: 0, xMax: 350, yMin: 0, yMax: 45 };
+        
+        function toPixelX(x) {
+            return padding.left + (x - plotArea.xMin) / (plotArea.xMax - plotArea.xMin) * (graphWidth - padding.left - padding.right);
+        }
+        function toPixelY(y) {
+            return graphHeight - padding.bottom - (y - plotArea.yMin) / (plotArea.yMax - plotArea.yMin) * (graphHeight - padding.top - padding.bottom);
+        }
+        
+        function drawAxes() {
+            ctxGraph.clearRect(0, 0, graphWidth, graphHeight);
+            ctxGraph.fillStyle = "#ffffff";
+            ctxGraph.fillRect(0, 0, graphWidth, graphHeight);
+            ctxGraph.strokeStyle = "#2f5e7a";
+            ctxGraph.lineWidth = 1.5;
+            ctxGraph.beginPath();
+            ctxGraph.moveTo(padding.left, graphHeight - padding.bottom);
+            ctxGraph.lineTo(graphWidth - padding.right, graphHeight - padding.bottom);
+            ctxGraph.stroke();
+            ctxGraph.beginPath();
+            ctxGraph.moveTo(padding.left, padding.top);
+            ctxGraph.lineTo(padding.left, graphHeight - padding.bottom);
+            ctxGraph.stroke();
+            ctxGraph.fillStyle = "#2f5e7a";
+            ctxGraph.font = "12px 'Segoe UI'";
+            for (let x = 0; x <= 350; x += 50) {
+                const px = toPixelX(x);
+                ctxGraph.beginPath();
+                ctxGraph.moveTo(px, graphHeight - padding.bottom - 4);
+                ctxGraph.lineTo(px, graphHeight - padding.bottom + 4);
+                ctxGraph.stroke();
+                ctxGraph.fillText(x + "", px-10, graphHeight - padding.bottom + 16);
+            }
+            for (let y = 0; y <= 45; y += 5) {
+                const py = toPixelY(y);
+                ctxGraph.beginPath();
+                ctxGraph.moveTo(padding.left - 4, py);
+                ctxGraph.lineTo(padding.left + 4, py);
+                ctxGraph.stroke();
+                ctxGraph.fillText(y + "", padding.left - 28, py+3);
+            }
+            ctxGraph.font = "bold 13px 'Segoe UI'";
+            ctxGraph.fillStyle = "#1f4a62";
+            ctxGraph.fillText("底面积 (cm²)", graphWidth/2 - 50, graphHeight - 10);
+            ctxGraph.save();
+            ctxGraph.translate(22, graphHeight/2);
+            ctxGraph.rotate(-Math.PI/2);
+            ctxGraph.fillText("高度 (cm)", -20, 0);
+            ctxGraph.restore();
+        }
+        
+        // 描点 (根据记录的数据)
+        function drawPoints() {
+            if (!records.length) return;
+            for (let rec of records) {
+                const x = rec.area, y = rec.height;
+                if (x >= plotArea.xMin && x <= plotArea.xMax && y >= plotArea.yMin && y <= plotArea.yMax) {
+                    const px = toPixelX(x);
+                    const py = toPixelY(y);
+                    ctxGraph.beginPath();
+                    ctxGraph.arc(px, py, 6, 0, 2*Math.PI);
+                    ctxGraph.fillStyle = "#e67e22";
+                    ctxGraph.fill();
+                    ctxGraph.beginPath();
+                    ctxGraph.arc(px, py, 3, 0, 2*Math.PI);
+                    ctxGraph.fillStyle = "#ffffff";
+                    ctxGraph.fill();
+                    ctxGraph.fillStyle = "#1f4a62";
+                    ctxGraph.font = "bold 10px monospace";
+                    ctxGraph.fillText(`(${x},${y.toFixed(1)})`, px+8, py-4);
+                }
+            }
+        }
+        
+        // 绘制平滑反比例曲线 (基于 xy = 1000)
+        function drawSmoothCurve() {
+            ctxGraph.beginPath();
+            let first = true;
+            for (let x = 20; x <= 320; x += 2) {
+                let y = 1000 / x;
+                if (y > plotArea.yMax) continue;
+                if (y < 0) continue;
+                const px = toPixelX(x);
+                const py = toPixelY(y);
+                if (first) {
+                    ctxGraph.moveTo(px, py);
+                    first = false;
+                } else {
+                    ctxGraph.lineTo(px, py);
+                }
+            }
+            ctxGraph.strokeStyle = "#d9534f";
+            ctxGraph.lineWidth = 2.5;
+            ctxGraph.stroke();
+        }
+        
+        function redrawGraph(withPoints = true, withCurve = false) {
+            drawAxes();
+            if (withPoints) drawPoints();
+            if (withCurve) drawSmoothCurve();
+        }
+        
+        function plotOnlyPoints() {
+            if (records.length === 0) {
+                alert("请先记录数据（拖动滑块后点击「记录当前数据」）");
+                return;
+            }
+            redrawGraph(true, false);
+        }
+        
+        function drawCurveOnly() {
+            redrawGraph(true, true);
+        }
+        
+        function resetGraph() {
+            drawAxes();
+        }
+        
+        // 初始化: 底面积100
+        currentArea = 100;
+        areaSlider.value = 100;
+        updateDisplay();
+        drawAxes();
+        
+        // 事件绑定
+        areaSlider.addEventListener('input', () => {
+            onAreaChange();
+        });
+        document.getElementById('recordBtn').addEventListener('click', () => {
+            recordCurrentData();
+        });
+        document.getElementById('clearRecordBtn').addEventListener('click', () => {
+            clearRecords();
+            resetGraph();
+        });
+        document.getElementById('plotBtn').addEventListener('click', () => {
+            plotOnlyPoints();
+        });
+        document.getElementById('curveBtn').addEventListener('click', () => {
+            drawCurveOnly();
+        });
+        document.getElementById('resetGraphBtn').addEventListener('click', () => {
+            resetGraph();
+        });
+        
+        updateRecordTable();
+    })();
+</script>
+</body>
+</html>

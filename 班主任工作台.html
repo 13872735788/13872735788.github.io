@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>班主任完整工作台</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft Yahei",system-ui,-apple-system}
+body{background:#f4f7fa;color:#333;padding:16px}
+.container{max-width:1300px;margin:0 auto}
+header{background:#2b5797;color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:16px}
+h1{font-size:22px;margin-bottom:4px}
+.header-desc{font-size:13px;opacity:0.9}
+
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab-btn{padding:10px 14px;border:none;background:#e2e8f0;border-radius:6px;cursor:pointer;font-size:14px}
+.tab-btn.active{background:#2b5797;color:#fff}
+.tab-panel{display:none;background:#fff;padding:20px;border-radius:10px;box-shadow:0 1px 5px rgba(0,0,0,0.12)}
+.tab-panel.show{display:block}
+
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:18px}
+.card{background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e9edf2}
+.card h3{font-size:15px;margin-bottom:8px;color:#444}
+.card .num{font-size:26px;font-weight:bold;color:#2b5797}
+
+input,textarea,select{width:100%;padding:9px 11px;border:1px solid #cbd5e0;border-radius:6px;margin:8px 0;font-size:14px}
+button{padding:9px 14px;border:none;border-radius:6px;background:#2b5797;color:#fff;cursor:pointer;margin:4px;font-size:14px}
+button.gray{background:#718096}
+button.del{background:#c53030}
+button.success{background:#2f855a}
+
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+th,td{border:1px solid #e2e8f0;padding:9px;text-align:left}
+th{background:#edf2f7}
+.scroll-wrap{max-height:390px;overflow:auto}
+small{color:#777}
+.tag{display:inline-block;background:#bee3f8;color:#2b5797;padding:2px 6px;border-radius:4px;font-size:12px;margin:2px}
+.file-tip{background:#f0fff4;padding:12px;border-radius:6px;margin:12px 0;border:1px solid #c6f6d5}
+.flex-row{display:flex;gap:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>班主任完整工作台</h1>
+<div class="header-desc">本地离线存储｜Excel批量导入｜花名册｜班委｜卫生值日｜考勤｜谈话｜奖惩｜待办｜全套数据备份</div>
+</header>
+
+<div class="tabs">
+<button class="tab-btn active" data-tab="dashboard">仪表盘</button>
+<button class="tab-btn" data-tab="roster">班级花名册</button>
+<button class="tab-btn" data-tab="classcadre">班委管理</button>
+<button class="tab-btn" data-tab="duty">卫生值日</button>
+<button class="tab-btn" data-tab="student">学生档案</button>
+<button class="tab-btn" data-tab="attendance">考勤登记</button>
+<button class="tab-btn" data-tab="talk">谈心谈话</button>
+<button class="tab-btn" data-tab="score">奖惩积分</button>
+<button class="tab-btn" data-tab="todo">待办事项</button>
+</div>
+
+<!-- 仪表盘 -->
+<div class="tab-panel show" id="dashboard">
+<div class="row">
+<div class="card"><h3>班级总人数</h3><div class="num" id="totalStu">0</div></div>
+<div class="card"><h3>今日请假</h3><div class="num" id="leaveCnt">0</div></div>
+<div class="card"><h3>班委人数</h3><div class="num" id="cadreCnt">0</div></div>
+<div class="card"><h3>值日组数</h3><div class="num" id="dutyCnt">0</div></div>
+<div class="card"><h3>谈话记录</h3><div class="num" id="talkCnt">0</div></div>
+<div class="card"><h3>待办总数</h3><div class="num" id="todoCnt">0</div></div>
+</div>
+<div class="card">
+<h3>数据备份与恢复</h3>
+<button onclick="exportAll()">导出全部数据备份</button>
+<button class="gray" onclick="importData()">导入备份JSON文件</button>
+<small>提示：清除浏览器缓存会丢失全部数据，请定期导出备份保存到电脑。</small>
+</div>
+</div>
+
+<!-- 班级花名册 -->
+<div class="tab-panel" id="roster">
+<h3>📋 班级花名册</h3>
+<small>数据自动读取学生档案，无需重复录入</small>
+<div class="scroll-wrap">
+<table>
+<thead>
+<tr>
+<th>学号</th>
+<th>姓名</th>
+<th>性别</th>
+<th>家长电话</th>
+<th>班委职务</th>
+<th>特殊关注标签</th>
+</tr>
+</thead>
+<tbody id="rosterTable"></tbody>
+</table>
+</div>
+<button class="success" onclick="exportRosterExcel()">导出花名册Excel</button>
+</div>
+
+<!-- 班委管理 -->
+<div class="tab-panel" id="classcadre">
+<h3>👔 班委职务管理</h3>
+<select id="cadreStuSel"></select>
+<input placeholder="填写职务，例如：班长、学习委员、小组长" id="cadreJob">
+<button onclick="addCadre()">添加班委</button>
+<div class="scroll-wrap">
+<table>
+<thead>
+<tr>
+<th>学生姓名</th>
+<th>职务</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="cadreTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- 卫生值日 -->
+<div class="tab-panel" id="duty">
+<h3>🧹 卫生值日安排</h3>
+<input placeholder="值日区域/组别，例：教室扫地、走廊、卫生间" id="dutyArea">
+<input placeholder="值日学生名单，多人使用顿号隔开" id="dutyUsers">
+<input placeholder="值日周期，例：周一、周二、单周" id="dutyWeek">
+<button onclick="addDuty()">保存值日安排</button>
+<div class="scroll-wrap">
+<table>
+<thead>
+<tr>
+<th>值日区域</th>
+<th>值日人员</th>
+<th>周期</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="dutyTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- 学生档案 -->
+<div class="tab-panel" id="student">
+<div class="file-tip">
+<h4>📂 Excel / CSV 批量导入学生档案</h4>
+<p>表格支持字段：学号、姓名、性别、身份证号、家庭住址、家长电话、班委职务、特殊关注标签、家庭情况</p>
+<input type="file" id="stuFileInput" accept=".xlsx,.xls,.csv">
+<button class="success" onclick="handleImportExcel()">读取选中文件批量导入</button>
+</div>
+
+<h3>手动新增学生完整档案</h3>
+<div class="flex-row">
+<input placeholder="学号" id="sId">
+<input placeholder="姓名" id="sName">
+<select id="sGender">
+<option value="">选择性别</option>
+<option value="男">男</option>
+<option value="女">女</option>
+</select>
+</div>
+<input placeholder="身份证号" id="sIdCard">
+<input placeholder="家庭住址" id="sAddress">
+<input placeholder="家长联系电话" id="sPhone">
+<input placeholder="班委职务" id="sDuty">
+<input placeholder="特殊关注标签，多个标签用英文逗号分隔" id="sTag">
+<textarea placeholder="家庭情况、心理状况、重点备注信息" id="sRemark"></textarea>
+<button onclick="addStudent()">保存学生档案</button>
+
+<div class="scroll-wrap">
+<table>
+<thead>
+<tr>
+<th>学号</th>
+<th>姓名</th>
+<th>性别</th>
+<th>身份证号</th>
+<th>家庭住址</th>
+<th>家长电话</th>
+<th>班委</th>
+<th>关注标签</th>
+<th>备注</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="stuTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- 考勤登记 -->
+<div class="tab-panel" id="attendance">
+<h3>考勤登记｜请假 / 迟到 / 旷课</h3>
+<select id="attStuSel"></select>
+<select id="attType">
+<option value="请假">请假</option>
+<option value="迟到">迟到</option>
+<option value="旷课">旷课</option>
+</select>
+<input type="date" id="attDate">
+<textarea placeholder="事由备注" id="attRemark"></textarea>
+<button onclick="addAttendance()">保存考勤记录</button>
+<div class="scroll-wrap">
+<table>
+<thead>
+<tr>
+<th>日期</th>
+<th>学生</th>
+<th>类型</th>
+<th>备注</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="attTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- 谈心谈话 -->
+<div class="tab-panel" id="talk">
+<h3>谈心谈话记录（德育留痕）</h3>
+<select id="talkStuSel"></select>
+<input type="date" id="talkDate">
+<textarea placeholder="谈话主题、问题、谈话过程" id="talkContent"></textarea>
+<textarea placeholder="教育引导结果、后续跟进措施" id="talkResult"></textarea>
+<button onclick="addTalk()">保存谈话记录</button>
+<div class="scroll-wrap">
+<table>
+<thead>
+<tr>
+<th>日期</th>
+<th>学生</th>
+<th>谈话摘要</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="talkTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- 奖惩积分 -->
+<div class="tab-panel" id="score">
+<h3>奖惩积分管理</h3>
+<select id="scoreStuSel"></select>
+<select id="scoreType">
+<option value="表扬">表扬加分</option>
+<option value="违纪扣分">违纪扣分</option>
+</select>
+<input placeholder="填写分值数字" id="scoreVal">
+<textarea placeholder="事件描述" id="scoreDesc"></textarea>
+<button onclick="addScore()">保存奖惩记录</button>
+<div class="scroll-wrap">
+<table>
+<thead>
+<tr>
+<th>学生</th>
+<th>类型</th>
+<th>分值</th>
+<th>描述</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="scoreTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- 待办事项 -->
+<div class="tab-panel" id="todo">
+<h3>班主任待办事项</h3>
+<input placeholder="待办工作内容" id="todoText">
+<input type="date" id="todoDdl">
+<button onclick="addTodo()">新增待办</button>
+<div id="todoList"></div>
+</div>
+
+</div>
+
+<script>
+const KEY_STU = "bz_student";
+const KEY_ATT = "bz_attendance";
+const KEY_TALK = "bz_talk";
+const KEY_SCORE = "bz_score";
+const KEY_TODO = "bz_todo";
+const KEY_CADRE = "bz_cadre";
+const KEY_DUTY = "bz_duty";
+
+function get(key) {
+  const d = localStorage.getItem(key);
+  return d ? JSON.parse(d) : [];
+}
+function set(key, val) {
+  localStorage.setItem(key, JSON.stringify(val));
+}
+
+//标签切换
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("show"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("show");
+    renderAll();
+  }
+});
+
+window.onload = renderAll;
+
+function renderAll() {
+  renderDash();
+  renderStudent();
+  renderRoster();
+  renderCadre();
+  renderDuty();
+  renderAttendance();
+  renderTalk();
+  renderScore();
+  renderTodo();
+  fillStudentSelect();
+}
+
+function renderDash() {
+  const stu = get(KEY_STU);
+  const att = get(KEY_ATT);
+  const talk = get(KEY_TALK);
+  const todo = get(KEY_TODO);
+  const cadre = get(KEY_CADRE);
+  const duty = get(KEY_DUTY);
+  const today = new Date().toISOString().slice(0,10);
+  const leaveToday = att.filter(x => x.date === today && x.type === "请假");
+
+  document.getElementById("totalStu").innerText = stu.length;
+  document.getElementById("leaveCnt").innerText = leaveToday.length;
+  document.getElementById("cadreCnt").innerText = cadre.length;
+  document.getElementById("dutyCnt").innerText = duty.length;
+  document.getElementById("talkCnt").innerText = talk.length;
+  document.getElementById("todoCnt").innerText = todo.length;
+}
+
+//学生档案
+function addStudent(){
+  const obj = {
+    id: Date.now(),
+    sid: document.getElementById("sId").value.trim(),
+    name: document.getElementById("sName").value.trim(),
+    gender: document.getElementById("sGender").value,
+    idcard: document.getElementById("sIdCard").value.trim(),
+    address: document.getElementById("sAddress").value.trim(),
+    phone: document.getElementById("sPhone").value.trim(),
+    duty: document.getElementById("sDuty").value.trim(),
+    tag: document.getElementById("sTag").value.trim(),
+    remark: document.getElementById("sRemark").value.trim()
+  };
+  if(!obj.name){ alert("请输入学生姓名"); return; }
+  const arr = get(KEY_STU);
+  arr.push(obj);
+  set(KEY_STU, arr);
+  ["sId","sName","sIdCard","sAddress","sPhone","sDuty","sTag","sRemark"].forEach(id=>document.getElementById(id).value="");
+  renderAll();
+}
+
+function renderStudent(){
+  const arr = get(KEY_STU);
+  const tb = document.getElementById("stuTable");
+  tb.innerHTML = arr.map(item=>{
+    let tagHtml = "";
+    if(item.tag){
+      item.tag.split(",").forEach(t=>{ tagHtml += `<span class="tag">${t.trim()}</span>`; });
+    }
+    return `<tr>
+      <td>${item.sid||""}</td>
+      <td>${item.name}</td>
+      <td>${item.gender||""}</td>
+      <td>${item.idcard||""}</td>
+      <td>${item.address||""}</td>
+      <td>${item.phone||""}</td>
+      <td>${item.duty||""}</td>
+      <td>${tagHtml}</td>
+      <td>${item.remark||""}</td>
+      <td><button class="del" onclick="delStu(${item.id})">删除</button></td>
+    </tr>`;
+  }).join("");
+}
+function delStu(id){
+  const arr = get(KEY_STU).filter(x=>x.id!==id);
+  set(KEY_STU, arr); renderAll();
+}
+
+//花名册
+function renderRoster(){
+  const arr = get(KEY_STU);
+  const tb = document.getElementById("rosterTable");
+  tb.innerHTML = arr.map(item=>{
+    let tagHtml = "";
+    if(item.tag){ item.tag.split(",").forEach(t=>tagHtml+=`<span class="tag">${t.trim()}</span>`); }
+    return `<tr>
+      <td>${item.sid||""}</td>
+      <td>${item.name}</td>
+      <td>${item.gender||""}</td>
+      <td>${item.phone||""}</td>
+      <td>${item.duty||""}</td>
+      <td>${tagHtml}</td>
+    </tr>`;
+  }).join("");
+}
+
+function exportRosterExcel(){
+  const stu = get(KEY_STU);
+  const data = stu.map(x=>({
+    "学号":x.sid,"姓名":x.name,"性别":x.gender,"家长电话":x.phone,"班委职务":x.duty,"特殊标签":x.tag
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "班级花名册");
+  XLSX.writeFile(wb, "班级花名册.xlsx");
+}
+
+//班委管理
+function addCadre(){
+  const sid = document.getElementById("cadreStuSel").value;
+  const job = document.getElementById("cadreJob").value.trim();
+  if(!job){ alert("请填写班委职务"); return; }
+  const stu = get(KEY_STU).find(s=>String(s.id)===sid);
+  const arr = get(KEY_CADRE);
+  arr.push({id:Date.now(), sid, name:stu.name, job});
+  set(KEY_CADRE, arr);
+  document.getElementById("cadreJob").value="";
+  renderAll();
+}
+function renderCadre(){
+  const arr = get(KEY_CADRE);
+  const tb = document.getElementById("cadreTable");
+  tb.innerHTML = arr.map(item=>`<tr>
+    <td>${item.name}</td>
+    <td>${item.job}</td>
+    <td><button class="del" onclick="delCadre(${item.id})">删除</button></td>
+  </tr>`).join("");
+}
+function delCadre(id){
+  const arr = get(KEY_CADRE).filter(x=>x.id!==id);
+  set(KEY_CADRE, arr); renderAll();
+}
+
+//卫生值日
+function addDuty(){
+  const area = document.getElementById("dutyArea").value.trim();
+  const users = document.getElementById("dutyUsers").value.trim();
+  const week = document.getElementById("dutyWeek").value.trim();
+  if(!area || !users){ alert("请填写值日区域和值日人员"); return; }
+  const arr = get(KEY_DUTY);
+  arr.push({id:Date.now(), area, users, week});
+  set(KEY_DUTY, arr);
+  document.getElementById("dutyArea").value="";
+  document.getElementById("dutyUsers").value="";
+  document.getElementById("dutyWeek").value="";
+  renderAll();
+}
+function renderDuty(){
+  const arr = get(KEY_DUTY);
+  const tb = document.getElementById("dutyTable");
+  tb.innerHTML = arr.map(item=>`<tr>
+    <td>${item.area}</td>
+    <td>${item.users}</td>
+    <td>${item.week||"不限"}</td>
+    <td><button class="del" onclick="delDuty(${item.id})">删除</button></td>
+  </tr>`).join("");
+}
+function delDuty(id){
+  const arr = get(KEY_DUTY).filter(x=>x.id!==id);
+  set(KEY_DUTY, arr); renderAll();
+}
+
+//Excel导入
+function handleImportExcel(){
+  const file = document.getElementById("stuFileInput").files[0];
+  if(!file){ alert("请先选择本地Excel或CSV文件"); return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, {type:"array"});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const jsonArr = XLSX.utils.sheet_to_json(sheet);
+    if(jsonArr.length === 0){ alert("表格读取结果为空"); return; }
+    const stuList = get(KEY_STU);
+    jsonArr.forEach(row=>{
+      stuList.push({
+        id: Date.now()+Math.floor(Math.random()*999),
+        sid: (row["学号"]||"").toString().trim(),
+        name: (row["姓名"]||"").toString().trim(),
+        gender: (row["性别"]||"").toString().trim(),
+        idcard: (row["身份证号"]||"").toString().trim(),
+        address: (row["家庭住址"]||"").toString().trim(),
+        phone: (row["家长电话"]||"").toString().trim(),
+        duty: (row["班委职务"]||"").toString().trim(),
+        tag: (row["特殊关注标签"]||"").toString().trim(),
+        remark: (row["家庭情况"]||"").toString().trim()
+      });
+    });
+    set(KEY_STU, stuList);
+    alert(`成功导入 ${jsonArr.length} 条学生档案`);
+    document.getElementById("stuFileInput").value = null;
+    renderAll();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+//下拉框填充
+function fillStudentSelect(){
+  const stu = get(KEY_STU);
+  const opt = stu.map(s=>`<option value="${s.id}">${s.name}</option>`).join("");
+  document.getElementById("attStuSel").innerHTML = opt;
+  document.getElementById("talkStuSel").innerHTML = opt;
+  document.getElementById("scoreStuSel").innerHTML = opt;
+  document.getElementById("cadreStuSel").innerHTML = opt;
+}
+
+//考勤
+function addAttendance(){
+  const sid = document.getElementById("attStuSel").value;
+  const type = document.getElementById("attType").value;
+  const date = document.getElementById("attDate").value;
+  const remark = document.getElementById("attRemark").value.trim();
+  if(!date){ alert("请选择日期"); return; }
+  const stu = get(KEY_STU).find(s=>String(s.id)===sid);
+  const arr = get(KEY_ATT);
+  arr.push({id:Date.now(), sid, sName:stu.name, type, date, remark});
+  set(KEY_ATT, arr);
+  document.getElementById("attRemark").value = "";
+  renderAll();
+}
+function renderAttendance(){
+  const arr = get(KEY_ATT);
+  const tb = document.getElementById("attTable");
+  tb.innerHTML = arr.map(item=>`<tr>
+    <td>${item.date}</td>
+    <td>${item.sName}</td>
+    <td>${item.type}</td>
+    <td>${item.remark||""}</td>
+    <td><button class="del" onclick="delAtt(${item.id})">删除</button></td>
+  </tr>`).join("");
+}
+function delAtt(id){
+  const arr = get(KEY_ATT).filter(x=>x.id!==id);
+  set(KEY_ATT, arr); renderAll();
+}
+
+//谈心谈话
+function addTalk(){
+  const sid = document.getElementById("talkStuSel").value;
+  const date = document.getElementById("talkDate").value;
+  const content = document.getElementById("talkContent").value.trim();
+  const result = document.getElementById("talkResult").value.trim();
+  if(!date || !content){ alert("请填写日期与谈话内容"); return; }
+  const stu = get(KEY_STU).find(s=>String(s.id)===sid);
+  const arr = get(KEY_TALK);
+  arr.push({id:Date.now(), sid, sName:stu.name, date, content, result});
+  set(KEY_TALK, arr);
+  document.getElementById("talkContent").value="";
+  document.getElementById("talkResult").value="";
+  renderAll();
+}
+function renderTalk(){
+  const arr = get(KEY_TALK);
+  const tb = document.getElementById("talkTable");
+  tb.innerHTML = arr.map(item=>`<tr>
+    <td>${item.date}</td>
+    <td>${item.sName}</td>
+    <td>${(item.content||"").substring(0,45)}…</td>
+    <td><button class="del" onclick="delTalk(${item.id})">删除</button></td>
+  </tr>`).join("");
+}
+function delTalk(id){
+  const arr = get(KEY_TALK).filter(x=>x.id!==id);
+  set(KEY_TALK, arr); renderAll();
+}
+
+//奖惩积分
+function addScore(){
+  const sid = document.getElementById("scoreStuSel").value;
+  const type = document.getElementById("scoreType").value;
+  const val = document.getElementById("scoreVal").value.trim();
+  const desc = document.getElementById("scoreDesc").value.trim();
+  if(!val){ alert("请填写分值"); return; }
+  const stu = get(KEY_STU).find(s=>String(s.id)===sid);
+  const arr = get(KEY_SCORE);
+  arr.push({id:Date.now(), sid, sName:stu.name, type, val, desc});
+  set(KEY_SCORE, arr);
+  document.getElementById("scoreVal").value="";
+  document.getElementById("scoreDesc").value="";
+  renderAll();
+}
+function renderScore(){
+  const arr = get(KEY_SCORE);
+  const tb = document.getElementById("scoreTable");
+  tb.innerHTML = arr.map(item=>`<tr>
+    <td>${item.sName}</td>
+    <td>${item.type}</td>
+    <td>${item.val}</td>
+    <td>${item.desc||""}</td>
+    <td><button class="del" onclick="delScore(${item.id})">删除</button></td>
+  </tr>`).join("");
+}
+function delScore(id){
+  const arr = get(KEY_SCORE).filter(x=>x.id!==id);
+  set(KEY_SCORE, arr); renderAll();
+}
+
+//待办
+function addTodo(){
+  const text = document.getElementById("todoText").value.trim();
+  const ddl = document.getElementById("todoDdl").value;
+  if(!text) return;
+  const arr = get(KEY_TODO);
+  arr.push({id:Date.now(), text, ddl, done:false});
+  set(KEY_TODO, arr);
+  document.getElementById("todoText").value="";
+  renderAll();
+}
+function renderTodo(){
+  const arr = get(KEY_TODO);
+  const box = document.getElementById("todoList");
+  box.innerHTML = arr.map(item=>`
+  <div class="card" style="display:flex;align-items:center;gap:8px">
+    <input type="checkbox" ${item.done?"checked":""} onchange="toggleTodo(${item.id})">
+    <div style="flex:1">${item.text} <small>截止：${item.ddl||"无"}</small></div>
+    <button class="del" onclick="delTodo(${item.id})">删除</button>
+  </div>`).join("");
+}
+function toggleTodo(id){
+  const arr = get(KEY_TODO);
+  const obj = arr.find(x=>x.id===id);
+  if(obj){ obj.done = !obj.done; set(KEY_TODO, arr); renderAll(); }
+}
+function delTodo(id){
+  const arr = get(KEY_TODO).filter(x=>x.id!==id);
+  set(KEY_TODO, arr); renderAll();
+}
+
+//全局备份导出
+function exportAll(){
+  const exportData = {
+    student:get(KEY_STU),
+    attendance:get(KEY_ATT),
+    talk:get(KEY_TALK),
+    score:get(KEY_SCORE),
+    todo:get(KEY_TODO),
+    cadre:get(KEY_CADRE),
+    duty:get(KEY_DUTY)
+  };
+  const blob = new Blob([JSON.stringify(exportData,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "班主任全套工作台备份.json";
+  a.click();
+}
+
+function importData(){
+  const inp = document.createElement("input");
+  inp.type="file";
+  inp.accept=".json";
+  inp.onchange = e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = ev=>{
+      try{
+        const j = JSON.parse(ev.target.result);
+        set(KEY_STU, j.student||[]);
+        set(KEY_ATT, j.attendance||[]);
+        set(KEY_TALK, j.talk||[]);
+        set(KEY_SCORE, j.score||[]);
+        set(KEY_TODO, j.todo||[]);
+        set(KEY_CADRE, j.cadre||[]);
+        set(KEY_DUTY, j.duty||[]);
+        alert("全部数据导入恢复成功");
+        renderAll();
+      }catch(err){
+        alert("备份文件解析失败，请确认文件完整性");
+      }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+</script>
+</body>
+</html>

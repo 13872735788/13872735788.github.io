@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>平行四边形的不稳定性 - 长12cm 宽6cm</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #eef2f7 0%, #d9e2ef 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            box-shadow: 0 20px 60px rgba(0, 20, 40, 0.25), 0 8px 20px rgba(0, 0, 0, 0.08);
+            padding: 30px 40px 40px 40px;
+            max-width: 960px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1a2b4a;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #1a2b4a, #3a5f8b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .badge {
+            font-size: 14px;
+            color: #4a6a8b;
+            background: #e8edf5;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 20, 40, 0.08);
+            padding: 8px;
+            margin-bottom: 18px;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 14px;
+            cursor: grab;
+            background: #ffffff;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .data-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .data-item {
+            background: #f7f9fc;
+            border-radius: 14px;
+            padding: 12px 16px;
+            text-align: center;
+            border: 1px solid rgba(200, 212, 230, 0.3);
+            transition: background 0.2s, transform 0.15s;
+        }
+        .data-item:hover {
+            background: #f0f4fb;
+            transform: translateY(-1px);
+        }
+
+        .data-item .label {
+            font-size: 13px;
+            color: #6a7f9b;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .data-item .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a2b4a;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s;
+        }
+        .data-item .value .unit {
+            font-size: 14px;
+            font-weight: 400;
+            color: #7a8fa8;
+            margin-left: 2px;
+        }
+        .data-item .value.highlight-blue {
+            color: #2a7ddb;
+        }
+        .data-item .value.highlight-orange {
+            color: #e67e22;
+        }
+        .data-item .value.highlight-green {
+            color: #27ae60;
+        }
+
+        .control-area {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            background: #f7f9fc;
+            border-radius: 16px;
+            padding: 14px 20px;
+            border: 1px solid rgba(200, 212, 230, 0.3);
+        }
+
+        .control-area .control-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #3a5a7a;
+            white-space: nowrap;
+        }
+
+        .slider-container {
+            flex: 1;
+            min-width: 140px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #b0c8e0, #2a7ddb);
+            outline: none;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #2a7ddb;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(42, 125, 219, 0.4);
+            border: 3px solid white;
+            transition: transform 0.15s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.12);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #2a7ddb;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(42, 125, 219, 0.4);
+        }
+        input[type="range"]:active::-webkit-slider-thumb {
+            transform: scale(0.95);
+        }
+
+        .slider-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a2b4a;
+            min-width: 52px;
+            text-align: center;
+            background: white;
+            padding: 2px 12px;
+            border-radius: 10px;
+            border: 1px solid #dce4ee;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            color: #1a2b4a;
+            border: 1px solid #d0dcec;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+        .btn:hover {
+            background: #eaf0f8;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 20, 40, 0.08);
+        }
+        .btn:active {
+            transform: translateY(0px);
+        }
+        .btn-primary {
+            background: #2a7ddb;
+            color: white;
+            border-color: #2a7ddb;
+        }
+        .btn-primary:hover {
+            background: #1e6bc4;
+            border-color: #1e6bc4;
+        }
+        .btn-primary.active {
+            background: #e67e22;
+            border-color: #e67e22;
+        }
+        .btn-primary.active:hover {
+            background: #d35400;
+            border-color: #d35400;
+        }
+        .btn-outline {
+            background: transparent;
+            border-color: #b0c8e0;
+        }
+
+        .footer-note {
+            font-size: 13px;
+            color: #6a7f9b;
+            text-align: center;
+            padding-top: 10px;
+            border-top: 1px solid #e8edf5;
+            letter-spacing: 0.3px;
+            line-height: 1.6;
+        }
+        .footer-note strong {
+            color: #2a4a6a;
+        }
+
+        .shortcut-hint {
+            display: inline-block;
+            background: #e8edf5;
+            padding: 0 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #2a4a6a;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            background: #27ae60;
+            color: white;
+            transition: all 0.3s;
+        }
+        .status-badge.parallel {
+            background: #e67e22;
+        }
+
+        @media (max-width: 740px) {
+            .container {
+                padding: 18px 16px 24px 16px;
+            }
+            .data-panel {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            .data-item .value {
+                font-size: 18px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .control-area {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding: 14px 16px;
+            }
+            .slider-container {
+                min-width: unset;
+            }
+            .btn-group {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 440px) {
+            .data-panel {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+            }
+            .data-item {
+                padding: 8px 6px;
+            }
+            .data-item .value {
+                font-size: 15px;
+            }
+            .data-item .label {
+                font-size: 11px;
+            }
+            .container {
+                padding: 12px 10px 18px 10px;
+                border-radius: 20px;
+            }
+            .header h1 {
+                font-size: 17px;
+            }
+            .btn {
+                padding: 6px 14px;
+                font-size: 13px;
+            }
+        }
+
+        .unit-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #4a6a8b;
+            background: #eef2f7;
+            padding: 4px 12px;
+            border-radius: 20px;
+            cursor: default;
+        }
+        .unit-toggle .unit-label {
+            font-weight: 600;
+            color: #1a2b4a;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>▱ 平行四边形的不稳定性</h1>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <span class="badge">长12cm · 宽6cm</span>
+                <span class="unit-toggle">📏 单位: <span class="unit-label">厘米 (cm)</span></span>
+                <span class="status-badge" id="shapeStatus">⬛ 长方形</span>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="canvas" width="880" height="440"></canvas>
+        </div>
+
+        <div class="data-panel" id="dataPanel">
+            <div class="data-item">
+                <span class="label">📏 周长</span>
+                <span class="value highlight-blue" id="perimeterVal">36.0 <span class="unit">cm</span></span>
+            </div>
+            <div class="data-item">
+                <span class="label">📐 高</span>
+                <span class="value highlight-orange" id="heightVal">6.0 <span class="unit">cm</span></span>
+            </div>
+            <div class="data-item">
+                <span class="label">📊 面积</span>
+                <span class="value highlight-green" id="areaVal">72.0 <span class="unit">cm²</span></span>
+            </div>
+        </div>
+
+        <div class="control-area">
+            <span class="control-label">🖱 变形程度</span>
+            <div class="slider-container">
+                <input type="range" id="slider" min="-5.9" max="5.9" value="0" step="0.01">
+                <span class="slider-value" id="sliderDisplay">0.0</span>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" id="btnAutoDemo">▶ 自动演示</button>
+                <button class="btn btn-outline" id="btnReset">↺ 重置</button>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            💡 <strong>拖拽</strong> 图形上边橙色手柄，或 <strong>拖动滑块</strong> 调整变形程度 · 周长 <strong>不变</strong> (36cm)
+            &nbsp;·&nbsp; 快捷键: <span class="shortcut-hint">← →</span> 微调 &nbsp;<span class="shortcut-hint">Space</span> 演示 &nbsp;<span class="shortcut-hint">R</span> 重置
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // ============================================================
+            // 几何参数 (单位: 厘米 cm)  — 长12cm，宽6cm
+            // 比例尺: 1 cm = 38 像素
+            // ============================================================
+            const SCALE = 38;
+            const BASE_LEN_CM = 12.0;
+            const SIDE_LEN_CM = 6.0;
+
+            const BASE_LEN = BASE_LEN_CM * SCALE;
+            const SIDE_LEN = SIDE_LEN_CM * SCALE;
+            const BASE_Y = 365;
+            const BASE_X = 160;
+
+            const MAX_OFFSET_CM = SIDE_LEN_CM - 0.1;
+
+            // 状态
+            let offsetCm = 0;
+            let isDragging = false;
+            let dragStartX = 0;
+            let dragStartOffsetCm = 0;
+            let isAutoPlaying = false;
+            let autoAnimId = null;
+            let isSliderInteracting = false;
+
+            // DOM
+            const slider = document.getElementById('slider');
+            const sliderDisplay = document.getElementById('sliderDisplay');
+            const perimeterVal = document.getElementById('perimeterVal');
+            const heightVal = document.getElementById('heightVal');
+            const areaVal = document.getElementById('areaVal');
+            const btnAuto = document.getElementById('btnAutoDemo');
+            const btnReset = document.getElementById('btnReset');
+            const shapeStatus = document.getElementById('shapeStatus');
+
+            // ---------- 计算函数 ----------
+            function computeHeightCm(offCm) {
+                const clamped = Math.min(Math.max(offCm, -MAX_OFFSET_CM), MAX_OFFSET_CM);
+                return Math.sqrt(SIDE_LEN_CM * SIDE_LEN_CM - clamped * clamped);
+            }
+
+            function getVertices(offCm) {
+                const hCm = computeHeightCm(offCm);
+                const hPx = hCm * SCALE;
+                const offPx = offCm * SCALE;
+                const x0 = BASE_X;
+                const y0 = BASE_Y;
+                const L = BASE_LEN;
+                return {
+                    A: { x: x0, y: y0 },
+                    B: { x: x0 + L, y: y0 },
+                    C: { x: x0 + L + offPx, y: y0 - hPx },
+                    D: { x: x0 + offPx, y: y0 - hPx },
+                    hCm: hCm,
+                    offCm: offCm
+                };
+            }
+
+            // 判断是否为长方形 (偏移量接近0)
+            function isRectangle(offCm) {
+                return Math.abs(offCm) < 0.01;
+            }
+
+            // ---------- 绘制直角符号 ----------
+            function drawRightAngle(ctx, cornerX, cornerY, size, dirX, dirY) {
+                ctx.save();
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 2.5;
+                ctx.shadowColor = 'rgba(231, 76, 60, 0.3)';
+                ctx.shadowBlur = 4;
+
+                const s = size;
+                const x1 = cornerX + dirX * s;
+                const y1 = cornerY;
+                const x2 = cornerX;
+                const y2 = cornerY + dirY * s;
+
+                ctx.beginPath();
+                ctx.moveTo(cornerX, cornerY);
+                ctx.lineTo(x1, y1);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(cornerX, cornerY);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(231, 76, 60, 0.15)';
+                ctx.strokeStyle = 'rgba(231, 76, 60, 0.5)';
+                ctx.lineWidth = 1;
+
+                const sx = dirX * s * 0.45;
+                const sy = dirY * s * 0.45;
+                ctx.beginPath();
+                ctx.moveTo(cornerX, cornerY);
+                ctx.lineTo(cornerX + sx, cornerY);
+                ctx.lineTo(cornerX + sx, cornerY + sy);
+                ctx.lineTo(cornerX, cornerY + sy);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            // ---------- 绘图 ----------
+            function draw(offCm) {
+                const v = getVertices(offCm);
+                const { A, B, C, D, hCm } = v;
+                const L = BASE_LEN;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // ---- 网格 ----
+                ctx.save();
+                ctx.strokeStyle = '#f0f3f8';
+                ctx.lineWidth = 0.5;
+                for (let y = 40; y < 420; y += SCALE) {
+                    ctx.beginPath();
+                    ctx.moveTo(20, y);
+                    ctx.lineTo(860, y);
+                    ctx.stroke();
+                }
+                for (let x = 40; x < 860; x += SCALE) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 40);
+                    ctx.lineTo(x, 400);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                // 网格标注
+                ctx.save();
+                ctx.fillStyle = '#c0c8d4';
+                ctx.font = '10px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                for (let x = 40; x < 860; x += SCALE) {
+                    if (x > 40 && x < 860) {
+                        const cmVal = ((x - 40) / SCALE).toFixed(0);
+                        ctx.fillText(cmVal + 'cm', x, 4);
+                    }
+                }
+                ctx.restore();
+
+                // ---- 面积填充 ----
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(A.x, A.y);
+                ctx.lineTo(B.x, B.y);
+                ctx.lineTo(C.x, C.y);
+                ctx.lineTo(D.x, D.y);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(42, 125, 219, 0.15)';
+                ctx.fill();
+                ctx.restore();
+
+                // ---- 高的辅助线 ----
+                const midX = (A.x + B.x) / 2;
+                const topY = D.y;
+                const bottomY = A.y;
+
+                ctx.save();
+                ctx.setLineDash([6, 6]);
+                ctx.strokeStyle = '#e67e22';
+                ctx.lineWidth = 2.0;
+                ctx.beginPath();
+                ctx.moveTo(midX, topY);
+                ctx.lineTo(midX, bottomY);
+                ctx.stroke();
+                ctx.restore();
+
+                // 高标注
+                ctx.save();
+                const labelX = midX + 18;
+                const labelY = (topY + bottomY) / 2;
+                ctx.fillStyle = '#d35400';
+                ctx.font = '600 15px "Segoe UI", "PingFang SC", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#e67e22';
+                ctx.beginPath();
+                ctx.moveTo(midX + 6, topY + 6);
+                ctx.lineTo(midX + 12, topY);
+                ctx.lineTo(midX + 12, topY + 12);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(midX + 6, bottomY - 6);
+                ctx.lineTo(midX + 12, bottomY);
+                ctx.lineTo(midX + 12, bottomY - 12);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#c0392b';
+                ctx.font = '600 15px "Segoe UI", "PingFang SC", sans-serif';
+                ctx.fillText('高 = ' + hCm.toFixed(2) + ' cm', labelX, labelY);
+                ctx.restore();
+
+                // ---- 主图形 ----
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(A.x, A.y);
+                ctx.lineTo(B.x, B.y);
+                ctx.lineTo(C.x, C.y);
+                ctx.lineTo(D.x, D.y);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(42, 125, 219, 0.20)';
+                ctx.fill();
+                ctx.strokeStyle = '#2a7ddb';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.restore();
+
+                // ---- 顶点 ----
+                const pts = [A, B, C, D];
+                const colors = ['#2a7ddb', '#2a7ddb', '#e67e22', '#e67e22'];
+                const labels = ['A', 'B', 'C', 'D'];
+                pts.forEach((p, i) => {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 6, 0, 2 * Math.PI);
+                    ctx.fillStyle = colors[i];
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.restore();
+                    ctx.save();
+                    ctx.fillStyle = '#1a2b4a';
+                    ctx.font = '600 14px "Segoe UI", "PingFang SC", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    const dx = (i === 0 || i === 3) ? -14 : 14;
+                    const dy = (i === 0 || i === 1) ? 18 : -18;
+                    ctx.fillText(labels[i], p.x + dx, p.y + dy);
+                    ctx.restore();
+                });
+
+                // ---- 直角符号 (仅在长方形时显示) ----
+                const isRect = isRectangle(offCm);
+                if (isRect) {
+                    drawRightAngle(ctx, A.x, A.y, 22, 1, -1);
+                    drawRightAngle(ctx, B.x, B.y, 22, -1, -1);
+                    drawRightAngle(ctx, C.x, C.y, 22, -1, 1);
+                    drawRightAngle(ctx, D.x, D.y, 22, 1, 1);
+                }
+
+                // ---- 边长标注 ----
+                ctx.save();
+                ctx.font = '500 13px "Segoe UI", "PingFang SC", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+
+                const midAB = { x: (A.x + B.x) / 2, y: A.y + 18 };
+                ctx.fillStyle = '#1a5a8a';
+                ctx.fillText('底边 = ' + BASE_LEN_CM.toFixed(1) + ' cm', midAB.x, midAB.y);
+
+                const midAD = { x: (A.x + D.x) / 2 - 20, y: (A.y + D.y) / 2 };
+                ctx.fillStyle = '#8a6a3a';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('侧边 = ' + SIDE_LEN_CM.toFixed(1) + ' cm', midAD.x, midAD.y);
+
+                const midBC = { x: (B.x + C.x) / 2 + 20, y: (B.y + C.y) / 2 };
+                ctx.fillStyle = '#8a6a3a';
+                ctx.textAlign = 'left';
+                ctx.fillText('侧边 = ' + SIDE_LEN_CM.toFixed(1) + ' cm', midBC.x, midBC.y);
+
+                const midCD = { x: (C.x + D.x) / 2, y: C.y - 20 };
+                ctx.fillStyle = '#1a5a8a';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText('上边 = ' + BASE_LEN_CM.toFixed(1) + ' cm', midCD.x, midCD.y);
+
+                ctx.restore();
+
+                // ---- 拖拽手柄 ----
+                const handleX = (D.x + C.x) / 2;
+                const handleY = D.y;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(handleX, handleY, 12, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(230, 126, 34, 0.25)';
+                ctx.fill();
+                ctx.strokeStyle = '#e67e22';
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([4, 4]);
+                ctx.stroke();
+                ctx.restore();
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(handleX, handleY, 8, 0, 2 * Math.PI);
+                ctx.fillStyle = '#e67e22';
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                ctx.restore();
+                ctx.save();
+                ctx.fillStyle = '#d35400';
+                ctx.font = '12px "Segoe UI", "PingFang SC", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText('↕ 拖拽', handleX, handleY - 16);
+                ctx.restore();
+
+                // ---- 倾斜角 ----
+                const angleRad = Math.asin(Math.min(Math.abs(offCm) / SIDE_LEN_CM, 0.999));
+                const angleDeg = (angleRad * 180 / Math.PI) * (offCm < 0 ? -1 : 1);
+                ctx.save();
+                ctx.fillStyle = '#7a8fa8';
+                ctx.font = '13px "Segoe UI", "PingFang SC", sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.fillText('倾斜角: ' + angleDeg.toFixed(1) + '°', canvas.width - 20, 14);
+                ctx.restore();
+
+                // ---- 更新数据显示 ----
+                const perimeterCm = 2 * (BASE_LEN_CM + SIDE_LEN_CM);
+                const areaCm2 = BASE_LEN_CM * hCm;
+
+                perimeterVal.innerHTML = perimeterCm.toFixed(1) + ' <span class="unit">cm</span>';
+                heightVal.innerHTML = hCm.toFixed(2) + ' <span class="unit">cm</span>';
+                areaVal.innerHTML = areaCm2.toFixed(2) + ' <span class="unit">cm²</span>';
+
+                sliderDisplay.textContent = offCm.toFixed(2);
+
+                // ---- 更新状态标识 ----
+                if (isRect) {
+                    shapeStatus.textContent = '⬛ 长方形';
+                    shapeStatus.className = 'status-badge';
+                } else {
+                    shapeStatus.textContent = '◇ 平行四边形';
+                    shapeStatus.className = 'status-badge parallel';
+                }
+            }
+
+            // ---------- 核心更新函数 ----------
+            function update(offCm) {
+                const clamped = Math.min(Math.max(offCm, -MAX_OFFSET_CM), MAX_OFFSET_CM);
+                offsetCm = clamped;
+                if (!isSliderInteracting) {
+                    slider.value = clamped;
+                }
+                draw(clamped);
+            }
+
+            // ---------- 滑块事件 ----------
+            slider.addEventListener('input', function(e) {
+                e.stopPropagation();
+                isSliderInteracting = true;
+                const val = parseFloat(this.value);
+                if (isAutoPlaying) {
+                    stopAutoDemo();
+                }
+                offsetCm = val;
+                draw(val);
+                sliderDisplay.textContent = val.toFixed(2);
+            });
+
+            slider.addEventListener('change', function() {
+                isSliderInteracting = false;
+            });
+
+            document.addEventListener('mouseup', function() {
+                isSliderInteracting = false;
+            });
+
+            // ---------- 图形拖拽 ----------
+            function getCanvasCoords(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function onPointerDown(e) {
+                e.preventDefault();
+                const pos = getCanvasCoords(e);
+                if (!pos) return;
+
+                const v = getVertices(offsetCm);
+                const handleX = (v.D.x + v.C.x) / 2;
+                const handleY = v.D.y;
+                const dist = Math.hypot(pos.x - handleX, pos.y - handleY);
+
+                if (dist < 45) {
+                    isDragging = true;
+                    dragStartX = pos.x;
+                    dragStartOffsetCm = offsetCm;
+                    canvas.style.cursor = 'grabbing';
+                    if (isAutoPlaying) stopAutoDemo();
+                }
+            }
+
+            function onPointerMove(e) {
+                e.preventDefault();
+                const pos = getCanvasCoords(e);
+                if (!pos) return;
+
+                if (!isDragging) {
+                    const v = getVertices(offsetCm);
+                    const handleX = (v.D.x + v.C.x) / 2;
+                    const handleY = v.D.y;
+                    const dist = Math.hypot(pos.x - handleX, pos.y - handleY);
+                    canvas.style.cursor = (dist < 45) ? 'grab' : 'default';
+                    return;
+                }
+
+                const deltaXPx = pos.x - dragStartX;
+                const deltaXCm = deltaXPx / SCALE;
+                let newOffsetCm = dragStartOffsetCm + deltaXCm * 0.8;
+                newOffsetCm = Math.min(Math.max(newOffsetCm, -MAX_OFFSET_CM), MAX_OFFSET_CM);
+                offsetCm = newOffsetCm;
+                slider.value = newOffsetCm;
+                sliderDisplay.textContent = newOffsetCm.toFixed(2);
+                draw(newOffsetCm);
+            }
+
+            function onPointerUp(e) {
+                if (isDragging) {
+                    isDragging = false;
+                    canvas.style.cursor = 'default';
+                }
+                isSliderInteracting = false;
+            }
+
+            canvas.addEventListener('mousedown', onPointerDown);
+            window.addEventListener('mousemove', onPointerMove);
+            window.addEventListener('mouseup', onPointerUp);
+
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                onPointerDown(e);
+            }, { passive: false });
+            window.addEventListener('touchmove', function(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    onPointerMove(e);
+                }
+            }, { passive: false });
+            window.addEventListener('touchend', function(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    onPointerUp(e);
+                }
+            }, { passive: false });
+
+            // ---------- 自动演示 ----------
+            function startAutoDemo() {
+                if (isAutoPlaying) return;
+                isAutoPlaying = true;
+                btnAuto.textContent = '⏹ 停止';
+                btnAuto.classList.add('active');
+
+                let direction = 1;
+                let currentOffset = offsetCm;
+
+                function animate() {
+                    if (!isAutoPlaying) return;
+                    currentOffset += direction * 0.012;
+                    if (currentOffset > MAX_OFFSET_CM - 0.02) {
+                        currentOffset = MAX_OFFSET_CM - 0.02;
+                        direction = -1;
+                    } else if (currentOffset < -MAX_OFFSET_CM + 0.02) {
+                        currentOffset = -MAX_OFFSET_CM + 0.02;
+                        direction = 1;
+                    }
+                    offsetCm = currentOffset;
+                    slider.value = currentOffset;
+                    sliderDisplay.textContent = currentOffset.toFixed(2);
+                    draw(currentOffset);
+                    autoAnimId = requestAnimationFrame(animate);
+                }
+                animate();
+            }
+
+            function stopAutoDemo() {
+                isAutoPlaying = false;
+                if (autoAnimId) {
+                    cancelAnimationFrame(autoAnimId);
+                    autoAnimId = null;
+                }
+                btnAuto.textContent = '▶ 自动演示';
+                btnAuto.classList.remove('active');
+            }
+
+            btnAuto.addEventListener('click', function() {
+                if (isAutoPlaying) {
+                    stopAutoDemo();
+                } else {
+                    startAutoDemo();
+                }
+            });
+
+            // ---------- 重置 ----------
+            btnReset.addEventListener('click', function() {
+                if (isAutoPlaying) stopAutoDemo();
+                update(0);
+                slider.value = 0;
+                sliderDisplay.textContent = '0.00';
+            });
+
+            // ---------- 键盘快捷键 ----------
+            window.addEventListener('keydown', function(e) {
+                if (e.key === 'r' || e.key === 'R') {
+                    btnReset.click();
+                }
+                if (e.key === ' ' || e.key === 'Space') {
+                    e.preventDefault();
+                    btnAuto.click();
+                }
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const val = Math.min(offsetCm + 0.04, MAX_OFFSET_CM);
+                    update(val);
+                    slider.value = val;
+                    sliderDisplay.textContent = val.toFixed(2);
+                }
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const val = Math.max(offsetCm - 0.04, -MAX_OFFSET_CM);
+                    update(val);
+                    slider.value = val;
+                    sliderDisplay.textContent = val.toFixed(2);
+                }
+            });
+
+            // ---------- 自适应 ----------
+            function resizeCanvas() {
+                const rect = canvas.parentElement.clientWidth;
+                const containerWidth = rect - 16;
+                const newWidth = Math.min(containerWidth, 880);
+                const newHeight = newWidth / (880 / 440);
+                canvas.style.width = newWidth + 'px';
+                canvas.style.height = newHeight + 'px';
+            }
+            window.addEventListener('resize', resizeCanvas);
+
+            // ---------- 初始化 ----------
+            update(0);
+            resizeCanvas();
+            setTimeout(resizeCanvas, 100);
+
+            console.log('📐 交互课件已加载！初始为长方形，拖拽后变为平行四边形。');
+
+        })();
+    </script>
+
+</body>
+</html>

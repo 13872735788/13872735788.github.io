@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>周长/面积一定 · 探究课件 (固定36)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, system-ui, sans-serif;
+            background: linear-gradient(145deg, #f6f9fc 0%, #eef3f7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            box-shadow: 0 30px 60px rgba(0, 20, 40, 0.15), 0 8px 20px rgba(0, 0, 0, 0.05);
+            padding: 30px 35px 40px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.2s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .title-group h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0b2b3d;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-group h1 span {
+            background: #1d6f8f;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 2px 14px;
+            border-radius: 40px;
+            letter-spacing: 0.3px;
+        }
+
+        .title-group .sub {
+            font-size: 15px;
+            color: #3d6a7f;
+            margin-top: 4px;
+            font-weight: 450;
+            letter-spacing: 0.2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .perim-badge {
+            background: #1d3b4a;
+            color: white;
+            padding: 8px 22px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 18px;
+            box-shadow: 0 4px 8px rgba(0, 20, 30, 0.15);
+            white-space: nowrap;
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: #e4ebf0;
+            border-radius: 40px;
+            padding: 4px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .mode-toggle button {
+            border: none;
+            background: transparent;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #3a6277;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .mode-toggle button.active {
+            background: white;
+            color: #0b2b3d;
+            box-shadow: 0 4px 12px rgba(0,20,30,0.12);
+        }
+
+        .mode-toggle button:hover:not(.active) {
+            color: #1d6f8f;
+        }
+
+        .main-area {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .canvas-wrapper {
+            flex: 1 1 520px;
+            background: white;
+            border-radius: 28px;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02), 0 8px 24px rgba(0, 20, 30, 0.06);
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            position: relative;
+        }
+
+        #rectCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 500 / 350;
+            border-radius: 18px;
+            cursor: default;
+            background: #ffffff;
+            touch-action: none;
+        }
+
+        .data-panel {
+            flex: 0 0 220px;
+            min-width: 180px;
+            background: white;
+            border-radius: 28px;
+            padding: 22px 24px;
+            box-shadow: 0 8px 24px rgba(0, 20, 30, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 9px 0;
+            border-bottom: 1px solid #eef3f7;
+        }
+        .data-item:last-of-type {
+            border-bottom: none;
+        }
+
+        .data-item .label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #3a6277;
+        }
+        .data-item .value {
+            font-size: 21px;
+            font-weight: 650;
+            color: #0b2b3d;
+            font-variant-numeric: tabular-nums;
+        }
+        .data-item .value.highlight {
+            color: #1b7a9e;
+        }
+        .data-item .value.fixed {
+            color: #2d7a5a;
+        }
+
+        .slider-section {
+            margin: 10px 0 22px;
+            padding: 0 4px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .slider-section .slider-label {
+            font-weight: 500;
+            color: #1d4a5e;
+            font-size: 15px;
+            white-space: nowrap;
+        }
+
+        .slider-wrapper {
+            flex: 1;
+            min-width: 160px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 6px;
+            background: linear-gradient(to right, #b6d4e0, #1b7a9e);
+            outline: none;
+            transition: background 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 30, 50, 0.25), 0 0 0 3px #1b7a9e;
+            cursor: pointer;
+            transition: 0.08s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.12);
+            box-shadow: 0 6px 16px rgba(0, 30, 50, 0.3), 0 0 0 3px #1b7a9e;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #1b7a9e;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 30, 50, 0.2);
+        }
+
+        .slider-value {
+            font-weight: 650;
+            font-size: 20px;
+            color: #0b2b3d;
+            min-width: 44px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .chart-wrapper {
+            background: white;
+            border-radius: 28px;
+            padding: 16px 18px 12px;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02), 0 8px 24px rgba(0, 20, 30, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            margin-top: 6px;
+        }
+
+        .chart-wrapper .chart-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #3a6277;
+            margin-bottom: 6px;
+            padding-left: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-wrapper .chart-title .legend {
+            display: flex;
+            gap: 18px;
+            font-size: 13px;
+            font-weight: 400;
+        }
+        .chart-wrapper .chart-title .legend span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .chart-wrapper .chart-title .legend .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .dot.curve-dot {
+            background: #1b7a9e;
+        }
+        .dot.max-dot {
+            background: #c44536;
+        }
+        .dot.current-dot {
+            background: #e67e22;
+        }
+
+        #chartCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 600 / 210;
+            border-radius: 14px;
+            background: #fbfdff;
+        }
+
+        @media (max-width: 820px) {
+            .container {
+                padding: 20px 16px 28px;
+                border-radius: 32px;
+            }
+            .main-area {
+                flex-direction: column;
+            }
+            .data-panel {
+                flex: 1 1 auto;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 16px 20px;
+                gap: 4px 16px;
+            }
+            .data-item {
+                border-bottom: none;
+                padding: 4px 0;
+                flex: 1 0 auto;
+                min-width: 90px;
+            }
+            .data-item .value {
+                font-size: 18px;
+            }
+            .title-group h1 {
+                font-size: 22px;
+            }
+            .perim-badge {
+                font-size: 15px;
+                padding: 5px 16px;
+            }
+            .slider-section {
+                gap: 12px;
+            }
+            .header-right {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 14px 10px 20px;
+                border-radius: 24px;
+            }
+            .title-group h1 {
+                font-size: 18px;
+                flex-wrap: wrap;
+            }
+            .title-group h1 span {
+                font-size: 13px;
+                padding: 0 12px;
+            }
+            .data-panel {
+                padding: 12px 14px;
+            }
+            .data-item .value {
+                font-size: 16px;
+            }
+            .slider-value {
+                font-size: 17px;
+                min-width: 34px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- 头部 -->
+        <div class="header">
+            <div class="title-group">
+                <h1>
+                    📐 周长/面积一定 · 探究
+                    <span id="modeLabel">周长一定</span>
+                </h1>
+                <div class="sub" id="subLabel">固定周长36，越接近正方形面积越大</div>
+            </div>
+            <div class="header-right">
+                <div class="mode-toggle">
+                    <button id="modePerim" class="active">📏 周长一定</button>
+                    <button id="modeArea">📦 面积一定</button>
+                </div>
+                <div class="perim-badge" id="fixedBadge">
+                    ⚡ 周长 = <span id="fixedDisplay">36.0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主体 -->
+        <div class="main-area">
+            <div class="canvas-wrapper">
+                <canvas id="rectCanvas" width="500" height="350"></canvas>
+            </div>
+            <div class="data-panel">
+                <div class="data-item">
+                    <span class="label">📏 长</span>
+                    <span class="value" id="lengthDisplay">16.0</span>
+                </div>
+                <div class="data-item">
+                    <span class="label">📐 宽</span>
+                    <span class="value" id="widthDisplay">2.0</span>
+                </div>
+                <div class="data-item">
+                    <span class="label" id="varLabel">📦 面积</span>
+                    <span class="value highlight" id="varDisplay">32.0</span>
+                </div>
+                <div class="data-item">
+                    <span class="label" id="constLabel">🔘 周长</span>
+                    <span class="value fixed" id="constDisplay">36.0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 滑块 -->
+        <div class="slider-section">
+            <span class="slider-label">↔ 拖动调整长（步长0.5）</span>
+            <div class="slider-wrapper">
+                <input type="range" id="lengthSlider" min="1.0" max="17.0" step="0.5" value="16.0" />
+                <span class="slider-value" id="sliderVal">16.0</span>
+            </div>
+        </div>
+
+        <!-- 曲线图 -->
+        <div class="chart-wrapper">
+            <div class="chart-title">
+                <span id="chartTitle">📈 面积随长的变化</span>
+                <span class="legend">
+                    <span><span class="dot curve-dot"></span> <span id="curveLabel">面积曲线</span></span>
+                    <span><span class="dot max-dot"></span> <span id="extremeLabel">最大值</span></span>
+                    <span><span class="dot current-dot"></span> 当前位置</span>
+                </span>
+            </div>
+            <canvas id="chartCanvas" width="600" height="210"></canvas>
+        </div>
+
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- 模式与常量 ----------
+            const MODE_PERIM = 'perimeter';
+            const MODE_AREA = 'area';
+
+            const PERIMETER_FIXED = 36;
+            const AREA_FIXED = 36;
+
+            const PERIM_START = 16.0;
+            const AREA_START = 18.0;
+
+            let currentMode = MODE_PERIM;
+            let currentLength = PERIM_START;
+
+            // ---------- DOM 引用 ----------
+            const rectCanvas = document.getElementById('rectCanvas');
+            const ctxRect = rectCanvas.getContext('2d');
+            const chartCanvas = document.getElementById('chartCanvas');
+            const ctxChart = chartCanvas.getContext('2d');
+
+            const lengthSlider = document.getElementById('lengthSlider');
+            const sliderVal = document.getElementById('sliderVal');
+            const lengthDisplay = document.getElementById('lengthDisplay');
+            const widthDisplay = document.getElementById('widthDisplay');
+            const varDisplay = document.getElementById('varDisplay');
+            const constDisplay = document.getElementById('constDisplay');
+            const fixedDisplay = document.getElementById('fixedDisplay');
+
+            const varLabel = document.getElementById('varLabel');
+            const constLabel = document.getElementById('constLabel');
+            const chartTitle = document.getElementById('chartTitle');
+            const curveLabel = document.getElementById('curveLabel');
+            const extremeLabel = document.getElementById('extremeLabel');
+            const modeLabel = document.getElementById('modeLabel');
+            const subLabel = document.getElementById('subLabel');
+            const fixedBadge = document.getElementById('fixedBadge');
+
+            const modePerimBtn = document.getElementById('modePerim');
+            const modeAreaBtn = document.getElementById('modeArea');
+
+            // ---------- 辅助函数 ----------
+            function getWidthPerim(length) {
+                return PERIMETER_FIXED / 2 - length;
+            }
+
+            function getAreaPerim(length) {
+                const w = getWidthPerim(length);
+                return length * w;
+            }
+
+            function getWidthArea(length) {
+                return AREA_FIXED / length;
+            }
+
+            function getPerimeterArea(length) {
+                const w = getWidthArea(length);
+                return 2 * (length + w);
+            }
+
+            function computeValues(mode, length) {
+                if (mode === MODE_PERIM) {
+                    const w = getWidthPerim(length);
+                    const area = getAreaPerim(length);
+                    const maxArea = (PERIMETER_FIXED / 2) ** 2;
+                    return {
+                        width: w,
+                        variable: area,
+                        constant: PERIMETER_FIXED,
+                        extreme: maxArea,
+                        extremeLabel: '最大值',
+                        varLabel: '📦 面积',
+                        constLabel: '🔘 周长',
+                        chartYLabel: '面积',
+                    };
+                } else {
+                    const w = getWidthArea(length);
+                    const perimeter = getPerimeterArea(length);
+                    const minPerimeter = 4 * Math.sqrt(AREA_FIXED);
+                    return {
+                        width: w,
+                        variable: perimeter,
+                        constant: AREA_FIXED,
+                        extreme: minPerimeter,
+                        extremeLabel: '最小值',
+                        varLabel: '📐 周长',
+                        constLabel: '📦 面积',
+                        chartYLabel: '周长',
+                    };
+                }
+            }
+
+            function getSliderRange(mode) {
+                if (mode === MODE_PERIM) {
+                    return { min: 1.0, max: 17.0 };
+                } else {
+                    return { min: 1.0, max: 36.0 };
+                }
+            }
+
+            function clampLength(mode, length) {
+                const range = getSliderRange(mode);
+                length = Math.min(Math.max(length, range.min), range.max);
+                length = Math.round(length / 0.5) * 0.5;
+                return Math.min(Math.max(length, range.min), range.max);
+            }
+
+            // ---------- 绘制长方形 ----------
+            function drawRectangle(mode, length) {
+                const vals = computeValues(mode, length);
+                const w = vals.width;
+                const variable = vals.variable;
+                const isSquare = Math.abs(length - w) < 0.001;
+
+                const canvas = rectCanvas;
+                const ctx = ctxRect;
+                const W = canvas.width;
+                const H = canvas.height;
+
+                ctx.clearRect(0, 0, W, H);
+
+                const margin = 50;
+                const drawW = W - margin * 2;
+                const drawH = H - margin * 2;
+
+                let rectW, rectH;
+                const ratio = length / w;
+                if (ratio >= 1) {
+                    rectW = drawW;
+                    rectH = drawW / ratio;
+                    if (rectH > drawH) {
+                        rectH = drawH;
+                        rectW = drawH * ratio;
+                    }
+                } else {
+                    rectH = drawH;
+                    rectW = drawH * ratio;
+                    if (rectW > drawW) {
+                        rectW = drawW;
+                        rectH = drawW / ratio;
+                    }
+                }
+
+                const x = (W - rectW) / 2;
+                const y = (H - rectH) / 2;
+
+                ctx.shadowColor = 'rgba(0,20,30,0.08)';
+                ctx.shadowBlur = 18;
+                ctx.shadowOffsetY = 6;
+                ctx.fillStyle = isSquare ? '#f0e6d0' : '#daeaf2';
+                ctx.fillRect(x, y, rectW, rectH);
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+
+                ctx.strokeStyle = '#1d5a73';
+                ctx.lineWidth = 2.5;
+                ctx.strokeRect(x, y, rectW, rectH);
+
+                if (isSquare) {
+                    ctx.save();
+                    ctx.strokeStyle = '#c44536';
+                    ctx.lineWidth = 1.8;
+                    ctx.setLineDash([5, 6]);
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + rectW, y + rectH);
+                    ctx.moveTo(x + rectW, y);
+                    ctx.lineTo(x, y + rectH);
+                    ctx.stroke();
+                    ctx.restore();
+                    ctx.fillStyle = '#c44536';
+                    ctx.font = 'bold 14px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText('✦ 正方形', x + rectW / 2, y - 8);
+                }
+
+                // 尺寸标注
+                ctx.fillStyle = '#0b2b3d';
+                ctx.font = '600 16px "Segoe UI", "PingFang SC", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+
+                const labelY = y + rectH + 28;
+                ctx.fillStyle = '#1d6f8f';
+                ctx.font = '600 16px "Segoe UI", "PingFang SC", sans-serif';
+                ctx.fillText(`长 = ${length.toFixed(1)}`, x + rectW / 2, labelY);
+
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#1d6f8f';
+                ctx.font = '600 16px "Segoe UI", "PingFang SC", sans-serif';
+                const labelX = x + rectW + 12;
+                ctx.fillText(`宽 = ${w.toFixed(1)}`, labelX, y + rectH / 2);
+
+                const varName = (mode === MODE_PERIM) ? '面积' : '周长';
+                ctx.fillStyle = '#0b2b3d';
+                ctx.font = '600 18px "Segoe UI", "PingFang SC", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`${varName} = ${variable.toFixed(2)}`, x + rectW / 2, y + rectH / 2 - 4);
+
+                // 拖拽手柄
+                const handleX = x + rectW;
+                const handleY = y + rectH / 2;
+                const radius = 14;
+
+                const grad = ctx.createRadialGradient(handleX, handleY, 0, handleX, handleY, radius + 10);
+                grad.addColorStop(0, 'rgba(27,122,158,0.25)');
+                grad.addColorStop(1, 'rgba(27,122,158,0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(handleX, handleY, radius + 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowColor = 'rgba(0,30,50,0.2)';
+                ctx.shadowBlur = 14;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 4;
+                ctx.beginPath();
+                ctx.arc(handleX, handleY, radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#1b7a9e';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.fillStyle = '#1b7a9e';
+                ctx.font = '18px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⟷', handleX, handleY + 1);
+
+                ctx.fillStyle = '#1b7a9e';
+                ctx.font = '12px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText('拖我', handleX, handleY + radius + 6);
+            }
+
+            // ---------- 绘制曲线图 ----------
+            function drawChart(mode, length) {
+                const canvas = chartCanvas;
+                const ctx = ctxChart;
+                const W = canvas.width;
+                const H = canvas.height;
+
+                ctx.clearRect(0, 0, W, H);
+
+                const pad = { top: 20, bottom: 30, left: 44, right: 20 };
+                const chartW = W - pad.left - pad.right;
+                const chartH = H - pad.top - pad.bottom;
+
+                let minLen, maxLen;
+                if (mode === MODE_PERIM) {
+                    minLen = 1.0;
+                    maxLen = 17.0;
+                } else {
+                    minLen = 1.0;
+                    maxLen = 36.0;
+                }
+
+                let yMin, yMax, extremeVal, extremeLen;
+                if (mode === MODE_PERIM) {
+                    yMin = 0;
+                    yMax = 360;
+                    extremeVal = (PERIMETER_FIXED / 2) ** 2;
+                    extremeLen = PERIMETER_FIXED / 2;
+                } else {
+                    yMin = 0;
+                    yMax = 85;
+                    extremeVal = 4 * Math.sqrt(AREA_FIXED);
+                    extremeLen = Math.sqrt(AREA_FIXED);
+                }
+
+                function toPixelX(len) {
+                    return pad.left + ((len - minLen) / (maxLen - minLen)) * chartW;
+                }
+
+                function toPixelY(val) {
+                    return pad.top + chartH - ((val - yMin) / (yMax - yMin)) * chartH;
+                }
+
+                // 网格
+                ctx.strokeStyle = '#e8edf2';
+                ctx.lineWidth = 0.8;
+                const ySteps = 6;
+                for (let i = 0; i <= ySteps; i++) {
+                    const val = yMin + (yMax - yMin) * (i / ySteps);
+                    const yPos = toPixelY(val);
+                    ctx.beginPath();
+                    ctx.moveTo(pad.left, yPos);
+                    ctx.lineTo(W - pad.right, yPos);
+                    ctx.stroke();
+                    ctx.fillStyle = '#8aa3b3';
+                    ctx.font = '11px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(val.toFixed(0), pad.left - 8, yPos);
+                }
+                let xStep = (mode === MODE_PERIM) ? 1 : 4;
+                for (let len = minLen; len <= maxLen; len += xStep) {
+                    const xPos = toPixelX(len);
+                    ctx.beginPath();
+                    ctx.moveTo(xPos, pad.top);
+                    ctx.lineTo(xPos, H - pad.bottom);
+                    ctx.stroke();
+                    ctx.fillStyle = '#8aa3b3';
+                    ctx.font = '11px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(len.toFixed(0), xPos, H - pad.bottom + 4);
+                }
+                ctx.fillStyle = '#3a6277';
+                ctx.font = '12px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText('长 →', pad.left + chartW / 2, H - 4);
+
+                // 曲线
+                ctx.beginPath();
+                ctx.strokeStyle = '#1b7a9e';
+                ctx.lineWidth = 3.5;
+                ctx.shadowColor = 'rgba(27,122,158,0.15)';
+                ctx.shadowBlur = 8;
+                let first = true;
+                for (let len = minLen; len <= maxLen; len += 0.05) {
+                    let val = (mode === MODE_PERIM) ? getAreaPerim(len) : getPerimeterArea(len);
+                    const px = toPixelX(len);
+                    const py = toPixelY(val);
+                    if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+
+                // 极值点
+                const exX = toPixelX(extremeLen);
+                const exY = toPixelY(extremeVal);
+                ctx.shadowColor = 'rgba(196,69,54,0.2)';
+                ctx.shadowBlur = 16;
+                ctx.beginPath();
+                ctx.arc(exX, exY, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#c44536';
+                ctx.fill();
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                const label = (mode === MODE_PERIM) ? `最大值 ${extremeVal.toFixed(1)}` : `最小值 ${extremeVal.toFixed(2)}`;
+                ctx.fillStyle = '#c44536';
+                ctx.font = 'bold 13px "Segoe UI", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(label, exX + 14, exY - 2);
+
+                ctx.setLineDash([4, 5]);
+                ctx.strokeStyle = '#c44536';
+                ctx.lineWidth = 1.4;
+                ctx.beginPath();
+                ctx.moveTo(exX, pad.top);
+                ctx.lineTo(exX, exY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 当前点
+                let curVal = (mode === MODE_PERIM) ? getAreaPerim(length) : getPerimeterArea(length);
+                const cx = toPixelX(length);
+                const cy = toPixelY(curVal);
+
+                const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 24);
+                glow.addColorStop(0, 'rgba(230,126,34,0.3)');
+                glow.addColorStop(1, 'rgba(230,126,34,0)');
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowColor = 'rgba(230,126,34,0.3)';
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+                ctx.fillStyle = '#e67e22';
+                ctx.fill();
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                ctx.fillStyle = '#0b2b3d';
+                ctx.font = 'bold 13px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                const offset = (cy < pad.top + 40) ? -18 : 18;
+                ctx.fillText(`(${length.toFixed(1)}, ${curVal.toFixed(2)})`, cx, cy + offset);
+
+                ctx.setLineDash([3, 5]);
+                ctx.strokeStyle = '#e67e22';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(cx, pad.top);
+                ctx.lineTo(cx, cy);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.setLineDash([3, 5]);
+                ctx.strokeStyle = '#e67e22';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(pad.left, cy);
+                ctx.lineTo(cx, cy);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // ---------- 更新所有UI ----------
+            function updateAll(mode, length) {
+                length = clampLength(mode, length);
+                currentLength = length;
+                const vals = computeValues(mode, length);
+                const w = vals.width;
+                const variable = vals.variable;
+                const constant = vals.constant;
+
+                const range = getSliderRange(mode);
+                lengthSlider.min = range.min;
+                lengthSlider.max = range.max;
+                lengthSlider.step = 0.5;
+                lengthSlider.value = length;
+                sliderVal.textContent = length.toFixed(1);
+
+                lengthDisplay.textContent = length.toFixed(1);
+                widthDisplay.textContent = w.toFixed(1);
+                varDisplay.textContent = variable.toFixed(2);
+                constDisplay.textContent = constant.toFixed(1);
+                fixedDisplay.textContent = constant.toFixed(1);
+                varLabel.textContent = vals.varLabel;
+                constLabel.textContent = vals.constLabel;
+
+                if (mode === MODE_PERIM) {
+                    modeLabel.textContent = '周长一定';
+                    subLabel.textContent = '固定周长36，越接近正方形面积越大';
+                    chartTitle.textContent = '📈 面积随长的变化';
+                    curveLabel.textContent = '面积曲线';
+                    extremeLabel.textContent = '最大值';
+                    fixedBadge.innerHTML = `⚡ 周长 = <span>${constant.toFixed(1)}</span>`;
+                } else {
+                    modeLabel.textContent = '面积一定';
+                    subLabel.textContent = '固定面积36，越接近正方形周长越小';
+                    chartTitle.textContent = '📈 周长随长的变化';
+                    curveLabel.textContent = '周长曲线';
+                    extremeLabel.textContent = '最小值';
+                    fixedBadge.innerHTML = `📦 面积 = <span>${constant.toFixed(1)}</span>`;
+                }
+
+                drawRectangle(mode, length);
+                drawChart(mode, length);
+            }
+
+            // ---------- 切换模式 ----------
+            function setMode(mode) {
+                let newLen = (mode === MODE_PERIM) ? PERIM_START : AREA_START;
+                newLen = clampLength(mode, newLen);
+                currentMode = mode;
+                currentLength = newLen;
+
+                modePerimBtn.classList.toggle('active', mode === MODE_PERIM);
+                modeAreaBtn.classList.toggle('active', mode === MODE_AREA);
+
+                updateAll(mode, currentLength);
+            }
+
+            // ---------- 事件绑定 ----------
+            modePerimBtn.addEventListener('click', function() {
+                setMode(MODE_PERIM);
+            });
+            modeAreaBtn.addEventListener('click', function() {
+                setMode(MODE_AREA);
+            });
+
+            lengthSlider.addEventListener('input', function() {
+                const val = parseFloat(this.value);
+                const clamped = clampLength(currentMode, val);
+                if (clamped !== currentLength) {
+                    updateAll(currentMode, clamped);
+                } else {
+                    updateAll(currentMode, clamped);
+                }
+            });
+
+            // 拖拽手柄
+            let isDragging = false;
+
+            function getCanvasCoords(e) {
+                const rect = rectCanvas.getBoundingClientRect();
+                const scaleX = rectCanvas.width / rect.width;
+                const scaleY = rectCanvas.height / rect.height;
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                    e.preventDefault();
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                const canvasX = (clientX - rect.left) * scaleX;
+                const canvasY = (clientY - rect.top) * scaleY;
+                return { x: canvasX, y: canvasY };
+            }
+
+            function handleDragStart(e) {
+                const pos = getCanvasCoords(e);
+                const canvas = rectCanvas;
+                const W = canvas.width;
+                const H = canvas.height;
+                const margin = 50;
+                const drawW = W - margin * 2;
+                const drawH = H - margin * 2;
+                const length = currentLength;
+                const vals = computeValues(currentMode, length);
+                const w = vals.width;
+                const ratio = length / w;
+
+                let rectW, rectH;
+                if (ratio >= 1) {
+                    rectW = drawW;
+                    rectH = drawW / ratio;
+                    if (rectH > drawH) {
+                        rectH = drawH;
+                        rectW = drawH * ratio;
+                    }
+                } else {
+                    rectH = drawH;
+                    rectW = drawH * ratio;
+                    if (rectW > drawW) {
+                        rectW = drawW;
+                        rectH = drawW / ratio;
+                    }
+                }
+                const x = (W - rectW) / 2;
+                const y = (H - rectH) / 2;
+                const handleX = x + rectW;
+                const handleY = y + rectH / 2;
+
+                const dist = Math.hypot(pos.x - handleX, pos.y - handleY);
+                if (dist < 40) {
+                    isDragging = true;
+                    rectCanvas.style.cursor = 'grabbing';
+                    e.preventDefault();
+                }
+            }
+
+            function handleDragMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                const pos = getCanvasCoords(e);
+                const canvas = rectCanvas;
+                const W = canvas.width;
+                const margin = 50;
+                const drawW = W - margin * 2;
+                const minX = margin;
+                const maxX = margin + drawW;
+                let t = (pos.x - minX) / (maxX - minX);
+                t = Math.min(Math.max(t, 0), 1);
+                const range = getSliderRange(currentMode);
+                let newLen = range.min + t * (range.max - range.min);
+                newLen = clampLength(currentMode, newLen);
+                if (newLen !== currentLength) {
+                    updateAll(currentMode, newLen);
+                }
+            }
+
+            function handleDragEnd(e) {
+                if (isDragging) {
+                    isDragging = false;
+                    rectCanvas.style.cursor = 'default';
+                }
+            }
+
+            rectCanvas.addEventListener('mousedown', handleDragStart);
+            window.addEventListener('mousemove', handleDragMove);
+            window.addEventListener('mouseup', handleDragEnd);
+
+            rectCanvas.addEventListener('touchstart', handleDragStart, { passive: false });
+            window.addEventListener('touchmove', handleDragMove, { passive: false });
+            window.addEventListener('touchend', handleDragEnd);
+
+            rectCanvas.addEventListener('mousemove', function(e) {
+                if (isDragging) return;
+                const pos = getCanvasCoords(e);
+                const canvas = rectCanvas;
+                const W = canvas.width;
+                const H = canvas.height;
+                const margin = 50;
+                const drawW = W - margin * 2;
+                const drawH = H - margin * 2;
+                const length = currentLength;
+                const vals = computeValues(currentMode, length);
+                const w = vals.width;
+                const ratio = length / w;
+
+                let rectW, rectH;
+                if (ratio >= 1) {
+                    rectW = drawW;
+                    rectH = drawW / ratio;
+                    if (rectH > drawH) {
+                        rectH = drawH;
+                        rectW = drawH * ratio;
+                    }
+                } else {
+                    rectH = drawH;
+                    rectW = drawH * ratio;
+                    if (rectW > drawW) {
+                        rectW = drawW;
+                        rectH = drawW / ratio;
+                    }
+                }
+                const x = (W - rectW) / 2;
+                const y = (H - rectH) / 2;
+                const handleX = x + rectW;
+                const handleY = y + rectH / 2;
+                const dist = Math.hypot(pos.x - handleX, pos.y - handleY);
+                rectCanvas.style.cursor = (dist < 40) ? 'grab' : 'default';
+            });
+
+            // 键盘支持
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const range = getSliderRange(currentMode);
+                    let newLen = currentLength - 0.5;
+                    newLen = Math.max(newLen, range.min);
+                    newLen = clampLength(currentMode, newLen);
+                    if (newLen !== currentLength) updateAll(currentMode, newLen);
+                } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const range = getSliderRange(currentMode);
+                    let newLen = currentLength + 0.5;
+                    newLen = Math.min(newLen, range.max);
+                    newLen = clampLength(currentMode, newLen);
+                    if (newLen !== currentLength) updateAll(currentMode, newLen);
+                }
+            });
+
+            // ---------- 窗口resize重绘 ----------
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    drawRectangle(currentMode, currentLength);
+                    drawChart(currentMode, currentLength);
+                }, 100);
+            });
+
+            // ---------- 初始化 ----------
+            setMode(MODE_PERIM);
+
+        })();
+    </script>
+
+</body>
+</html>

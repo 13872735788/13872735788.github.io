@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>等积变形 · 交互课件</title>
+    <style>
+        /* ===== 样式 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            background: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+            margin: 0;
+            touch-action: none;
+        }
+        .container {
+            max-width: 920px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 32px;
+            box-shadow: 0 20px 60px rgba(0, 20, 40, 0.15);
+            overflow: hidden;
+            padding: 24px 28px 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px 16px;
+            margin-bottom: 18px;
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0b2b44;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header h1 small {
+            font-size: 14px;
+            font-weight: 400;
+            color: #5a7a94;
+            margin-left: 6px;
+        }
+        .tabs {
+            display: flex;
+            gap: 6px;
+            background: #e8edf3;
+            padding: 4px;
+            border-radius: 40px;
+        }
+        .tab-btn {
+            border: none;
+            background: transparent;
+            padding: 8px 22px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #3d5a73;
+            cursor: pointer;
+            transition: all 0.25s;
+            touch-action: manipulation;
+        }
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .tab-btn.active {
+            background: #ffffff;
+            color: #0b2b44;
+            box-shadow: 0 4px 12px rgba(0, 20, 40, 0.10);
+        }
+        .tab-btn .badge {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #b0c8d8;
+            margin-left: 6px;
+            transition: background 0.3s;
+        }
+        .tab-btn .badge.done {
+            background: #2ecc71;
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.5);
+        }
+        .canvas-wrapper {
+            position: relative;
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid #e2e9f0;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 800 / 500;
+            background: #fafcfe;
+            touch-action: none;
+            cursor: default;
+        }
+        .data-panel {
+            position: absolute;
+            right: 18px;
+            top: 18px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 14px 20px 16px;
+            min-width: 150px;
+            box-shadow: 0 8px 30px rgba(0, 20, 40, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+        }
+        .data-panel .label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #6b8ba4;
+            margin-bottom: 6px;
+        }
+        .data-panel .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 3px 0;
+            font-size: 14px;
+            color: #1a334a;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        .data-panel .row:last-child {
+            border-bottom: none;
+        }
+        .data-panel .row .key {
+            color: #4d6a82;
+            font-weight: 500;
+        }
+        .data-panel .row .val {
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .data-panel .row .val.glow {
+            animation: breathe 1.6s ease-in-out infinite;
+            color: #2e7d32;
+        }
+        .data-panel .formula {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 2px dashed #d0dce8;
+            font-size: 13px;
+            color: #2a4a62;
+            text-align: center;
+            font-weight: 500;
+        }
+        @keyframes breathe {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(0.96);
+                color: #1b5e20;
+            }
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 14px;
+            padding: 0 4px;
+        }
+        .footer .slogan {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a3a52;
+            background: linear-gradient(135deg, #1a3a52 20%, #2d6a8f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .footer .slogan span {
+            font-weight: 400;
+            color: #5a7a94;
+            -webkit-text-fill-color: #5a7a94;
+        }
+        .footer .status {
+            font-size: 13px;
+            color: #5a7a94;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .footer .status .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #b0c8d8;
+            transition: background 0.4s;
+        }
+        .footer .status .dot.all-done {
+            background: #2ecc71;
+            box-shadow: 0 0 16px rgba(46, 204, 113, 0.6);
+        }
+        .egg-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 30, 50, 0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            animation: fadeIn 0.4s ease;
+            padding: 20px;
+        }
+        .egg-overlay.show {
+            display: flex;
+        }
+        .egg-modal {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 32px 36px 28px;
+            max-width: 560px;
+            width: 100%;
+            box-shadow: 0 40px 80px rgba(0, 20, 40, 0.3);
+            animation: slideUp 0.4s ease;
+        }
+        .egg-modal h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0b2b44;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .egg-modal .sub {
+            text-align: center;
+            color: #5a7a94;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .egg-modal .chart-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 32px;
+            height: 180px;
+            padding: 0 10px 30px;
+            border-bottom: 2px solid #d0dce8;
+            margin-bottom: 16px;
+        }
+        .egg-modal .bar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            max-width: 80px;
+        }
+        .egg-modal .bar {
+            width: 52px;
+            border-radius: 8px 8px 0 0;
+            background: linear-gradient(180deg, #4a90d9, #2d6a8f);
+            min-height: 8px;
+            transition: height 0.6s ease;
+            box-shadow: 0 4px 12px rgba(45, 106, 143, 0.25);
+        }
+        .egg-modal .bar.tri {
+            background: linear-gradient(180deg, #f39c12, #d68910);
+        }
+        .egg-modal .bar.para {
+            background: linear-gradient(180deg, #2ecc71, #1e8449);
+        }
+        .egg-modal .bar.trap {
+            background: linear-gradient(180deg, #8e44ad, #6c3483);
+        }
+        .egg-modal .bar-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a334a;
+        }
+        .egg-modal .bar-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0b2b44;
+        }
+        .egg-modal .close-btn {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 12px;
+            border: none;
+            background: #0b2b44;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: background 0.2s;
+            touch-action: manipulation;
+        }
+        .egg-modal .close-btn:hover {
+            background: #1a4a6a;
+        }
+        .egg-modal .confetti {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 2px;
+            letter-spacing: 4px;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        @media (max-width: 640px) {
+            .container {
+                padding: 14px 12px;
+            }
+            .header h1 {
+                font-size: 18px;
+            }
+            .header h1 small {
+                font-size: 12px;
+            }
+            .tab-btn {
+                padding: 6px 14px;
+                font-size: 13px;
+            }
+            .data-panel {
+                right: 10px;
+                top: 10px;
+                padding: 10px 14px 12px;
+                min-width: 110px;
+            }
+            .data-panel .row {
+                font-size: 12px;
+                padding: 2px 0;
+            }
+            .data-panel .formula {
+                font-size: 11px;
+            }
+            .footer .slogan {
+                font-size: 14px;
+            }
+            .egg-modal {
+                padding: 24px 20px 20px;
+            }
+            .egg-modal .chart-wrap {
+                gap: 16px;
+                height: 140px;
+                padding: 0 4px 20px;
+            }
+            .egg-modal .bar {
+                width: 36px;
+            }
+        }
+        @media (max-width: 420px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .tabs {
+                justify-content: center;
+            }
+            .tab-btn {
+                flex: 1;
+                text-align: center;
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+            .data-panel {
+                right: 6px;
+                top: 6px;
+                padding: 8px 10px 10px;
+                min-width: 90px;
+            }
+            .data-panel .row {
+                font-size: 10px;
+                padding: 1px 0;
+            }
+            .data-panel .formula {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>
+                📐 等积变形
+                <small>底不变 · 高不变 · 面积恒等</small>
+            </h1>
+            <div class="tabs" id="tabContainer">
+                <button class="tab-btn active" data-shape="triangle">△ 三角形 <span class="badge" id="badge-triangle"></span></button>
+                <button class="tab-btn" data-shape="parallelogram">▱ 平行四边形 <span class="badge" id="badge-parallelogram"></span></button>
+                <button class="tab-btn" data-shape="trapezoid">⏢ 梯形 <span class="badge" id="badge-trapezoid"></span></button>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="canvas" width="800" height="500"></canvas>
+            <div class="data-panel" id="dataPanel">
+                <div class="label">📊 实时数据</div>
+                <div class="row"><span class="key">底</span><span class="val" id="dBase">—</span></div>
+                <div class="row"><span class="key">高</span><span class="val" id="dHeight">—</span></div>
+                <div class="row"><span class="key">面积</span><span class="val glow" id="dArea">—</span></div>
+                <div class="formula" id="dFormula">S = 底 × 高 ÷ 2</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="slogan">🔷 <span>底不变 · 高不变 · 面积永不变</span></div>
+            <div class="status">
+                <span id="progressText">探索进度：0 / 3</span>
+                <span class="dot" id="progressDot"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 彩蛋弹窗 -->
+    <div class="egg-overlay" id="eggOverlay">
+        <div class="egg-modal">
+            <div class="confetti">🎉✨🏆</div>
+            <h2>面积对比 · 恒等之美</h2>
+            <p class="sub">三种图形虽然形状不同，但面积恒定！</p>
+            <div class="chart-wrap" id="chartWrap">
+                <div class="bar-item">
+                    <div class="bar-value" id="chartTriVal">—</div>
+                    <div class="bar tri" id="chartTriBar" style="height:60px;"></div>
+                    <div class="bar-label">△ 三角形</div>
+                </div>
+                <div class="bar-item">
+                    <div class="bar-value" id="chartParaVal">—</div>
+                    <div class="bar para" id="chartParaBar" style="height:60px;"></div>
+                    <div class="bar-label">▱ 平行四边形</div>
+                </div>
+                <div class="bar-item">
+                    <div class="bar-value" id="chartTrapVal">—</div>
+                    <div class="bar trap" id="chartTrapBar" style="height:60px;"></div>
+                    <div class="bar-label">⏢ 梯形</div>
+                </div>
+            </div>
+            <button class="close-btn" id="eggCloseBtn">👍 太神奇了！</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ===== 画布参数 =====
+            const CANVAS_W = 800,
+                CANVAS_H = 500;
+            // 图形高度固定为 120px（变小了）
+            const TOP_Y = 190,
+                BOT_Y = 310;
+            const HEIGHT = BOT_Y - TOP_Y; // 120
+
+            // 边界大幅放宽，图形可以在更广阔范围内移动
+            const MIN_X = 20,
+                MAX_X = 780;
+
+            // 各图形底边长度（比之前小）
+            const TRI_BASE = 260;
+            const PARA_BASE = 260;
+            const TRAP_TOP = 160,
+                TRAP_BOT = 260;
+
+            // ===== DOM 引用 =====
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const tabs = document.querySelectorAll('.tab-btn');
+            const badges = {
+                triangle: document.getElementById('badge-triangle'),
+                parallelogram: document.getElementById('badge-parallelogram'),
+                trapezoid: document.getElementById('badge-trapezoid'),
+            };
+            const dBase = document.getElementById('dBase');
+            const dHeight = document.getElementById('dHeight');
+            const dArea = document.getElementById('dArea');
+            const dFormula = document.getElementById('dFormula');
+            const progressText = document.getElementById('progressText');
+            const progressDot = document.getElementById('progressDot');
+            const eggOverlay = document.getElementById('eggOverlay');
+            const eggCloseBtn = document.getElementById('eggCloseBtn');
+
+            // ===== 状态 =====
+            let currentShape = 'triangle';
+            let draggedPoint = null;
+            let isDragging = false;
+
+            const state = {
+                triangle: { apexOffset: 0, baseOffset: 0, visited: false },
+                parallelogram: { topOffset: 0, bottomOffset: 0, visited: false },
+                trapezoid: { topOffset: 0, bottomOffset: 0, visited: false }
+            };
+
+            // ===== 工具 =====
+            function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
+
+            // ===== 核心：获取各图形顶点（严格边界约束） =====
+            function getPoints(shape) {
+                const s = state[shape];
+                const pts = {};
+
+                if (shape === 'triangle') {
+                    // 三角形：顶点 A 可水平移动，底边 BC 整体平移
+                    let ax = 400 + s.apexOffset;
+                    let bx = 270 + s.baseOffset;
+                    let cx = bx + TRI_BASE;
+
+                    // 底边整体限制
+                    const minB = MIN_X;
+                    const maxB = MAX_X - TRI_BASE;
+                    if (minB <= maxB) {
+                        bx = clamp(bx, minB, maxB);
+                        cx = bx + TRI_BASE;
+                    } else {
+                        // 极端情况，取中间
+                        bx = (MIN_X + MAX_X - TRI_BASE) / 2;
+                        cx = bx + TRI_BASE;
+                    }
+                    // 顶点 A 限制
+                    ax = clamp(ax, MIN_X, MAX_X);
+
+                    // 回写偏移
+                    s.baseOffset = bx - 270;
+                    s.apexOffset = ax - 400;
+
+                    pts.A = { x: ax, y: TOP_Y };
+                    pts.B = { x: bx, y: BOT_Y };
+                    pts.C = { x: cx, y: BOT_Y };
+                } else if (shape === 'parallelogram') {
+                    let ax = 270 + s.topOffset;
+                    let dx = ax + PARA_BASE;
+                    let bx = 270 + s.bottomOffset;
+                    let cx = bx + PARA_BASE;
+
+                    // 上底限制
+                    const minTop = MIN_X;
+                    const maxTop = MAX_X - PARA_BASE;
+                    if (minTop <= maxTop) {
+                        ax = clamp(ax, minTop, maxTop);
+                        dx = ax + PARA_BASE;
+                    } else {
+                        ax = (MIN_X + MAX_X - PARA_BASE) / 2;
+                        dx = ax + PARA_BASE;
+                    }
+                    // 下底限制
+                    const minBot = MIN_X;
+                    const maxBot = MAX_X - PARA_BASE;
+                    if (minBot <= maxBot) {
+                        bx = clamp(bx, minBot, maxBot);
+                        cx = bx + PARA_BASE;
+                    } else {
+                        bx = (MIN_X + MAX_X - PARA_BASE) / 2;
+                        cx = bx + PARA_BASE;
+                    }
+
+                    s.topOffset = ax - 270;
+                    s.bottomOffset = bx - 270;
+
+                    pts.A = { x: ax, y: TOP_Y };
+                    pts.D = { x: dx, y: TOP_Y };
+                    pts.B = { x: bx, y: BOT_Y };
+                    pts.C = { x: cx, y: BOT_Y };
+                } else { // trapezoid
+                    let ax = 320 + s.topOffset;
+                    let dx = ax + TRAP_TOP;
+                    let bx = 270 + s.bottomOffset;
+                    let cx = bx + TRAP_BOT;
+
+                    const minTop = MIN_X;
+                    const maxTop = MAX_X - TRAP_TOP;
+                    if (minTop <= maxTop) {
+                        ax = clamp(ax, minTop, maxTop);
+                        dx = ax + TRAP_TOP;
+                    } else {
+                        ax = (MIN_X + MAX_X - TRAP_TOP) / 2;
+                        dx = ax + TRAP_TOP;
+                    }
+                    const minBot = MIN_X;
+                    const maxBot = MAX_X - TRAP_BOT;
+                    if (minBot <= maxBot) {
+                        bx = clamp(bx, minBot, maxBot);
+                        cx = bx + TRAP_BOT;
+                    } else {
+                        bx = (MIN_X + MAX_X - TRAP_BOT) / 2;
+                        cx = bx + TRAP_BOT;
+                    }
+
+                    s.topOffset = ax - 320;
+                    s.bottomOffset = bx - 270;
+
+                    pts.A = { x: ax, y: TOP_Y };
+                    pts.D = { x: dx, y: TOP_Y };
+                    pts.B = { x: bx, y: BOT_Y };
+                    pts.C = { x: cx, y: BOT_Y };
+                }
+                return pts;
+            }
+
+            // ===== 绘制 =====
+            function draw() {
+                ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+                drawGrid();
+                const pts = getPoints(currentShape);
+                if (currentShape === 'triangle') drawTriangle(pts);
+                else if (currentShape === 'parallelogram') drawParallelogram(pts);
+                else drawTrapezoid(pts);
+                drawControls(pts);
+                updateDataPanel(pts);
+                updateBadges();
+                updateProgress();
+            }
+
+            function drawGrid() {
+                ctx.save();
+                ctx.strokeStyle = '#e8edf3';
+                ctx.lineWidth = 0.5;
+                for (let x = 0; x <= CANVAS_W; x += 25) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, CANVAS_H);
+                    ctx.stroke();
+                }
+                for (let y = 0; y <= CANVAS_H; y += 25) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(CANVAS_W, y);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            function drawShape(points, fillColor, strokeColor) {
+                const keys = Object.keys(points);
+                ctx.save();
+                ctx.beginPath();
+                const first = points[keys[0]];
+                ctx.moveTo(first.x, first.y);
+                for (let i = 1; i < keys.length; i++) {
+                    const p = points[keys[i]];
+                    ctx.lineTo(p.x, p.y);
+                }
+                ctx.closePath();
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.restore();
+                // 顶点标签
+                ctx.save();
+                ctx.font = 'bold 15px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                for (const [name, p] of Object.entries(points)) {
+                    ctx.fillStyle = '#0b2b44';
+                    ctx.fillText(name, p.x, p.y - 10);
+                }
+                ctx.restore();
+            }
+
+            function drawTriangle(pts) {
+                const { A, B, C } = pts;
+                drawShape({ A, B, C }, 'rgba(243, 156, 18, 0.25)', '#d68910');
+                drawHeight(A.x, A.y, A.x, BOT_Y);
+                drawBaseLabel(B.x, B.y, C.x, C.y, '底=' + TRI_BASE, '#1a5276');
+                const area = TRI_BASE * HEIGHT / 2;
+                drawAreaLabel('S = ' + TRI_BASE + '×' + HEIGHT + '÷2 = ' + area, 400, 470);
+            }
+
+            function drawParallelogram(pts) {
+                const { A, D, B, C } = pts;
+                drawShape({ A, B, C, D }, 'rgba(46, 204, 113, 0.25)', '#1e8449');
+                const footX = C.x;
+                drawHeight(footX, TOP_Y, footX, BOT_Y);
+                drawBaseLabel(B.x, B.y, C.x, C.y, '底=' + PARA_BASE, '#1a5276');
+                drawBaseLabel(A.x, A.y, D.x, D.y, '上底=' + PARA_BASE, '#1a5276');
+                const area = PARA_BASE * HEIGHT;
+                drawAreaLabel('S = ' + PARA_BASE + '×' + HEIGHT + ' = ' + area, 400, 470);
+            }
+
+            function drawTrapezoid(pts) {
+                const { A, D, B, C } = pts;
+                drawShape({ A, B, C, D }, 'rgba(142, 68, 173, 0.25)', '#6c3483');
+                const footX = C.x;
+                drawHeight(footX, TOP_Y, footX, BOT_Y);
+                drawBaseLabel(B.x, B.y, C.x, C.y, '下底=' + TRAP_BOT, '#1a5276');
+                drawBaseLabel(A.x, A.y, D.x, D.y, '上底=' + TRAP_TOP, '#1a5276');
+                const area = (TRAP_TOP + TRAP_BOT) * HEIGHT / 2;
+                drawAreaLabel('S = (' + TRAP_TOP + '+' + TRAP_BOT + ')×' + HEIGHT + '÷2 = ' + area, 400, 470);
+            }
+
+            function drawHeight(x1, y1, x2, y2) {
+                ctx.save();
+                ctx.setLineDash([5, 5]);
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                ctx.restore();
+                // 直角符号
+                const s = 10;
+                ctx.save();
+                ctx.strokeStyle = '#c0392b';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x1 + s, y1);
+                ctx.lineTo(x1 + s, y1 + s);
+                ctx.stroke();
+                ctx.restore();
+                // 高标注
+                ctx.save();
+                ctx.fillStyle = '#c0392b';
+                ctx.font = 'bold 14px "Segoe UI", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('高=' + HEIGHT, x1 + 12, (y1 + y2) / 2);
+                ctx.restore();
+            }
+
+            function drawBaseLabel(x1, y1, x2, y2, text, color) {
+                const midX = (x1 + x2) / 2;
+                const midY = (y1 + y2) / 2 + 22;
+                ctx.save();
+                ctx.fillStyle = color;
+                ctx.font = 'bold 13px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.8;
+                ctx.beginPath();
+                ctx.moveTo(x1, midY - 6);
+                ctx.lineTo(x2, midY - 6);
+                ctx.stroke();
+                // 箭头
+                for (const x of [x1, x2]) {
+                    const dir = x === x1 ? 1 : -1;
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    const a = 5;
+                    ctx.moveTo(x + dir * a, midY - 6 - a * 0.6);
+                    ctx.lineTo(x + dir * a, midY - 6 + a * 0.6);
+                    ctx.lineTo(x - dir * a * 0.3, midY - 6);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                ctx.fillStyle = color;
+                ctx.fillText(text, midX, midY + 2);
+                ctx.restore();
+            }
+
+            function drawAreaLabel(text, x, y) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(11, 43, 68, 0.80)';
+                ctx.font = 'bold 15px "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(text, x, y);
+                ctx.restore();
+            }
+
+            function drawControls(pts) {
+                for (const [name, p] of Object.entries(pts)) {
+                    const isHot = isDragging && draggedPoint && draggedPoint.id === name;
+                    ctx.save();
+                    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, isHot ? 12 : 8, 0, 2 * Math.PI);
+                    ctx.fillStyle = isHot ? '#e74c3c' : '#2c3e50';
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            // ===== 数据面板 =====
+            function updateDataPanel(pts) {
+                let baseStr, heightStr, areaStr, formulaStr;
+                if (currentShape === 'triangle') {
+                    const { B, C } = pts;
+                    const b = Math.round(C.x - B.x);
+                    baseStr = b + ' px';
+                    heightStr = HEIGHT + ' px';
+                    const area = b * HEIGHT / 2;
+                    areaStr = area.toFixed(0);
+                    formulaStr = 'S = 底 × 高 ÷ 2';
+                } else if (currentShape === 'parallelogram') {
+                    const { B, C } = pts;
+                    const b = Math.round(C.x - B.x);
+                    baseStr = b + ' px';
+                    heightStr = HEIGHT + ' px';
+                    const area = b * HEIGHT;
+                    areaStr = area.toFixed(0);
+                    formulaStr = 'S = 底 × 高';
+                } else {
+                    const { A, D, B, C } = pts;
+                    const top = Math.round(D.x - A.x);
+                    const bot = Math.round(C.x - B.x);
+                    baseStr = top + ' / ' + bot + ' px';
+                    heightStr = HEIGHT + ' px';
+                    const area = (top + bot) * HEIGHT / 2;
+                    areaStr = area.toFixed(0);
+                    formulaStr = 'S = (上底+下底) × 高 ÷ 2';
+                }
+                dBase.textContent = baseStr;
+                dHeight.textContent = heightStr;
+                dArea.textContent = areaStr;
+                dFormula.textContent = formulaStr;
+                dArea.classList.add('glow');
+            }
+
+            function updateBadges() {
+                for (const [shape, s] of Object.entries(state)) {
+                    const badge = badges[shape];
+                    if (s.visited) {
+                        badge.classList.add('done');
+                    } else {
+                        badge.classList.remove('done');
+                    }
+                }
+            }
+
+            function updateProgress() {
+                const total = 3;
+                const done = Object.values(state).filter(s => s.visited).length;
+                progressText.textContent = '探索进度：' + done + ' / ' + total;
+                if (done === total) {
+                    progressDot.classList.add('all-done');
+                    if (!window._eggShown) {
+                        window._eggShown = true;
+                        setTimeout(showEgg, 500);
+                    }
+                } else {
+                    progressDot.classList.remove('all-done');
+                }
+            }
+
+            // ===== 彩蛋 =====
+            function showEgg() {
+                const areas = {};
+                for (const shape of ['triangle', 'parallelogram', 'trapezoid']) {
+                    const pts = getPoints(shape);
+                    if (shape === 'triangle') {
+                        const b = Math.round(pts.C.x - pts.B.x);
+                        areas.triangle = b * HEIGHT / 2;
+                    } else if (shape === 'parallelogram') {
+                        const b = Math.round(pts.C.x - pts.B.x);
+                        areas.parallelogram = b * HEIGHT;
+                    } else {
+                        const top = Math.round(pts.D.x - pts.A.x);
+                        const bot = Math.round(pts.C.x - pts.B.x);
+                        areas.trapezoid = (top + bot) * HEIGHT / 2;
+                    }
+                }
+                const maxVal = Math.max(areas.triangle, areas.parallelogram, areas.trapezoid);
+                const maxH = 160;
+                const hTri = maxVal ? (areas.triangle / maxVal) * maxH : 40;
+                const hPara = maxVal ? (areas.parallelogram / maxVal) * maxH : 40;
+                const hTrap = maxVal ? (areas.trapezoid / maxVal) * maxH : 40;
+
+                document.getElementById('chartTriBar').style.height = Math.max(hTri, 20) + 'px';
+                document.getElementById('chartParaBar').style.height = Math.max(hPara, 20) + 'px';
+                document.getElementById('chartTrapBar').style.height = Math.max(hTrap, 20) + 'px';
+                document.getElementById('chartTriVal').textContent = areas.triangle.toFixed(0);
+                document.getElementById('chartParaVal').textContent = areas.parallelogram.toFixed(0);
+                document.getElementById('chartTrapVal').textContent = areas.trapezoid.toFixed(0);
+
+                eggOverlay.classList.add('show');
+            }
+
+            eggCloseBtn.addEventListener('click', function() {
+                eggOverlay.classList.remove('show');
+            });
+            eggOverlay.addEventListener('click', function(e) {
+                if (e.target === this) eggOverlay.classList.remove('show');
+            });
+
+            // ===== 交互 =====
+            function getCanvasCoords(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function hitTest(px, py) {
+                const pts = getPoints(currentShape);
+                const threshold = 20;
+                for (const [name, p] of Object.entries(pts)) {
+                    const dx = px - p.x,
+                        dy = py - p.y;
+                    if (dx * dx + dy * dy < threshold * threshold) {
+                        return { id: name };
+                    }
+                }
+                return null;
+            }
+
+            function startDrag(e) {
+                e.preventDefault();
+                const coord = getCanvasCoords(e);
+                const hit = hitTest(coord.x, coord.y);
+                if (!hit) return;
+                const pts = getPoints(currentShape);
+                const p = pts[hit.id];
+                draggedPoint = {
+                    shape: currentShape,
+                    id: hit.id,
+                    offsetX: coord.x - p.x,
+                };
+                isDragging = true;
+                if (!state[currentShape].visited) {
+                    state[currentShape].visited = true;
+                }
+                canvas.style.cursor = 'grabbing';
+                draw();
+            }
+
+            function moveDrag(e) {
+                e.preventDefault();
+                if (!isDragging || !draggedPoint) return;
+                const coord = getCanvasCoords(e);
+                const newX = coord.x - draggedPoint.offsetX;
+                const shape = draggedPoint.shape;
+                const id = draggedPoint.id;
+                const s = state[shape];
+                const pts = getPoints(shape);
+                const p = pts[id];
+
+                let delta = newX - p.x;
+
+                if (shape === 'triangle') {
+                    if (id === 'A') {
+                        s.apexOffset += delta;
+                    } else if (id === 'B' || id === 'C') {
+                        s.baseOffset += delta;
+                    }
+                } else {
+                    if (id === 'A' || id === 'D') {
+                        s.topOffset += delta;
+                    } else if (id === 'B' || id === 'C') {
+                        s.bottomOffset += delta;
+                    }
+                }
+                // 重新计算并修正偏移（由 getPoints 内部 clamp 完成）
+                getPoints(shape);
+                draw();
+            }
+
+            function endDrag(e) {
+                if (isDragging) {
+                    isDragging = false;
+                    draggedPoint = null;
+                    canvas.style.cursor = 'default';
+                    draw();
+                }
+            }
+
+            canvas.addEventListener('mousedown', startDrag);
+            window.addEventListener('mousemove', moveDrag);
+            window.addEventListener('mouseup', endDrag);
+            canvas.addEventListener('touchstart', startDrag, { passive: false });
+            window.addEventListener('touchmove', moveDrag, { passive: false });
+            window.addEventListener('touchend', endDrag, { passive: false });
+            window.addEventListener('touchcancel', endDrag, { passive: false });
+
+            tabs.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    tabs.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentShape = this.dataset.shape;
+                    draw();
+                });
+            });
+
+            // ===== 初始化 =====
+            draw();
+
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(draw, 100);
+            });
+
+        })();
+    </script>
+
+</body>
+</html>

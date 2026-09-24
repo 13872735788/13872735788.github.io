@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>数学探究：车轮为什么是圆的？</title>
+    <script src="https://data.zcat.cn/cdn/npm/@tailwindcss/3.4.17.js"></script>
+    <link rel="stylesheet" href="https://data.zcat.cn/cdn/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: "Microsoft YaHei", "微软雅黑", sans-serif; background-color: #F5F7FB; touch-action: none; overflow: hidden; margin: 0; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #4285F4; cursor: pointer; margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #E0E0E0; border-radius: 3px; }
+        .canvas-container { box-shadow: inset 0 0 20px rgba(0,0,0,0.05); }
+        .mode-tab { transition: all 0.3s ease; cursor: pointer; user-select: none; }
+        .mode-tab.active { background: #4285F4 !important; color: white !important; box-shadow: 0 4px 12px rgba(66,133,244,0.3); }
+        .shape-toggle { transition: all 0.3s ease; cursor: pointer; user-select: none; }
+        .shape-toggle.active { background: #4285F4; color: white; }
+        .compare-btn { transition: all 0.2s ease; cursor: pointer; user-select: none; }
+        .compare-btn:active { transform: scale(0.96); }
+        .step-btn { transition: all 0.15s ease; cursor: pointer; user-select: none; }
+        .step-btn:active:not(:disabled) { transform: scale(0.9); }
+        .step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .height-toggle { transition: all 0.2s ease; cursor: pointer; user-select: none; }
+        .height-toggle.active { background: #4285F4 !important; color: white !important; border-color: #4285F4 !important; }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center p-3 md:p-4">
+    <div class="bg-white w-full max-w-6xl h-[92vh] rounded-3xl shadow-xl flex flex-col overflow-hidden relative">
+        <div class="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-gray-100 bg-white z-20 flex-shrink-0">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-circle-notch text-[#4285F4] text-xl md:text-2xl"></i>
+                <h1 class="text-lg md:text-2xl font-bold text-gray-800 whitespace-nowrap">车轮的形状探究</h1>
+            </div>
+            <div class="flex bg-gray-100 rounded-xl p-1 flex-shrink-0">
+                <button id="tabSingle" class="mode-tab active px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-1 md:gap-2">
+                    <i class="fa-solid fa-magnifying-glass"></i> <span class="hidden sm:inline">单轮探究</span><span class="sm:hidden">探究</span>
+                </button>
+                <button id="tabCompare" class="mode-tab px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-gray-500 flex items-center gap-1 md:gap-2">
+                    <i class="fa-solid fa-layer-group"></i> <span class="hidden sm:inline">多轮对比</span><span class="sm:hidden">对比</span>
+                </button>
+            </div>
+        </div>
+        <div class="flex-grow flex flex-col md:flex-row overflow-hidden min-h-0">
+            <div class="flex-grow bg-slate-50 relative canvas-container overflow-hidden min-h-0">
+                <canvas id="mainCanvas" class="absolute inset-0 w-full h-full"></canvas>
+            </div>
+            <div class="w-full md:w-80 bg-white p-4 md:p-6 flex flex-col gap-4 md:gap-5 z-10 shadow-[-5px_0_15px_rgba(0,0,0,0.05)] overflow-y-auto flex-shrink-0">
+                <div id="singleControls" class="flex flex-col gap-5">
+                    <div class="flex bg-gray-100 rounded-xl p-1">
+                        <button id="togglePoly" class="shape-toggle active flex-1 py-2 rounded-lg text-xs font-bold">正多边形</button>
+                        <button id="toggleEllipse" class="shape-toggle flex-1 py-2 rounded-lg text-xs font-bold text-gray-500">椭圆</button>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-600 font-medium">当前形状</span>
+                            <span id="shapeName" class="text-[#4285F4] font-bold text-lg">正五边形</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 font-medium">中心波动</span>
+                            <span id="heightVar" class="text-[#EA4335] font-bold text-lg">明显</span>
+                        </div>
+                    </div>
+                    <div id="polySliderGroup" class="space-y-3">
+                        <div class="flex justify-between items-center text-sm font-bold text-gray-700">
+                            <label><i class="fa-solid fa-shapes mr-1"></i> 边数调节</label>
+                            <div class="flex items-center gap-2">
+                                <span id="sidesVal" class="text-[#4285F4]">当前：5边</span>
+                                <button id="sidesPlusBtn" class="step-btn w-8 h-8 rounded-full bg-[#4285F4] text-white flex items-center justify-center text-base font-bold shadow-md shadow-blue-200" title="边数+1">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="range" id="sidesSlider" min="3" max="50" value="5" step="1">
+                        <div class="flex justify-between text-xs text-gray-400 px-1">
+                            <span>3 (三角)</span><span>50 (圆)</span>
+                        </div>
+                    </div>
+                    <div id="ellipseSliderGroup" class="space-y-3 hidden">
+                        <div class="flex justify-between text-sm font-bold text-gray-700">
+                            <label><i class="fa-solid fa-compress mr-1"></i> 离心率调节</label>
+                            <span id="eccVal" class="text-[#9C27B0]">0.50</span>
+                        </div>
+                        <input type="range" id="eccSlider" min="0" max="0.9" value="0.5" step="0.05">
+                        <div class="flex justify-between text-xs text-gray-400 px-1">
+                            <span>0 (正圆)</span><span>0.9 (极扁)</span>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm font-bold text-gray-700">
+                            <label><i class="fa-solid fa-gauge-high mr-1"></i> 滚动速度</label>
+                            <span id="speedVal" class="text-[#34A853]">中速</span>
+                        </div>
+                        <input type="range" id="speedSlider" min="0" max="10" value="3" step="0.5">
+                    </div>
+                </div>
+                <div id="compareControls" class="flex flex-col gap-4 hidden">
+                    <!-- 【新增】高度数据显示开关按钮 -->
+                    <button id="heightToggleBtn" class="height-toggle w-full py-2.5 rounded-xl border-2 border-[#4285F4] text-[#4285F4] font-bold text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-ruler-vertical"></i> <span id="heightToggleText">显示高度数据</span>
+                    </button>
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                        <i class="fa-solid fa-lightbulb text-[#FBBC05] mr-1"></i>
+                        每个形状在独立跑道上滚动，点击按钮可单独暂停观察轨迹与高度变化。
+                    </p>
+                    <div class="grid grid-cols-1 gap-2" id="compareBtnGrid"></div>
+                    <div class="space-y-3 mt-2">
+                        <div class="flex justify-between text-sm font-bold text-gray-700">
+                            <label><i class="fa-solid fa-gauge-high mr-1"></i> 全局速度</label>
+                            <span id="cmpSpeedVal" class="text-[#34A853]">中速</span>
+                        </div>
+                        <input type="range" id="cmpSpeedSlider" min="0" max="10" value="3" step="0.5">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-auto pt-4 border-t border-gray-100">
+                    <button id="playBtn" class="bg-[#4285F4] hover:bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play" id="playIcon"></i>
+                        <span id="playText">开始</span>
+                    </button>
+                    <button id="resetBtn" class="bg-white border-2 border-gray-200 hover:border-[#EA4335] hover:text-[#EA4335] text-gray-600 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> 重置
+                    </button>
+                </div>
+                <div class="flex items-center gap-3 opacity-80">
+                    <img src="https://api.zcat.cn/udata/111819/png/037f1714c18d29ca3314d66003e4b33c.png" class="w-12 h-12 rounded-lg object-cover shadow-sm" alt="Bus">
+                    <p class="text-xs text-gray-500 leading-tight">只有圆形车轮的中心才走直线，车子最平稳！</p>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+(function() {
+    'use strict';
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const tabSingle = document.getElementById('tabSingle');
+    const tabCompare = document.getElementById('tabCompare');
+    const singleControls = document.getElementById('singleControls');
+    const compareControls = document.getElementById('compareControls');
+    const togglePoly = document.getElementById('togglePoly');
+    const toggleEllipse = document.getElementById('toggleEllipse');
+    const polySliderGroup = document.getElementById('polySliderGroup');
+    const ellipseSliderGroup = document.getElementById('ellipseSliderGroup');
+    const sidesSlider = document.getElementById('sidesSlider');
+    const sidesPlusBtn = document.getElementById('sidesPlusBtn');
+    const eccSlider = document.getElementById('eccSlider');
+    const speedSlider = document.getElementById('speedSlider');
+    const cmpSpeedSlider = document.getElementById('cmpSpeedSlider');
+    const sidesValDisplay = document.getElementById('sidesVal');
+    const eccValDisplay = document.getElementById('eccVal');
+    const speedValDisplay = document.getElementById('speedVal');
+    const cmpSpeedValDisplay = document.getElementById('cmpSpeedVal');
+    const shapeNameDisplay = document.getElementById('shapeName');
+    const heightVarDisplay = document.getElementById('heightVar');
+    const playBtn = document.getElementById('playBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const playIcon = document.getElementById('playIcon');
+    const playText = document.getElementById('playText');
+    const compareBtnGrid = document.getElementById('compareBtnGrid');
+    // 【新增】高度显示开关按钮及文字元素
+    const heightToggleBtn = document.getElementById('heightToggleBtn');
+    const heightToggleText = document.getElementById('heightToggleText');
+
+    const COLORS = { 3: '#EA4335', 4: '#FA7B17', 5: '#FBBC05', 6: '#34A853', 50: '#4285F4', ellipse: '#9C27B0' };
+    const COMPARE_CONFIG = [
+        { sides: 3, type: 'poly', color: COLORS[3], label: '三角形', icon: '▲' },
+        { sides: 4, type: 'poly', color: COLORS[4], label: '正方形', icon: '■' },
+        { sides: 5, type: 'poly', color: COLORS[5], label: '五边形', icon: '⬠' },
+        { sides: 6, type: 'poly', color: COLORS[6], label: '六边形', icon: '⬡' },
+        { sides: 50, type: 'poly', color: COLORS[50], label: '圆形', icon: '●' },
+        { sides: 0, type: 'ellipse', color: COLORS.ellipse, label: '椭圆', icon: '⬮', eccentricity: 0.5 }
+    ];
+
+    const PX_TO_CM = 0.5;
+
+    let mode = 'single';
+    let singleShapeType = 'poly';
+    let singleState = { sides: 5, eccentricity: 0.5, speed: 3, isPlaying: false, rotation: 0, x: 40, radius: 35, groundY: 0, trail: [], lastTrailX: 40 };
+    let compareWheels = [];
+    // 【新增】高度数据显示开关，默认关闭
+    let showHeightInfo = false;
+
+    function initCompareWheels() {
+        compareWheels = COMPARE_CONFIG.map((cfg) => ({ ...cfg, radius: 0, rotation: 0, x: 0, trail: [], lastTrailX: 0, paused: true, laneY: 0, laneTop: 0, dynamicRadius: 0 }));
+    }
+    initCompareWheels();
+
+    function resizeCanvas() {
+        const parent = canvas.parentElement;
+        const w = parent.clientWidth;
+        const h = parent.clientHeight;
+        if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; singleState.groundY = h - 45; }
+        if (mode === 'compare') recalcLanes();
+    }
+
+    function recalcLanes() {
+        const h = canvas.height;
+        const laneCount = compareWheels.length;
+        const laneHeight = h / laneCount;
+        compareWheels.forEach((wheel, idx) => {
+            wheel.laneTop = idx * laneHeight;
+            wheel.laneY = (idx + 1) * laneHeight - 10;
+            const maxR = (laneHeight - 20) * 0.35;
+            wheel.dynamicRadius = Math.max(15, Math.min(maxR, 36));
+        });
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function getPolyCenterHeight(R, n, theta) {
+        if (n >= 50) return R;
+        let maxY = -Infinity;
+        for (let i = 0; i < n; i++) { const a = theta + i * (2 * Math.PI / n); const y = Math.sin(a); if (y > maxY) maxY = y; }
+        return R * maxY;
+    }
+
+    function getEllipseCenterHeight(a, b, theta) {
+        const sinT = Math.sin(theta); const cosT = Math.cos(theta);
+        return Math.sqrt(a * a * sinT * sinT + b * b * cosT * cosT);
+    }
+
+    function getCenterHeight(shapeType, radius, sides, eccentricity, rotation) {
+        if (shapeType === 'ellipse') { const a = radius; const b = radius * (1 - eccentricity); return getEllipseCenterHeight(a, b, rotation); }
+        return getPolyCenterHeight(radius, sides, rotation);
+    }
+
+    function drawGroundLine(y, alpha, extend) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width + (extend || 200), y);
+        ctx.strokeStyle = `rgba(52, 168, 83, ${alpha})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    function drawLaneDivider(y) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+        ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.lineWidth = 1;
+        ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    function drawPolyShape(x, y, radius, sides, rotation, strokeColor, fillColor) {
+        ctx.beginPath();
+        for (let i = 0; i <= sides; i++) { const angle = rotation + (i * 2 * Math.PI) / sides; const px = x + radius * Math.cos(angle); const py = y + radius * Math.sin(angle); if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+        ctx.closePath(); ctx.fillStyle = fillColor; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = strokeColor; ctx.stroke();
+    }
+
+    function drawEllipseShape(x, y, a, b, rotation, strokeColor, fillColor) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(rotation);
+        ctx.beginPath(); ctx.ellipse(0, 0, a, b, 0, 0, 2 * Math.PI); ctx.closePath();
+        ctx.fillStyle = fillColor; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = strokeColor; ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawShapeByType(type, x, y, radius, sides, eccentricity, rotation, strokeColor, fillColor) {
+        if (type === 'ellipse') { const a = radius; const b = radius * (1 - eccentricity); drawEllipseShape(x, y, a, b, rotation, strokeColor, fillColor); }
+        else { drawPolyShape(x, y, radius, sides, rotation, strokeColor, fillColor); }
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, 2 * Math.PI); ctx.fillStyle = strokeColor; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+
+    function drawTrail(trail, color) {
+        if (trail.length < 2) return;
+        ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+        ctx.moveTo(trail[0].x, trail[0].y);
+        for (let i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+        ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    function drawLaneLabel(wheel) {
+        const labelX = 10; const labelY = wheel.laneY - wheel.dynamicRadius - 8;
+        ctx.fillStyle = wheel.color + '18';
+        const textWidth = ctx.measureText(wheel.icon + ' ' + wheel.label).width;
+        ctx.beginPath(); ctx.roundRect(labelX - 4, labelY - 12, textWidth + 16, 20, 6); ctx.fill();
+        ctx.fillStyle = wheel.color; ctx.font = 'bold 11px Microsoft YaHei'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(wheel.icon + ' ' + wheel.label, labelX + 4, labelY);
+    }
+
+    function drawHeightLabel(x, cy, groundY, color) {
+        const heightPx = groundY - cy;
+        const heightCm = (heightPx * PX_TO_CM).toFixed(1);
+        const text = heightCm + 'cm';
+        ctx.font = 'bold 12px Microsoft YaHei';
+        const tw = ctx.measureText(text).width;
+        const lx = x + 12;
+        const ly = cy - 14;
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        ctx.beginPath();
+        ctx.roundRect(lx - 4, ly - 10, tw + 8, 20, 5);
+        ctx.fill();
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, lx, ly);
+    }
+
+    function drawHeightLine(x, cy, groundY, color) {
+        ctx.beginPath();
+        ctx.moveTo(x, cy);
+        ctx.lineTo(x, groundY);
+        ctx.strokeStyle = color + '99';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    // 【新增】更新高度开关按钮样式
+    function updateHeightToggleUI() {
+        if (showHeightInfo) {
+            heightToggleBtn.classList.add('active');
+            heightToggleText.textContent = '隐藏高度数据';
+        } else {
+            heightToggleBtn.classList.remove('active');
+            heightToggleText.textContent = '显示高度数据';
+        }
+    }
+
+    function renderSingle() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const groundY = singleState.groundY;
+        if (singleState.isPlaying) {
+            singleState.x += singleState.speed;
+            singleState.rotation += singleState.speed / singleState.radius;
+            if (singleState.x > canvas.width + singleState.radius) { singleState.x = -singleState.radius; singleState.trail = []; singleState.lastTrailX = -singleState.radius; }
+        }
+        const h = getCenterHeight(singleShapeType, singleState.radius, singleState.sides, singleState.eccentricity, singleState.rotation);
+        const cy = groundY - h;
+        if (singleState.isPlaying && Math.abs(singleState.x - singleState.lastTrailX) > 4) {
+            singleState.trail.push({ x: singleState.x, y: cy });
+            singleState.lastTrailX = singleState.x;
+            if (singleState.trail.length > 4500) singleState.trail.shift();
+        }
+        ctx.fillStyle = 'rgba(52,168,83,0.08)'; ctx.fillRect(0, groundY, canvas.width + 800, canvas.height - groundY);
+        drawGroundLine(groundY, 1, 800);
+        drawTrail(singleState.trail, singleShapeType === 'ellipse' ? COLORS.ellipse : '#EA4335');
+        const sc = singleShapeType === 'ellipse' ? COLORS.ellipse : '#4285F4';
+        const fc = singleShapeType === 'ellipse' ? COLORS.ellipse + '33' : 'rgba(66,133,244,0.2)';
+        drawShapeByType(singleShapeType, singleState.x, cy, singleState.radius, singleState.sides, singleState.eccentricity, singleState.rotation, sc, fc);
+    }
+
+    function renderCompare() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const globalSpeed = parseFloat(cmpSpeedSlider.value);
+        compareWheels.forEach((wheel, idx) => {
+            if (idx > 0) drawLaneDivider(wheel.laneTop);
+            ctx.fillStyle = idx % 2 === 0 ? 'rgba(52,168,83,0.03)' : 'rgba(66,133,244,0.02)';
+            const nextTop = idx < compareWheels.length - 1 ? compareWheels[idx + 1].laneTop : canvas.height;
+            ctx.fillRect(0, wheel.laneTop, canvas.width, nextTop - wheel.laneTop);
+            drawGroundLine(wheel.laneY, 0.5);
+        });
+        compareWheels.forEach((wheel) => {
+            const r = wheel.dynamicRadius; const startX = 80;
+            if (!wheel.paused && globalSpeed > 0) {
+                wheel.x += globalSpeed; wheel.rotation += globalSpeed / r;
+                if (wheel.x > canvas.width + r) { wheel.x = startX; wheel.trail = []; wheel.lastTrailX = startX; }
+            }
+            if (wheel.x === 0) { wheel.x = startX; wheel.lastTrailX = startX; }
+            const ecc = wheel.type === 'ellipse' ? wheel.eccentricity : 0;
+            const h = getCenterHeight(wheel.type, r, wheel.sides, ecc, wheel.rotation);
+            const cy = wheel.laneY - h;
+            if (!wheel.paused && globalSpeed > 0 && Math.abs(wheel.x - wheel.lastTrailX) > 3) {
+                wheel.trail.push({ x: wheel.x, y: cy }); wheel.lastTrailX = wheel.x;
+                if (wheel.trail.length > 2500) wheel.trail.shift();
+            }
+            drawTrail(wheel.trail, wheel.color);
+            drawShapeByType(wheel.type, wheel.x, cy, r, wheel.sides, ecc, wheel.rotation, wheel.color, wheel.color + '33');
+            // 【修改】高度线和标签仅在开关开启时绘制
+            if (showHeightInfo) {
+                drawHeightLine(wheel.x, cy, wheel.laneY, wheel.color);
+                drawHeightLabel(wheel.x, cy, wheel.laneY, wheel.color);
+            }
+            drawLaneLabel(wheel);
+        });
+    }
+
+    function animate() { resizeCanvas(); if (mode === 'single') renderSingle(); else renderCompare(); requestAnimationFrame(animate); }
+
+    function updateSidesPlusBtnState() { sidesPlusBtn.disabled = singleState.sides >= 50; }
+
+    function updateSingleUI() {
+        if (singleShapeType === 'ellipse') {
+            const ecc = singleState.eccentricity; eccValDisplay.textContent = ecc.toFixed(2);
+            if (ecc < 0.05) { shapeNameDisplay.textContent = "椭圆 (≈正圆)"; shapeNameDisplay.className = "text-[#34A853] font-bold text-lg"; heightVarDisplay.textContent = "无 (平稳)"; heightVarDisplay.className = "text-[#34A853] font-bold text-lg"; }
+            else if (ecc < 0.4) { shapeNameDisplay.textContent = "椭圆 (微扁)"; shapeNameDisplay.className = "text-[#9C27B0] font-bold text-lg"; heightVarDisplay.textContent = "轻微"; heightVarDisplay.className = "text-[#FBBC05] font-bold text-lg"; }
+            else { shapeNameDisplay.textContent = "椭圆 (较扁)"; shapeNameDisplay.className = "text-[#9C27B0] font-bold text-lg"; heightVarDisplay.textContent = "明显"; heightVarDisplay.className = "text-[#EA4335] font-bold text-lg"; }
+        } else {
+            sidesValDisplay.textContent = `当前：${singleState.sides}边`; updateSidesPlusBtnState();
+            if (singleState.sides >= 50) { shapeNameDisplay.textContent = "圆形"; shapeNameDisplay.className = "text-[#34A853] font-bold text-lg"; heightVarDisplay.textContent = "无 (平稳)"; heightVarDisplay.className = "text-[#34A853] font-bold text-lg"; }
+            else {
+                shapeNameDisplay.textContent = `正${singleState.sides}边形`; shapeNameDisplay.className = "text-[#4285F4] font-bold text-lg";
+                if (singleState.sides < 6) { heightVarDisplay.textContent = "剧烈"; heightVarDisplay.className = "text-[#EA4335] font-bold text-lg"; }
+                else if (singleState.sides < 12) { heightVarDisplay.textContent = "明显"; heightVarDisplay.className = "text-[#FBBC05] font-bold text-lg"; }
+                else { heightVarDisplay.textContent = "轻微"; heightVarDisplay.className = "text-[#34A853] font-bold text-lg"; }
+            }
+        }
+        const spd = singleState.speed; speedValDisplay.textContent = spd === 0 ? "暂停" : spd < 3 ? "慢速" : spd < 7 ? "中速" : "快速";
+    }
+
+    function updateCompareUI() { const spd = parseFloat(cmpSpeedSlider.value); cmpSpeedValDisplay.textContent = spd === 0 ? "暂停" : spd < 3 ? "慢速" : spd < 7 ? "中速" : "快速"; }
+
+    function setPlayButton(playing) {
+        if (playing) { playIcon.className = "fa-solid fa-pause"; playText.textContent = "暂停"; playBtn.classList.remove("bg-[#4285F4]", "hover:bg-blue-600"); playBtn.classList.add("bg-[#FBBC05]", "hover:bg-yellow-500"); }
+        else { playIcon.className = "fa-solid fa-play"; playText.textContent = "开始"; playBtn.classList.add("bg-[#4285F4]", "hover:bg-blue-600"); playBtn.classList.remove("bg-[#FBBC05]", "hover:bg-yellow-500"); }
+    }
+
+    function buildCompareButtons() {
+        compareBtnGrid.innerHTML = '';
+        compareWheels.forEach((wheel) => {
+            const btn = document.createElement('button');
+            btn.className = 'compare-btn flex items-center justify-between px-4 py-2.5 rounded-xl border-2 font-bold text-sm';
+            btn.style.borderColor = wheel.color; btn.style.color = wheel.color;
+            const updateBtnStyle = () => {
+                if (wheel.paused) { btn.style.background = 'white'; btn.innerHTML = `<span><i class="fa-solid fa-play mr-1"></i>${wheel.icon} ${wheel.label}</span><span class="text-xs opacity-60">已暂停</span>`; }
+                else { btn.style.background = wheel.color + '15'; btn.innerHTML = `<span><i class="fa-solid fa-pause mr-1"></i>${wheel.icon} ${wheel.label}</span><span class="text-xs opacity-60">滚动中</span>`; }
+            };
+            updateBtnStyle();
+            btn.addEventListener('click', () => { wheel.paused = !wheel.paused; updateBtnStyle(); });
+            compareBtnGrid.appendChild(btn);
+        });
+    }
+
+    function switchMode(newMode) {
+        mode = newMode;
+        if (mode === 'single') {
+            tabSingle.classList.add('active'); tabCompare.classList.remove('active'); tabCompare.classList.add('text-gray-500'); tabSingle.classList.remove('text-gray-500');
+            singleControls.classList.remove('hidden'); compareControls.classList.add('hidden');
+        } else {
+            tabCompare.classList.add('active'); tabSingle.classList.remove('active'); tabSingle.classList.add('text-gray-500'); tabCompare.classList.remove('text-gray-500');
+            singleControls.classList.add('hidden'); compareControls.classList.remove('hidden');
+            compareWheels.forEach(w => { w.x = 0; w.trail = []; w.rotation = 0; w.paused = true; });
+            // 【新增】切换到对比模式时自动关闭高度显示
+            showHeightInfo = false;
+            updateHeightToggleUI();
+            buildCompareButtons(); recalcLanes(); setPlayButton(false);
+        }
+    }
+
+    tabSingle.addEventListener('click', () => switchMode('single'));
+    tabCompare.addEventListener('click', () => switchMode('compare'));
+
+    // 【新增】高度显示开关点击事件
+    heightToggleBtn.addEventListener('click', () => {
+        showHeightInfo = !showHeightInfo;
+        updateHeightToggleUI();
+    });
+
+    function switchShapeType(type) {
+        singleShapeType = type;
+        if (type === 'poly') {
+            togglePoly.classList.add('active'); toggleEllipse.classList.remove('active'); toggleEllipse.classList.add('text-gray-500'); togglePoly.classList.remove('text-gray-500');
+            polySliderGroup.classList.remove('hidden'); ellipseSliderGroup.classList.add('hidden');
+        } else {
+            toggleEllipse.classList.add('active'); togglePoly.classList.remove('active'); togglePoly.classList.add('text-gray-500'); toggleEllipse.classList.remove('text-gray-500');
+            ellipseSliderGroup.classList.remove('hidden'); polySliderGroup.classList.add('hidden');
+        }
+        singleState.lastTrailX = singleState.x; updateSingleUI();
+    }
+
+    togglePoly.addEventListener('click', () => switchShapeType('poly'));
+    toggleEllipse.addEventListener('click', () => switchShapeType('ellipse'));
+
+    sidesSlider.addEventListener('input', (e) => { singleState.sides = parseInt(e.target.value, 10); updateSingleUI(); });
+    sidesPlusBtn.addEventListener('click', () => { if (singleState.sides < 50) { singleState.sides += 1; sidesSlider.value = singleState.sides; updateSingleUI(); } });
+    eccSlider.addEventListener('input', (e) => { singleState.eccentricity = parseFloat(e.target.value); updateSingleUI(); });
+    speedSlider.addEventListener('input', (e) => { singleState.speed = parseFloat(e.target.value); updateSingleUI(); });
+    cmpSpeedSlider.addEventListener('input', updateCompareUI);
+
+    playBtn.addEventListener('click', () => {
+        if (mode === 'single') { singleState.isPlaying = !singleState.isPlaying; setPlayButton(singleState.isPlaying); }
+        else { const anyRunning = compareWheels.some(w => !w.paused); const newState = !anyRunning; compareWheels.forEach(w => w.paused = !newState); buildCompareButtons(); setPlayButton(newState); }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        if (mode === 'single') {
+            singleState.x = 40; singleState.rotation = 0; singleState.trail = []; singleState.lastTrailX = 40; singleState.isPlaying = false; setPlayButton(false);
+        }
+        else { compareWheels.forEach(w => { w.rotation = 0; w.x = 0; w.trail = []; w.lastTrailX = 0; w.paused = true; }); buildCompareButtons(); setPlayButton(false); }
+    });
+
+    updateSingleUI(); updateHeightToggleUI(); setPlayButton(false); animate();
+})();
+</script>
+</body>
+</html>

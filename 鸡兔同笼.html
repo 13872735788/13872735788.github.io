@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鸡兔同笼 - 紧凑模型版(无瑕疵)</title>
+    <style>
+        :root {
+            --primary-color: #5c9ded;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --danger-color: #ff7675;
+            --bg-color: #eef2f7;
+            --panel-bg: #ffffff;
+            --text-color: #2d3436;
+            --border-radius: 16px;
+            --chicken-color: #ffd32a;
+            --chicken-border: #e6be00;
+            --rabbit-color: #dfe6e9;
+            --rabbit-border: #b2bec3;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), #74b9ff);
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(92, 157, 237, 0.3);
+        }
+        header h1 { font-size: 2rem; margin-bottom: 0.5rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        header p { font-size: 1rem; opacity: 0.95; font-weight: 300; }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 25px;
+            padding: 25px;
+            max-width: 1300px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .control-group { margin-bottom: 25px; }
+        .control-group label { display: block; margin-bottom: 10px; font-weight: 700; color: #636e72; font-size: 0.95rem; }
+        .input-wrapper { display: flex; align-items: center; gap: 12px; }
+        input[type="number"] {
+            width: 70px; padding: 8px; border: 2px solid #dfe6e9; border-radius: 8px; 
+            font-size: 1.1rem; text-align: center; font-weight: bold; color: var(--primary-color); transition: border-color 0.3s;
+        }
+        input[type="number"]:focus { border-color: var(--primary-color); outline: none; }
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--primary-color); height: 6px; }
+
+        .btn-adjust {
+            width: 40px; height: 40px; border-radius: 12px; border: none; background: #f1f2f6; color: var(--text-color); font-size: 1.4rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-adjust:hover { background: var(--primary-color); color: white; transform: translateY(-2px); }
+        .btn-adjust:active { transform: translateY(0); }
+        .btn-adjust:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;
+            background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee;
+        }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 0.8rem; color: #b2bec3; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 1.4rem; font-weight: 800; margin-top: 4px; display: block; }
+        .highlight-chicken { color: #f39c12; }
+        .highlight-rabbit { color: #636e72; }
+
+        .status-message {
+            margin-top: 15px; padding: 15px; border-radius: 12px; text-align: center; font-weight: 600;
+            transition: all 0.3s; min-height: 55px; display: flex; align-items: center; justify-content: center; font-size: 1rem;
+        }
+        .status-neutral { background-color: #f1f2f6; color: #636e72; }
+        .status-success { background-color: #dff9fb; color: #22a6b3; border: 2px solid #c7ecee; }
+        .status-error { background-color: #ff7675; color: white; box-shadow: 0 4px 10px rgba(255, 118, 117, 0.3); }
+
+        .cage-container {
+            flex: 1; border: 3px dashed #b2bec3; border-radius: var(--border-radius);
+            background-color: #fff; background-image: linear-gradient(#f1f2f6 1px, transparent 1px), linear-gradient(90deg, #f1f2f6 1px, transparent 1px);
+            background-size: 30px 30px; position: relative; padding: 20px; min-height: 400px;
+            overflow-y: auto; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 15px;
+        }
+
+        .feet-visualizer {
+            margin-top: 0; border-top: 1px solid #eee; padding: 20px; background: #fafafa;
+            border-radius: 0 0 var(--border-radius) var(--border-radius); min-height: 90px;
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center;
+        }
+        .feet-label { width: 100%; text-align: center; font-size: 0.9rem; color: #999; margin-bottom: 8px; font-weight: 600; }
+
+        /* 动画 */
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        @keyframes waddle { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+        @keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        /* --- 动物模型：紧凑、无遮挡、实心 --- */
+        .animal {
+            width: 80px; height: 80px;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            padding-bottom: 0; margin-bottom: 5px;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            flex-shrink: 0;
+        }
+
+        /* --- 鸡 (紧凑版) --- */
+        .chicken { animation: popIn 0.4s ease forwards, waddle 3s infinite ease-in-out; }
+        
+        .chicken .head-group {
+            width: 36px; height: 30px;
+            margin-bottom: -10px;
+            position: relative; z-index: 2;
+        }
+        .chicken .comb {
+            width: 12px; height: 10px; background: #ff7675; border-radius: 50% 50% 0 0;
+            position: absolute; top: -8px; left: 12px; border: 1px solid #d63031;
+        }
+        .chicken .head-shape {
+            width: 32px; height: 28px; background: var(--chicken-color); border: 2px solid var(--chicken-border);
+            border-radius: 50%; position: absolute; top: 0; left: 2px; z-index: 2;
+        }
+        .chicken .eye {
+            width: 3px; height: 3px; background: #2d3436; border-radius: 50%;
+            position: absolute; top: 10px; right: 6px; z-index: 3;
+        }
+        .chicken .beak {
+            width: 0; height: 0; border-top: 3px solid transparent; border-bottom: 3px solid transparent; border-left: 7px solid #e17055;
+            position: absolute; top: 11px; left: -4px; z-index: 3;
+        }
+
+        .chicken .body-shape {
+            width: 50px; height: 42px; background: var(--chicken-color); border: 2px solid var(--chicken-border);
+            border-radius: 25px 25px 20px 20px; position: relative; z-index: 1;
+        }
+
+        .chicken .legs {
+            display: flex; gap: 14px; height: 12px; margin-top: -2px;
+        }
+        .chicken .leg {
+            width: 4px; height: 14px; background: #e17055; border-radius: 2px;
+        }
+
+        /* --- 兔 (紧凑版 - 修复版) --- */
+        .rabbit { animation: popIn 0.4s ease forwards, hop 3s infinite ease-in-out; }
+
+        /* 兔耳朵：干净的灰色，无多余装饰 */
+        .rabbit .ears {
+            display: flex; gap: 4px; margin-bottom: -15px;
+            z-index: 3;
+        }
+        .rabbit .ear {
+            width: 10px; height: 30px; background: var(--rabbit-color); border: 2px solid var(--rabbit-border);
+            border-radius: 20px;
+        }
+        /* 移除了 .rabbit .ear::after 伪元素，去掉了粉红竖条 */
+
+        .rabbit .head-group {
+            width: 40px; height: 34px;
+            margin-bottom: -8px;
+            position: relative; z-index: 2;
+        }
+        .rabbit .head-shape {
+            width: 36px; height: 32px; background: var(--rabbit-color); border: 2px solid var(--rabbit-border);
+            border-radius: 50%; position: absolute; top: 10px; left: 2px;
+        }
+        .rabbit .eye {
+            width: 4px; height: 4px; background: #2d3436; border-radius: 50%;
+            position: absolute; top: 20px; right: 6px; z-index: 3;
+        }
+        .rabbit .nose {
+            width: 5px; height: 4px; background: #ff7675; border-radius: 50%;
+            position: absolute; top: 24px; left: 6px; z-index: 3;
+        }
+        .rabbit .mouth {
+            width: 8px; height: 4px; border-bottom: 2px solid #636e72; border-radius: 0 0 50% 50%;
+            position: absolute; top: 27px; left: 6px; z-index: 3;
+        }
+
+        .rabbit .body-shape {
+            width: 56px; height: 46px; background: var(--rabbit-color); border: 2px solid var(--rabbit-border);
+            border-radius: 30px 30px 25px 25px; position: relative; z-index: 1;
+        }
+
+        .rabbit .legs {
+            display: flex; justify-content: space-between; width: 90%; margin: 0 auto; margin-top: -2px;
+        }
+        .rabbit .leg {
+            width: 6px; height: 12px; background: #b2bec3; border-radius: 3px; border: 1px solid #999;
+        }
+
+        /* 脚点样式 */
+        .foot-dot {
+            width: 12px; height: 12px; border-radius: 50%; cursor: help; transition: transform 0.2s;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+        }
+        .foot-dot:hover { transform: scale(1.5); }
+        .foot-dot.chicken-foot { background-color: var(--chicken-color); border: 2px solid var(--chicken-border); }
+        .foot-dot.rabbit-foot { background-color: var(--rabbit-color); border: 2px solid var(--rabbit-border); }
+
+        .text-pulse { animation: popIn 0.3s ease; color: var(--danger-color) !important; }
+        
+        .btn {
+            background-color: var(--primary-color); color: white; border: none; padding: 12px;
+            border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: all 0.2s; width: 100%; margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(92, 157, 237, 0.3);
+        }
+        .btn:hover { background-color: #3498db; transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+        .btn-outline { background-color: transparent; border: 2px solid var(--primary-color); color: var(--primary-color); margin-top: 10px; box-shadow: none; }
+        .btn-outline:hover { background-color: var(--primary-color); color: white; }
+
+        .explanation-box {
+            background-color: #e3f2fd; border-left: 5px solid var(--primary-color);
+            padding: 15px; margin-top: 20px; font-size: 0.95rem; line-height: 1.6; display: none; border-radius: 0 8px 8px 0;
+        }
+        .explanation-box.active { display: block; animation: popIn 0.4s; }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+    </style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header>
+    <h1>🐔 鸡兔同笼 - 紧凑模型版 🐰</h1>
+    <p>头身紧密连接，直观验证脚的数量</p>
+</header>
+
+<main>
+    <!-- 左侧控制区 -->
+    <section class="panel">
+        <h2 style="margin-bottom: 20px; font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 10px;">📝 出题设置</h2>
+        
+        <div class="control-group">
+            <label for="totalHeads">总头数: <span id="headsVal" class="stat-value" style="color:var(--primary-color); display:inline;">10</span></label>
+            <div class="input-wrapper">
+                <input type="range" id="headSlider" min="1" max="30" value="10">
+                <input type="number" id="totalHeads" min="1" max="30" value="10">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="totalFeet">目标总脚数: <span id="feetVal" class="stat-value" style="color:var(--primary-color); display:inline;">28</span></label>
+            <div class="input-wrapper">
+                <input type="range" id="footSlider" min="1" max="120" value="28" step="2">
+                <input type="number" id="totalFeet" min="1" max="120" value="28" step="2">
+            </div>
+        </div>
+
+        <hr style="margin: 25px 0; border: none; border-top: 1px dashed #ddd;">
+
+        <h2 style="margin-bottom: 20px; font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 10px;">🔧 动手操作</h2>
+        
+        <div class="control-group">
+            <label for="chickenCount">鸡的数量调整:</label>
+            
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <button class="btn-adjust" id="btnMinus" title="减少一只鸡">−</button>
+                <input type="range" id="chickenSlider" min="0" max="10" value="0">
+                <button class="btn-adjust" id="btnPlus" title="增加一只鸡">+</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">鸡</span>
+                    <span id="chickenDisplay" class="stat-value highlight-chicken">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">兔</span>
+                    <span id="rabbitDisplay" class="stat-value highlight-rabbit">0</span>
+                </div>
+                <div class="stat-item" style="grid-column: span 2; background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 8px;">
+                    <span class="stat-label">当前脚数</span>
+                    <span id="currentFeet" class="stat-value" style="font-size: 1.6rem; color: var(--primary-color)">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="statusBox" class="status-message status-neutral">
+            请调整滑块或点击按钮开始
+        </div>
+        
+        <div class="explanation-box" id="explanation">
+            <strong>🎉 恭喜！答案正确！</strong><br>
+            <div style="margin-top:8px;">
+                鸡: <b id="expChickens">0</b> 只 × 2 脚 = <span id="expCFeet">0</span> 脚<br>
+                兔: <b id="expRabbits">0</b> 只 × 4 脚 = <span id="expRFeet">0</span> 脚<br>
+                <hr style="margin: 8px 0; border:0; border-top:1px dashed #badc58;">
+                总计: <span id="expTotal">0</span> 脚
+            </div>
+        </div>
+
+        <button class="btn btn-outline" onclick="resetToHalf()">↺ 重置各一半</button>
+        <button class="btn" onclick="randomizeQuestion()">🎲 随机出题</button>
+    </section>
+
+    <!-- 右侧展示区 -->
+    <section class="panel" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="padding: 20px; border-bottom: 1px solid #eee; background: #fff; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="color:#636e72;">👁️ 笼子观察区</h3>
+            <div style="font-size:0.8rem; color:#b2bec3;">紧凑模型 · 无缝隙</div>
+        </div>
+        
+        <div id="cage" class="cage-container">
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#ccc;">
+                这里将显示可爱的小动物
+            </div>
+        </div>
+
+        <div class="feet-visualizer">
+            <div class="feet-label">🔢 脚的数量拆解 (黄色=鸡, 灰色=兔)</div>
+            <div id="feetDotsContainer" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;"></div>
+        </div>
+    </section>
+</main>
+
+<script>
+    // Elements
+    const totalHeadsInput = document.getElementById('totalHeads');
+    const headSlider = document.getElementById('headSlider');
+    const totalFeetInput = document.getElementById('totalFeet');
+    const footSlider = document.getElementById('footSlider');
+    const headsVal = document.getElementById('headsVal');
+    const feetVal = document.getElementById('feetVal');
+    const chickenSlider = document.getElementById('chickenSlider');
+    const btnMinus = document.getElementById('btnMinus');
+    const btnPlus = document.getElementById('btnPlus');
+    const chickenDisplay = document.getElementById('chickenDisplay');
+    const rabbitDisplay = document.getElementById('rabbitDisplay');
+    const currentFeetDisplay = document.getElementById('currentFeet');
+    const statusBox = document.getElementById('statusBox');
+    const cage = document.getElementById('cage');
+    const feetDotsContainer = document.getElementById('feetDotsContainer');
+    const explanationBox = document.getElementById('explanation');
+
+    const expChickens = document.getElementById('expChickens');
+    const expRabbits = document.getElementById('expRabbits');
+    const expCFeet = document.getElementById('expCFeet');
+    const expRFeet = document.getElementById('expRFeet');
+    const expTotal = document.getElementById('expTotal');
+
+    let state = { heads: 10, targetFeet: 28, chickens: 0 };
+
+    function init() {
+        addListeners();
+        randomizeQuestion();
+    }
+
+    function addListeners() {
+        totalHeadsInput.addEventListener('input', updateHeads);
+        headSlider.addEventListener('input', updateHeads);
+        totalFeetInput.addEventListener('input', updateFeet);
+        footSlider.addEventListener('input', updateFeet);
+        chickenSlider.addEventListener('input', (e) => {
+            state.chickens = parseInt(e.target.value);
+            updateUI();
+        });
+        btnMinus.addEventListener('click', () => {
+            if(state.chickens > 0) {
+                state.chickens--;
+                chickenSlider.value = state.chickens;
+                updateUI();
+            }
+        });
+        btnPlus.addEventListener('click', () => {
+            if(state.chickens < state.heads) {
+                state.chickens++;
+                chickenSlider.value = state.chickens;
+                updateUI();
+            }
+        });
+    }
+
+    function updateHeads(e) {
+        let val = parseInt(e.target.value) || 1;
+        if(val > 40) val = 40; 
+        state.heads = val;
+        headSlider.value = val;
+        totalHeadsInput.value = val;
+        headsVal.textContent = val;
+        chickenSlider.max = val;
+        footSlider.max = val * 4;
+        if (state.chickens > val) {
+            state.chickens = val;
+            chickenSlider.value = val;
+        }
+        updateUI();
+    }
+
+    function updateFeet(e) {
+        let val = parseInt(e.target.value) || 0;
+        if(val > state.heads * 4) val = state.heads * 4; 
+        state.targetFeet = val;
+        footSlider.value = val;
+        totalFeetInput.value = val;
+        feetVal.textContent = val;
+        checkResult();
+    }
+
+    function updateUI() {
+        const rabbits = state.heads - state.chickens;
+        const currentFeet = (state.chickens * 2) + (rabbits * 4);
+        chickenDisplay.textContent = state.chickens;
+        rabbitDisplay.textContent = rabbits;
+        
+        const oldFeet = parseInt(currentFeetDisplay.innerText);
+        if (oldFeet !== currentFeet) {
+            currentFeetDisplay.classList.remove('text-pulse');
+            void currentFeetDisplay.offsetWidth; 
+            currentFeetDisplay.classList.add('text-pulse');
+        }
+        currentFeetDisplay.textContent = currentFeet;
+
+        btnMinus.disabled = state.chickens <= 0;
+        btnPlus.disabled = state.chickens >= state.heads;
+
+        renderCage(state.chickens, rabbits);
+        renderFeetDots(state.chickens, rabbits);
+        checkResult();
+    }
+
+    function renderCage(c, r) {
+        cage.innerHTML = '';
+        if (c === 0 && r === 0) {
+            cage.innerHTML = '<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:1.2rem;">笼子空空如也</div>';
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        // Render Chickens
+        for(let i=0; i<c; i++) {
+            const el = document.createElement('div');
+            el.className = 'animal chicken';
+            el.innerHTML = `
+                <div class="head-group">
+                    <div class="comb"></div>
+                    <div class="head-shape">
+                        <div class="eye"></div>
+                        <div class="beak"></div>
+                    </div>
+                </div>
+                <div class="body-shape"></div>
+                <div class="legs">
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                </div>
+            `;
+            fragment.appendChild(el);
+        }
+
+        // Render Rabbits
+        for(let i=0; i<r; i++) {
+            const el = document.createElement('div');
+            el.className = 'animal rabbit';
+            el.innerHTML = `
+                <div class="ears">
+                    <div class="ear"></div>
+                    <div class="ear"></div>
+                </div>
+                <div class="head-group">
+                    <div class="head-shape">
+                        <div class="eye"></div>
+                        <div class="nose"></div>
+                        <div class="mouth"></div>
+                    </div>
+                </div>
+                <div class="body-shape"></div>
+                <div class="legs">
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                </div>
+            `;
+            fragment.appendChild(el);
+        }
+        cage.appendChild(fragment);
+    }
+
+    function renderFeetDots(c, r) {
+        feetDotsContainer.innerHTML = '';
+        let dots = [];
+        for(let i=0; i<c; i++) {
+            dots.push({ type: 'chicken', owner: `第 ${i+1} 只鸡` });
+            dots.push({ type: 'chicken', owner: `第 ${i+1} 只鸡` });
+        }
+        for(let i=0; i<r; i++) {
+            dots.push({ type: 'rabbit', owner: `第 ${i+1} 只兔` });
+            dots.push({ type: 'rabbit', owner: `第 ${i+1} 只兔` });
+            dots.push({ type: 'rabbit', owner: `第 ${i+1} 只兔` });
+            dots.push({ type: 'rabbit', owner: `第 ${i+1} 只兔` });
+        }
+
+        const fragment = document.createDocumentFragment();
+        dots.forEach((d, idx) => {
+            const dot = document.createElement('div');
+            dot.className = `foot-dot ${d.type}-foot`;
+            dot.title = d.owner;
+            dot.style.animation = `popIn 0.2s ease backwards ${idx * 0.005}s`;
+            fragment.appendChild(dot);
+        });
+        feetDotsContainer.appendChild(fragment);
+    }
+
+    function checkResult() {
+        const rabbits = state.heads - state.chickens;
+        const currentFeet = (state.chickens * 2) + (rabbits * 4);
+        const diff = currentFeet - state.targetFeet;
+        explanationBox.classList.remove('active');
+
+        if (state.heads === 0) {
+            setStatus('请先设置头数', 'neutral');
+            return;
+        }
+        if (state.targetFeet < state.heads * 2 || state.targetFeet > state.heads * 4 || (state.targetFeet % 2 !== 0)) {
+             setStatus('目标脚数不合理，无法组成', 'error');
+             return;
+        }
+
+        if (diff === 0) {
+            setStatus('🎉 完美！答案正确！', 'success');
+            expChickens.textContent = state.chickens;
+            expRabbits.textContent = rabbits;
+            expCFeet.textContent = state.chickens * 2;
+            expRFeet.textContent = rabbits * 4;
+            expTotal.textContent = state.targetFeet;
+            explanationBox.classList.add('active');
+            fireConfetti();
+        } else if (diff > 0) {
+            setStatus(`脚多了 ${diff} 只，试着减少兔子？`, 'error');
+        } else {
+            setStatus(`脚少了 ${Math.abs(diff)} 只，试着增加兔子？`, 'error');
+        }
+    }
+
+    function setStatus(msg, type) {
+        statusBox.textContent = msg;
+        statusBox.className = 'status-message';
+        if(type === 'success') statusBox.classList.add('status-success');
+        else if(type === 'error') statusBox.classList.add('status-error');
+        else statusBox.classList.add('status-neutral');
+    }
+
+    function resetToHalf() {
+        state.chickens = Math.floor(state.heads / 2);
+        chickenSlider.value = state.chickens;
+        updateUI();
+    }
+
+    function randomizeQuestion() {
+        const h = Math.floor(Math.random() * 10) + 5; 
+        state.heads = h;
+        const r = Math.floor(Math.random() * (h + 1));
+        const c = h - r;
+        state.targetFeet = c * 2 + r * 4;
+        
+        totalHeadsInput.value = h;
+        headSlider.value = h;
+        headsVal.textContent = h;
+        totalFeetInput.value = state.targetFeet;
+        footSlider.value = state.targetFeet;
+        feetVal.textContent = state.targetFeet;
+        
+        chickenSlider.max = h;
+        footSlider.max = h * 4;
+        
+        resetToHalf();
+    }
+
+    // Confetti Effect
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let confettiParticles = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function fireConfetti() {
+        confettiParticles = [];
+        const colors = ['#e17055', '#fdcb6e', '#00b894', '#0984e3', '#6c5ce7'];
+        for (let i = 0; i < 100; i++) {
+            confettiParticles.push({
+                x: window.innerWidth / 2, y: window.innerHeight / 2,
+                w: Math.random() * 10 + 5, h: Math.random() * 10 + 5,
+                vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20 - 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                rotation: Math.random() * 360, rotationSpeed: (Math.random() - 0.5) * 10
+            });
+        }
+        animateConfetti();
+    }
+
+    function animateConfetti() {
+        if (confettiParticles.length === 0) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        confettiParticles.forEach((p, index) => {
+            p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.rotation += p.rotationSpeed;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate((p.rotation * Math.PI) / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+            if (p.y > canvas.height) confettiParticles.splice(index, 1);
+        });
+        requestAnimationFrame(animateConfetti);
+    }
+    init();
+</script>
+</body>
+</html>

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正比例课件：圆柱注水实验 (两位小数)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #f6f9fc 0%, #e6f0f5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px;
+        }
+        .card {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 48px;
+            box-shadow: 0 20px 40px rgba(0,30,50,0.2), 0 8px 16px rgba(0,20,30,0.1);
+            padding: 30px 30px 40px;
+            border: 1px solid rgba(255,255,255,0.6);
+            position: relative;
+        }
+        /* 作者署名 - 右上角 */
+        .author-signature {
+            position: absolute;
+            top: 25px;
+            right: 35px;
+            font-size: 1.1rem;
+            color: #2b5e7a;
+            background: rgba(255,255,255,0.7);
+            padding: 6px 18px;
+            border-radius: 40px;
+            border: 1px solid #9dc1d4;
+            font-style: italic;
+            box-shadow: 0 2px 6px rgba(0,30,40,0.1);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            z-index: 20;
+        }
+        .author-signature::before {
+            content: "✎ ";
+            font-style: normal;
+            opacity: 0.7;
+        }
+        h1 {
+            text-align: center;
+            font-weight: 500;
+            font-size: 2.4rem;
+            color: #1a3e50;
+            margin: 0 0 8px 0;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 0 rgba(255,255,255,0.8);
+        }
+        .sub {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #2b5e7a;
+            margin-bottom: 30px;
+            font-style: italic;
+            background: #d9eaf3;
+            display: inline-block;
+            padding: 6px 28px;
+            border-radius: 40px;
+            margin-left: auto;
+            margin-right: auto;
+            width: fit-content;
+            box-shadow: inset 0 1px 4px #b0c8d6;
+        }
+        .experiment-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+        /* 左：圆柱与水可视化 (外侧刻度) */
+        .visual-panel {
+            flex: 1 1 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #ffffffc9;
+            border-radius: 60px 60px 40px 40px;
+            padding: 30px 20px 30px 20px;
+            box-shadow: inset 0 2px 10px #cbdbe6, 0 10px 15px rgba(0,30,40,0.15);
+        }
+        .cylinder-box {
+            position: relative;
+            width: 220px;
+            height: 260px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px 0 10px 0;
+        }
+        .cylinder-label {
+            font-weight: 600;
+            color: #1d4e6b;
+            margin: 5px 0 2px;
+        }
+        .cylinder-container {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .cylinder-outline {
+            position: relative;
+            width: 160px;
+            height: 200px;
+            background: #eaf3fc;
+            border: 5px solid #3b6f8c;
+            border-radius: 50% / 20px 20px 10px 10px;
+            border-top-width: 5px;
+            border-bottom-width: 8px;
+            box-shadow: 0 0 0 3px white, 0 8px 0 #1f4b61;
+            overflow: hidden;
+            cursor: pointer;
+            margin: 5px 0;
+            z-index: 2;
+        }
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #4aa3cf, #2575a5);
+            transition: height 0.15s ease;
+            border-top: 3px solid #9ad0f5;
+            box-shadow: inset 0 5px 8px #b3ddfa;
+            z-index: 2;
+        }
+        .water-surface {
+            position: absolute;
+            top: -4px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: repeating-linear-gradient(90deg, 
+                transparent, 
+                transparent 8px, 
+                rgba(255, 255, 255, 0.5) 8px, 
+                rgba(255, 255, 255, 0.7) 16px);
+            border-radius: 50%;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+        /* 外侧刻度尺 */
+        .ruler-container {
+            position: relative;
+            width: 40px;
+            height: 200px;
+            margin-left: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 10;
+        }
+        .ruler-line {
+            position: absolute;
+            left: 0;
+            width: 20px;
+            height: 100%;
+            border-left: 3px solid #1f4b61;
+            border-right: 1px solid #9bb8cc;
+            background: #f4f9ff;
+            border-radius: 4px;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .ruler-mark {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            padding: 0;
+        }
+        .mark-pos-10 { position: absolute; top: 0; left: 0; width: 100%; }
+        .mark-pos-8 { position: absolute; top: 20%; left: 0; width: 100%; }
+        .mark-pos-6 { position: absolute; top: 40%; left: 0; width: 100%; }
+        .mark-pos-4 { position: absolute; top: 60%; left: 0; width: 100%; }
+        .mark-pos-2 { position: absolute; top: 80%; left: 0; width: 100%; }
+        .mark-pos-0 { position: absolute; bottom: 0; left: 0; width: 100%; }
+
+        .stats {
+            background: #dbeaf3;
+            border-radius: 40px;
+            padding: 15px 25px;
+            margin-top: 10px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid white;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.3rem;
+            margin: 5px 0;
+            background: #ffffffb3;
+            border-radius: 40px;
+            padding: 8px 20px;
+            align-items: baseline;
+        }
+        .stat-label {
+            font-weight: 600;
+            color: #16445c;
+        }
+        .stat-value {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 1.6rem;
+            color: #003153;
+            background: #eef6fb;
+            padding: 2px 18px;
+            border-radius: 40px;
+            min-width: 90px;
+            text-align: center;
+        }
+        .unit {
+            font-size: 1rem;
+            color: #2b5e7a;
+            margin-left: 4px;
+        }
+
+        /* 右：控制面板 */
+        .control-panel {
+            flex: 1 1 380px;
+            background: #ffffffd9;
+            border-radius: 40px;
+            padding: 25px 25px 30px;
+            box-shadow: 0 8px 0 #b0c6d2, 0 15px 25px #0000001a;
+        }
+        .slider-area {
+            background: #f0f8ff;
+            padding: 15px 25px;
+            border-radius: 60px;
+            border: 2px solid white;
+            margin-bottom: 15px;
+        }
+        .time-label {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1b4b62;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .time-display {
+            background: #273e4e;
+            color: white;
+            padding: 6px 22px;
+            border-radius: 60px;
+            font-size: 2rem;
+            font-family: 'Courier New', monospace;
+        }
+        input[type=range] {
+            width: 100%;
+            margin: 18px 0 8px;
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 18px;
+            background: linear-gradient(90deg, #a2cedf, #2b749b);
+            border-radius: 20px;
+            border: 2px solid white;
+            box-shadow: inset 0 1px 4px #1f4b61;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 40px;
+            width: 40px;
+            border-radius: 50%;
+            background: white;
+            margin-top: -12px;
+            border: 3px solid #16445c;
+            box-shadow: 0 4px 8px #00000033;
+            cursor: grab;
+        }
+        .slider-tick {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 8px;
+            font-weight: 600;
+            color: #16445c;
+        }
+
+        /* 算式验证栏 */
+        .equation-bar {
+            background: #cbe0ea;
+            border-radius: 30px;
+            padding: 15px 15px;
+            margin: 0 0 20px 0;
+            border: 3px solid white;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .equation-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50px;
+            padding: 8px 15px;
+        }
+        .equation-category {
+            font-weight: 700;
+            color: #0f374b;
+            background: #d9eaf3;
+            padding: 5px 15px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            min-width: 130px;
+            text-align: center;
+            border: 2px solid white;
+            box-shadow: 0 2px 0 #9bb8cc;
+        }
+        .equation-item {
+            background: white;
+            border-radius: 40px;
+            padding: 6px 18px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #16445c;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 8px;
+            border: 2px solid #9dc1d4;
+            flex: 1;
+            justify-content: center;
+            box-shadow: 0 3px 0 #b3c9d4;
+        }
+        .equation-number {
+            font-family: 'Courier New', monospace;
+            font-weight: 800;
+            color: #003153;
+            background: #e2f0f8;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 1.3rem;
+            min-width: 70px;
+            text-align: center;
+        }
+        .equation-operator {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1d4e6b;
+        }
+        .equation-result {
+            font-family: 'Courier New', monospace;
+            font-weight: 800;
+            color: #c00;
+            background: #fff0f0;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 1.3rem;
+            min-width: 70px;
+            text-align: center;
+            border: 1px solid #ff9999;
+        }
+
+        /* 正比例验证卡片 */
+        .ratio-box {
+            background: #cbe0ea;
+            border-radius: 40px;
+            padding: 18px 15px 15px;
+            margin: 20px 0 0;
+            border: 2px solid white;
+        }
+        .ratio-title {
+            font-weight: 700;
+            color: #0f374b;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            text-align: center;
+            background: #d9eaf3;
+            padding: 5px 15px;
+            border-radius: 40px;
+            display: inline-block;
+            margin-left: auto;
+            margin-right: auto;
+            width: fit-content;
+            border: 2px solid white;
+        }
+        .ratio-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        .ratio-card {
+            background: white;
+            border-radius: 30px;
+            padding: 15px 12px;
+            flex: 1 1 160px;
+            text-align: center;
+            box-shadow: 0 4px 0 #b3c9d4;
+            border: 2px solid #9dc1d4;
+        }
+        .ratio-expression {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #16445c;
+            margin: 0 0 8px 0;
+        }
+        .ratio-constant {
+            font-family: 'Courier New', monospace;
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: #003153;
+            background: #e2f0f8;
+            padding: 5px 0;
+            border-radius: 30px;
+            margin: 5px 0;
+        }
+        .ratio-unit {
+            font-size: 0.95rem;
+            color: #266080;
+            font-weight: 500;
+            background: #f0f8ff;
+            padding: 3px 10px;
+            border-radius: 30px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .footnote {
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 20px;
+            color: #215a74;
+        }
+        .btn-reset {
+            background: #fff;
+            border: 3px solid #367f9f;
+            color: #1f4b61;
+            border-radius: 40px;
+            padding: 10px 25px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .btn-reset:hover {
+            background: #e2f2ff;
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <!-- 作者签名 - 右上角 -->
+        <div class="author-signature">龚能庆</div>
+        
+        <h1>💧 正比例 · 圆柱注水实验</h1>
+        <div class="sub">每秒 50 ml · 底面积 100 cm² · 高 10 cm (20秒注满)</div>
+
+        <div class="experiment-container">
+            <!-- 左边可视化圆柱 (外侧刻度) -->
+            <div class="visual-panel">
+                <div class="cylinder-box">
+                    <div class="cylinder-label">⚪ 圆柱容器 (底面积 100 cm²)</div>
+                    <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100%;">
+                        <div class="cylinder-outline" id="cylinderOutline">
+                            <div class="water-fill" id="waterFill" style="height: 0%;">
+                                <div class="water-surface"></div>
+                            </div>
+                        </div>
+                        <!-- 外侧刻度尺 -->
+                        <div class="ruler-container">
+                            <div class="ruler-line"></div>
+                            <div class="ruler-mark">
+                                <!-- 10cm 刻度 -->
+                                <div class="mark-pos-10" style="position: absolute; top: 0; left: 0; width: 100%;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="mark-line" style="width:12px; height:3px; background:#1f4b61; margin-right:4px;"></div>
+                                        <span class="mark-text" style="background:white; border:2px solid #1f4b61; border-radius:12px; padding:2px 6px; font-size:11px; font-weight:600;">10cm</span>
+                                    </div>
+                                </div>
+                                <!-- 8cm 刻度 -->
+                                <div class="mark-pos-8" style="position: absolute; top: 20%; left: 0; width: 100%;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="mark-line" style="width:12px; height:3px; background:#1f4b61; margin-right:4px;"></div>
+                                        <span class="mark-text" style="background:white; border:2px solid #1f4b61; border-radius:12px; padding:2px 6px; font-size:11px; font-weight:600;">8cm</span>
+                                    </div>
+                                </div>
+                                <!-- 6cm 刻度 -->
+                                <div class="mark-pos-6" style="position: absolute; top: 40%; left: 0; width: 100%;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="mark-line" style="width:12px; height:3px; background:#1f4b61; margin-right:4px;"></div>
+                                        <span class="mark-text" style="background:white; border:2px solid #1f4b61; border-radius:12px; padding:2px 6px; font-size:11px; font-weight:600;">6cm</span>
+                                    </div>
+                                </div>
+                                <!-- 4cm 刻度 -->
+                                <div class="mark-pos-4" style="position: absolute; top: 60%; left: 0; width: 100%;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="mark-line" style="width:12px; height:3px; background:#1f4b61; margin-right:4px;"></div>
+                                        <span class="mark-text" style="background:white; border:2px solid #1f4b61; border-radius:12px; padding:2px 6px; font-size:11px; font-weight:600;">4cm</span>
+                                    </div>
+                                </div>
+                                <!-- 2cm 刻度 -->
+                                <div class="mark-pos-2" style="position: absolute; top: 80%; left: 0; width: 100%;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="mark-line" style="width:12px; height:3px; background:#1f4b61; margin-right:4px;"></div>
+                                        <span class="mark-text" style="background:white; border:2px solid #1f4b61; border-radius:12px; padding:2px 6px; font-size:11px; font-weight:600;">2cm</span>
+                                    </div>
+                                </div>
+                                <!-- 0cm 刻度 -->
+                                <div class="mark-pos-0" style="position: absolute; bottom: 0; left: 0; width: 100%;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="mark-line" style="width:12px; height:3px; background:#1f4b61; margin-right:4px;"></div>
+                                        <span class="mark-text" style="background:white; border:2px solid #1f4b61; border-radius:12px; padding:2px 6px; font-size:11px; font-weight:600;">0cm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 1.1rem; margin: 6px 0; color:#0f374b;">⬆️ 水面高度</div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">⏱️ 时间</span>
+                        <span class="stat-value" id="displayTime">0.0</span><span class="unit">秒</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">📏 高度</span>
+                        <span class="stat-value" id="displayHeight">0.00</span><span class="unit">cm</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">💧 体积</span>
+                        <span class="stat-value" id="displayVolume">0.0</span><span class="unit">ml</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右边控制区 -->
+            <div class="control-panel">
+                <div class="slider-area">
+                    <div class="time-label">
+                        <span>🕒 拖动时间</span>
+                        <span class="time-display" id="timeReadout">0.0 s</span>
+                    </div>
+                    <input type="range" min="0" max="20" step="0.1" value="0" id="timeSlider" class="slider">
+                    <div class="slider-tick">
+                        <span>0s</span><span>5s</span><span>10s</span><span>15s</span><span>20s</span>
+                    </div>
+                </div>
+
+                <!-- 算式验证栏 - 两位小数精确显示 -->
+                <div class="equation-bar">
+                    <div class="equation-row">
+                        <span class="equation-category">体积 ÷ 高度</span>
+                        <div class="equation-item">
+                            <span class="equation-number" id="volDisplay">0.0</span>
+                            <span class="equation-operator">÷</span>
+                            <span class="equation-number" id="heightDisplay">0.00</span>
+                            <span class="equation-operator">=</span>
+                            <span class="equation-result" id="resultVH">0</span>
+                        </div>
+                    </div>
+                    <div class="equation-row">
+                        <span class="equation-category">体积 ÷ 时间</span>
+                        <div class="equation-item">
+                            <span class="equation-number" id="volDisplay2">0.0</span>
+                            <span class="equation-operator">÷</span>
+                            <span class="equation-number" id="timeDisplay">0.0</span>
+                            <span class="equation-operator">=</span>
+                            <span class="equation-result" id="resultVT">0</span>
+                        </div>
+                    </div>
+                    <div class="equation-row">
+                        <span class="equation-category">高度 ÷ 时间</span>
+                        <div class="equation-item">
+                            <span class="equation-number" id="heightDisplay2">0.00</span>
+                            <span class="equation-operator">÷</span>
+                            <span class="equation-number" id="timeDisplay2">0.0</span>
+                            <span class="equation-operator">=</span>
+                            <span class="equation-result" id="resultHT">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 正比例验证卡片 - 显示常数 -->
+                <div class="ratio-box">
+                    <div class="ratio-title">正比例关系验证 (比值一定)</div>
+                    <div class="ratio-row">
+                        <div class="ratio-card">
+                            <div class="ratio-expression">💧体积 ÷ 📏高度</div>
+                            <div class="ratio-constant">100 cm²</div>
+                            <div class="ratio-unit">（底面积）</div>
+                        </div>
+                        <div class="ratio-card">
+                            <div class="ratio-expression">💧体积 ÷ ⏱️时间</div>
+                            <div class="ratio-constant">50 ml/s</div>
+                            <div class="ratio-unit">（流速）</div>
+                        </div>
+                        <div class="ratio-card">
+                            <div class="ratio-expression">📏高度 ÷ ⏱️时间</div>
+                            <div class="ratio-constant">0.5 cm/s</div>
+                            <div class="ratio-unit">（每秒上升的高度）</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-reset" id="resetBtn">⟲ 重置到 0 秒</button>
+                <div class="footnote">
+                    * 拖动滑块 — 观察体积、高度、时间数据变化，所有数据精确显示两位小数。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // 常量
+            const FLOW_RATE = 50;        // 每秒 50 ml
+            const BASE_AREA = 100;        // 底面积 100 cm²
+            const MAX_TIME = 20;           // 20秒注满
+            const MAX_VOLUME = FLOW_RATE * MAX_TIME; // 1000 ml
+            const MAX_HEIGHT = MAX_VOLUME / BASE_AREA; // 10 cm
+
+            // DOM 元素
+            const slider = document.getElementById('timeSlider');
+            const timeReadout = document.getElementById('timeReadout');
+            const displayTime = document.getElementById('displayTime');
+            const displayVolume = document.getElementById('displayVolume');
+            const displayHeight = document.getElementById('displayHeight');
+            const waterFill = document.getElementById('waterFill');
+            
+            // 算式栏元素
+            const volDisplay = document.getElementById('volDisplay');
+            const volDisplay2 = document.getElementById('volDisplay2');
+            const heightDisplay = document.getElementById('heightDisplay');
+            const heightDisplay2 = document.getElementById('heightDisplay2');
+            const timeDisplay = document.getElementById('timeDisplay');
+            const timeDisplay2 = document.getElementById('timeDisplay2');
+            const resultVH = document.getElementById('resultVH');
+            const resultVT = document.getElementById('resultVT');
+            const resultHT = document.getElementById('resultHT');
+            
+            const resetBtn = document.getElementById('resetBtn');
+
+            // 更新所有UI
+            function updateFromTime(t) {
+                // 限制t 0~20，保留原始精度用于计算
+                t = Math.min(MAX_TIME, Math.max(0, t));
+                
+                // 计算体积 & 高度 - 保留原始值用于后续计算
+                const volume = FLOW_RATE * t;        // ml
+                const height = volume / BASE_AREA;    // cm
+                
+                // 更新滑块
+                if (Math.abs(slider.value - t) > 0.001) {
+                    slider.value = t;
+                }
+
+                // 格式化显示 - 根据数据类型决定小数位数
+                const tFixed = t.toFixed(1);           // 时间显示1位小数
+                const volumeFixed = volume.toFixed(1);  // 体积显示1位小数 (50的倍数)
+                const heightFixed = height.toFixed(2);  // 高度显示2位小数
+                
+                timeReadout.innerText = tFixed + ' s';
+                displayTime.innerText = tFixed;
+                displayHeight.innerText = heightFixed;
+                displayVolume.innerText = volumeFixed;
+
+                // 水面高度百分比
+                const heightPercent = (height / MAX_HEIGHT) * 100;
+                waterFill.style.height = heightPercent + '%';
+
+                // 计算三个比值 - 使用原始精度计算，然后格式化显示
+                let vhValue, vtValue, htValue;
+                
+                // 体积 ÷ 高度：当高度为0时显示0，否则计算 (结果应为100)
+                if (height > 0.0001) {
+                    vhValue = (volume / height).toFixed(1);
+                } else {
+                    vhValue = '0';
+                }
+                
+                // 体积 ÷ 时间：当时间为0时显示0，否则计算 (结果应为50)
+                if (t > 0.0001) {
+                    vtValue = (volume / t).toFixed(1);
+                } else {
+                    vtValue = '0';
+                }
+                
+                // 高度 ÷ 时间：当时间为0时显示0，否则计算 (结果应为0.5)
+                if (t > 0.0001) {
+                    htValue = (height / t).toFixed(2);
+                } else {
+                    htValue = '0';
+                }
+
+                // 更新算式栏 - 使用格式化后的显示值
+                volDisplay.innerText = volumeFixed;
+                heightDisplay.innerText = heightFixed;
+                resultVH.innerText = vhValue;
+                
+                volDisplay2.innerText = volumeFixed;
+                timeDisplay.innerText = tFixed;
+                resultVT.innerText = vtValue;
+                
+                heightDisplay2.innerText = heightFixed;
+                timeDisplay2.innerText = tFixed;
+                resultHT.innerText = htValue;
+            }
+
+            // 滑块事件
+            slider.addEventListener('input', function(e) {
+                const val = parseFloat(e.target.value);
+                updateFromTime(val);
+            });
+
+            // 重置按钮
+            resetBtn.addEventListener('click', function() {
+                updateFromTime(0);
+            });
+
+            // 初始化
+            updateFromTime(0);
+        })();
+    </script>
+
+    <style>
+        .water-fill {
+            transition: height 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.0);
+            background: linear-gradient(145deg, #59b8e0, #2179a5);
+        }
+        .time-display {
+            letter-spacing: 2px;
+        }
+        .cylinder-outline {
+            margin-right: 5px;
+        }
+        .ruler-container {
+            margin-left: 8px;
+        }
+        .equation-bar {
+            background: #cbe0ea;
+            border: 3px solid white;
+            margin-bottom: 15px;
+        }
+        .equation-row {
+            background: rgba(255,255,255,0.7);
+        }
+        .equation-category {
+            background: #d9eaf3;
+            border: 2px solid white;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 0 #9bb8cc;
+        }
+        .equation-item {
+            background: white;
+            border: 2px solid #9dc1d4;
+        }
+        .ratio-card {
+            transition: all 0.1s;
+        }
+        .ratio-constant {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+        .equation-number {
+            min-width: 70px;
+        }
+        .equation-result {
+            min-width: 70px;
+        }
+    </style>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</body>
+</html>

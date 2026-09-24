@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🧊 正方体搭建 - 小学数学教学工具</title>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, sans-serif;
+            background: #f0f4f8;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .app {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background: #f0f4f8;
+        }
+
+        .scene-container {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            background: #e8edf3;
+            overflow: hidden;
+            border-right: 3px solid #cbd5e1;
+        }
+
+        #three-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .scene-hint {
+            position: absolute;
+            top: 20px;
+            left: 24px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(6px);
+            padding: 10px 18px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            font-size: 14px;
+            color: #1e293b;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .scene-hint .badge {
+            background: #3b82f6;
+            color: white;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .scene-tip {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(6px);
+            color: #f1f5f9;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .panel {
+            width: 380px;
+            min-width: 320px;
+            height: 100%;
+            background: #ffffff;
+            padding: 18px 16px 14px 16px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.04);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+
+        .panel-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .panel-header h2 small {
+            font-size: 13px;
+            font-weight: 400;
+            color: #64748b;
+        }
+
+        .panel-sub {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .panel-sub .count {
+            background: #eef2ff;
+            color: #4f46e5;
+            padding: 2px 14px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .grid-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            padding: 2px 0 0 0;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+            width: 100%;
+            max-width: 340px;
+            aspect-ratio: 1 / 1;
+            background: #e9edf2;
+            padding: 5px;
+            border-radius: 14px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #dce2ea;
+        }
+
+        .grid-cell {
+            background: #f8fafc;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 2px solid transparent;
+            position: relative;
+            aspect-ratio: 1 / 1;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .grid-cell:hover {
+            transform: scale(1.04);
+            border-color: #94a3b8;
+            z-index: 2;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+        }
+
+        .grid-cell:active {
+            transform: scale(0.94);
+        }
+
+        .grid-cell .height-label {
+            font-size: 24px;
+            font-weight: 900;
+            pointer-events: none;
+            line-height: 1;
+            text-shadow: 
+                0 0 12px rgba(255,255,255,0.95),
+                0 0 6px rgba(255,255,255,0.9),
+                0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+            position: relative;
+            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+        }
+
+        .grid-cell.height-0 {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
+        .grid-cell.height-0 .height-label {
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 600;
+            text-shadow: none;
+        }
+
+        .grid-cell.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.3);
+            transform: scale(1.02);
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 10px;
+            padding: 8px 0 6px 0;
+            flex-shrink: 0;
+            justify-content: center;
+            width: 100%;
+            max-width: 340px;
+            border-top: 1px solid #e9edf2;
+            margin-top: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #334155;
+            font-weight: 500;
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            flex-shrink: 0;
+        }
+
+        .edit-controls {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            padding: 6px 0 4px 0;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 340px;
+        }
+
+        .edit-controls .btn-group-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-right: 2px;
+        }
+
+        .btn-edit {
+            padding: 6px 20px;
+            border: none;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            min-width: 60px;
+            justify-content: center;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+        }
+        .btn-edit:active {
+            transform: translateY(0px);
+        }
+
+        .btn-add {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-add:hover {
+            background: #2563eb;
+        }
+
+        .btn-remove {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-remove:hover {
+            background: #dc2626;
+        }
+
+        .btn-edit .key-hint {
+            font-size: 11px;
+            opacity: 0.8;
+            font-weight: 400;
+            background: rgba(255,255,255,0.2);
+            padding: 0 7px;
+            border-radius: 4px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            padding-top: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            border-top: 1px solid #e9edf2;
+            margin-top: 4px;
+        }
+
+        .btn {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f1f5f9;
+            color: #1e293b;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+        .btn:active {
+            transform: translateY(0px);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #cbd5e1;
+        }
+        .btn-outline:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+        }
+
+        .panel::-webkit-scrollbar {
+            width: 4px;
+        }
+        .panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .panel::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 820px) {
+            .app {
+                flex-direction: column;
+            }
+            .scene-container {
+                height: 50vh;
+                border-right: none;
+                border-bottom: 3px solid #cbd5e1;
+            }
+            .panel {
+                width: 100%;
+                min-width: unset;
+                height: 50vh;
+                padding: 12px 10px 10px 10px;
+            }
+            .grid-container {
+                max-width: 260px;
+            }
+            .panel-header h2 {
+                font-size: 17px;
+            }
+            .scene-hint {
+                font-size: 11px;
+                padding: 5px 12px;
+                top: 10px;
+                left: 12px;
+            }
+            .scene-tip {
+                font-size: 10px;
+                padding: 4px 12px;
+                bottom: 12px;
+            }
+            .grid-cell .height-label {
+                font-size: 20px !important;
+            }
+            .legend {
+                max-width: 260px;
+                gap: 3px 8px;
+            }
+            .legend-item {
+                font-size: 11px;
+            }
+            .legend-color {
+                width: 15px;
+                height: 15px;
+            }
+            .btn {
+                font-size: 12px;
+                padding: 5px 12px;
+            }
+            .btn-edit {
+                font-size: 14px;
+                padding: 5px 16px;
+                min-width: 52px;
+            }
+            .edit-controls {
+                max-width: 260px;
+                gap: 6px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .scene-container {
+                height: 40vh;
+            }
+            .panel {
+                height: 60vh;
+                padding: 8px 6px 6px 6px;
+            }
+            .grid-container {
+                max-width: 200px;
+                gap: 3px;
+                padding: 4px;
+            }
+            .grid-cell .height-label {
+                font-size: 16px !important;
+            }
+            .panel-header h2 {
+                font-size: 15px;
+            }
+            .panel-sub {
+                font-size: 11px;
+                margin-bottom: 6px;
+            }
+            .scene-hint {
+                font-size: 9px;
+                padding: 3px 8px;
+                top: 6px;
+                left: 8px;
+            }
+            .scene-tip {
+                font-size: 9px;
+                padding: 3px 10px;
+                bottom: 8px;
+            }
+            .legend {
+                max-width: 200px;
+                gap: 2px 6px;
+                padding: 5px 0 4px 0;
+                margin-top: 4px;
+            }
+            .legend-item {
+                font-size: 10px;
+            }
+            .legend-color {
+                width: 13px;
+                height: 13px;
+            }
+            .btn {
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+            .btn-edit {
+                font-size: 12px;
+                padding: 4px 12px;
+                min-width: 44px;
+            }
+            .edit-controls {
+                max-width: 200px;
+                gap: 4px;
+                padding: 4px 0 2px 0;
+            }
+            .btn-group {
+                gap: 4px;
+                padding-top: 5px;
+            }
+            .panel-sub .count {
+                font-size: 12px;
+                padding: 1px 10px;
+            }
+            .edit-controls .btn-group-label {
+                font-size: 11px;
+            }
+            .btn-edit .key-hint {
+                font-size: 9px;
+                padding: 0 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <div class="scene-container" id="scene-container">
+            <div id="three-canvas"></div>
+            <div class="scene-hint">
+                <span>🧊 正方体搭建</span>
+                <span class="badge" id="cube-count-display">0</span>
+                <span style="color:#94a3b8;font-size:13px;">个方块</span>
+            </div>
+            <div class="scene-tip">
+                🖱 拖拽旋转 &nbsp;·&nbsp; 滚轮缩放 &nbsp;·&nbsp; 点击格子编辑
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2>📐 俯视图 <small>6×6</small></h2>
+            </div>
+            <div class="panel-sub">
+                <span>👆 左键增加 &nbsp;·&nbsp; 右键移除</span>
+                <span class="count" id="total-count">0</span>
+            </div>
+
+            <div class="grid-wrapper">
+                <div class="grid-container" id="grid-container"></div>
+                <div class="legend" id="legend-container"></div>
+                <div class="edit-controls">
+                    <span class="btn-group-label">✏️ 编辑：</span>
+                    <button class="btn-edit btn-add" id="btn-add-cube">
+                        ➕ 增加 <span class="key-hint">A</span>
+                    </button>
+                    <button class="btn-edit btn-remove" id="btn-remove-cube">
+                        ➖ 减少 <span class="key-hint">D</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-danger" id="btn-clear">🗑 清空</button>
+                <button class="btn btn-success" id="btn-example1">🏗 示例1</button>
+                <button class="btn btn-warning" id="btn-example2">🏰 示例2</button>
+                <button class="btn btn-outline" id="btn-reset-view">🎯 复位</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const MAX_HEIGHT = 6;
+        const GRID_SIZE = 6;
+
+        const colorHex = {
+            0: '#f1f5f9',
+            1: '#FF6B6B',
+            2: '#4ECDC4',
+            3: '#45B7D1',
+            4: '#96CEB4',
+            5: '#FFEAA7',
+            6: '#DDA0DD',
+        };
+
+        function getTextColor(height) {
+            const bright = [4, 5, 6];
+            return bright.includes(height) ? '#1e293b' : '#ffffff';
+        }
+
+        // grid[row][col] 
+        // row: 0=俯视图最下面，5=俯视图最上面
+        // 3D对应: row 0 -> z正方向(后方)，row 5 -> z负方向(前方)
+        // 即俯视图从下往上 = 3D从后到前
+        const grid = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
+        let selectedRow = -1;
+        let selectedCol = -1;
+
+        const container = document.getElementById('grid-container');
+        const totalCountEl = document.getElementById('total-count');
+        const cubeCountDisplay = document.getElementById('cube-count-display');
+        const legendContainer = document.getElementById('legend-container');
+
+        function renderGrid() {
+            container.innerHTML = '';
+            // 俯视图显示：row 0 在最下面，row 5 在最上面
+            for (let displayRow = GRID_SIZE - 1; displayRow >= 0; displayRow--) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const r = displayRow;
+                    const h = grid[r][c];
+                    const cell = document.createElement('div');
+                    const isSelected = (r === selectedRow && c === selectedCol);
+                    cell.className = `grid-cell height-${h}${isSelected ? ' selected' : ''}`;
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    const bg = colorHex[h] || '#f1f5f9';
+                    cell.style.backgroundColor = bg;
+                    
+                    if (h > 0) {
+                        cell.style.borderColor = 'rgba(0,0,0,0.15)';
+                    } else {
+                        cell.style.borderColor = '#e2e8f0';
+                    }
+
+                    const label = document.createElement('span');
+                    label.className = 'height-label';
+                    if (h > 0) {
+                        label.textContent = h;
+                        label.style.color = getTextColor(h);
+                    } else {
+                        label.textContent = '·';
+                        label.style.color = '#94a3b8';
+                        label.style.fontSize = '16px';
+                        label.style.textShadow = 'none';
+                    }
+                    cell.appendChild(label);
+
+                    cell.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const row = parseInt(cell.dataset.row);
+                        const col = parseInt(cell.dataset.col);
+                        selectedRow = row;
+                        selectedCol = col;
+                        addCube(row, col);
+                    });
+
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        const row = parseInt(cell.dataset.row);
+                        const col = parseInt(cell.dataset.col);
+                        selectedRow = row;
+                        selectedCol = col;
+                        removeCube(row, col);
+                    });
+
+                    container.appendChild(cell);
+                }
+            }
+            updateStats();
+        }
+
+        function addCube(row, col) {
+            if (row === undefined || col === undefined) {
+                if (selectedRow >= 0 && selectedCol >= 0) {
+                    row = selectedRow;
+                    col = selectedCol;
+                } else {
+                    return;
+                }
+            }
+            if (grid[row][col] < MAX_HEIGHT) {
+                grid[row][col]++;
+                renderGrid();
+                rebuildScene();
+            }
+        }
+
+        function removeCube(row, col) {
+            if (row === undefined || col === undefined) {
+                if (selectedRow >= 0 && selectedCol >= 0) {
+                    row = selectedRow;
+                    col = selectedCol;
+                } else {
+                    return;
+                }
+            }
+            if (grid[row][col] > 0) {
+                grid[row][col]--;
+                renderGrid();
+                rebuildScene();
+            }
+        }
+
+        function clearAll() {
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    grid[r][c] = 0;
+                }
+            }
+            selectedRow = -1;
+            selectedCol = -1;
+            renderGrid();
+            rebuildScene();
+        }
+
+        function updateStats() {
+            let total = 0;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    total += grid[r][c];
+                }
+            }
+            totalCountEl.textContent = total;
+            cubeCountDisplay.textContent = total;
+        }
+
+        function renderLegend() {
+            legendContainer.innerHTML = '';
+            for (let h = 1; h <= MAX_HEIGHT; h++) {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                const colorBox = document.createElement('span');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundColor = colorHex[h];
+                const label = document.createElement('span');
+                label.textContent = `${h}层`;
+                item.appendChild(colorBox);
+                item.appendChild(label);
+                legendContainer.appendChild(item);
+            }
+        }
+
+        // ===== Three.js =====
+        const sceneContainer = document.getElementById('scene-container');
+        const canvasContainer = document.getElementById('three-canvas');
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xe8edf3);
+
+        const camera = new THREE.PerspectiveCamera(40, sceneContainer.clientWidth / sceneContainer.clientHeight, 0.1, 100);
+        camera.position.set(9, 8, 9);
+        camera.lookAt(0, 1.5, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(sceneContainer.clientWidth, sceneContainer.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        canvasContainer.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1.5, 0);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.10;
+        controls.minDistance = 4;
+        controls.maxDistance = 25;
+        controls.maxPolarAngle = Math.PI / 2.1;
+        controls.update();
+
+        // 光照
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+        dirLight.position.set(8, 15, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        const d = 12;
+        dirLight.shadow.camera.left = -d;
+        dirLight.shadow.camera.right = d;
+        dirLight.shadow.camera.top = d;
+        dirLight.shadow.camera.bottom = -d;
+        dirLight.shadow.camera.near = 1;
+        dirLight.shadow.camera.far = 30;
+        scene.add(dirLight);
+
+        const fillLight = new THREE.DirectionalLight(0xccddff, 0.5);
+        fillLight.position.set(-6, 4, -8);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.DirectionalLight(0xffeedd, 0.4);
+        rimLight.position.set(-4, 6, 10);
+        scene.add(rimLight);
+
+        // 地面
+        function createGround() {
+            const group = new THREE.Group();
+            const planeGeo = new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE);
+            const planeMat = new THREE.ShadowMaterial({ opacity: 0.2, color: 0x1e293b });
+            const plane = new THREE.Mesh(planeGeo, planeMat);
+            plane.rotation.x = -Math.PI / 2;
+            plane.position.set(0, -0.01, 0);
+            plane.receiveShadow = true;
+            group.add(plane);
+
+            const matLine = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.5 });
+            const half = GRID_SIZE / 2;
+            for (let i = 0; i <= GRID_SIZE; i++) {
+                const pos = i - half;
+                const ptsX = [new THREE.Vector3(-half, 0, pos), new THREE.Vector3(half, 0, pos)];
+                group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ptsX), matLine));
+                const ptsZ = [new THREE.Vector3(pos, 0, -half), new THREE.Vector3(pos, 0, half)];
+                group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ptsZ), matLine));
+            }
+            return group;
+        }
+        scene.add(createGround());
+
+        // 正方体
+        const cubeGroup = new THREE.Group();
+        scene.add(cubeGroup);
+        const materialCache = new Map();
+
+        function getCubeMaterial(height) {
+            if (materialCache.has(height)) return materialCache.get(height);
+            const mat = new THREE.MeshStandardMaterial({
+                color: colorHex[height] || '#e2e8f0',
+                roughness: 0.35,
+                metalness: 0.05,
+                envMapIntensity: 0.4,
+            });
+            materialCache.set(height, mat);
+            return mat;
+        }
+
+        function rebuildScene() {
+            while (cubeGroup.children.length > 0) {
+                const child = cubeGroup.children[0];
+                child.traverse((node) => { if (node.isMesh) node.geometry.dispose(); });
+                cubeGroup.remove(child);
+            }
+
+            const half = GRID_SIZE / 2;
+            
+            // 俯视图 (r, c) 对应 3D 坐标:
+            // r=0 (俯视图最下面) -> z = half - 0.5 (后方)
+            // r=5 (俯视图最上面) -> z = -half + 0.5 (前方)
+            // 即俯视图从下往上 = 3D从后到前
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const h = grid[r][c];
+                    if (h === 0) continue;
+                    
+                    const x = c - half + 0.5;
+                    // r=0 -> z=2.5 (后方), r=5 -> z=-2.5 (前方)
+                    const z = half - 0.5 - r;
+                    
+                    for (let level = 0; level < h; level++) {
+                        const y = level + 0.5;
+                        const pos = new THREE.Vector3(x, y, z);
+                        
+                        const material = getCubeMaterial(level + 1);
+                        const geometry = new THREE.BoxGeometry(0.96, 0.96, 0.96);
+                        const mesh = new THREE.Mesh(geometry, material);
+                        mesh.position.copy(pos);
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+
+                        const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.96, 0.96, 0.96));
+                        const wireframe = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
+                            color: 0x1e293b,
+                            transparent: true,
+                            opacity: 0.18,
+                        }));
+                        wireframe.position.copy(pos);
+
+                        const group = new THREE.Group();
+                        group.add(mesh);
+                        group.add(wireframe);
+                        cubeGroup.add(group);
+                    }
+                }
+            }
+        }
+
+        // 示例
+        function loadExample1() {
+            clearAll();
+            const center = 2.5;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const dist = Math.max(Math.abs(r - center), Math.abs(c - center));
+                    const h = Math.max(0, Math.floor(4 - dist));
+                    if (h > 0) grid[r][c] = Math.min(h, MAX_HEIGHT);
+                }
+            }
+            selectedRow = -1; selectedCol = -1;
+            renderGrid();
+            rebuildScene();
+        }
+
+        function loadExample2() {
+            clearAll();
+            for (let r = 1; r <= 4; r++) {
+                for (let c = 1; c <= 4; c++) grid[r][c] = 1;
+            }
+            const towers = [[1,1],[1,4],[4,1],[4,4]];
+            for (const [tr, tc] of towers) grid[tr][tc] = 3;
+            grid[2][2] = 2;
+            grid[3][3] = 2;
+            grid[3][1] = 0;
+            grid[3][2] = 0;
+            selectedRow = -1; selectedCol = -1;
+            renderGrid();
+            rebuildScene();
+        }
+
+        function onResize() {
+            const w = sceneContainer.clientWidth;
+            const h = sceneContainer.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        }
+        window.addEventListener('resize', onResize);
+        new ResizeObserver(onResize).observe(sceneContainer);
+
+        function resetView() {
+            camera.position.set(9, 8, 9);
+            controls.target.set(0, 1.5, 0);
+            controls.update();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function init() {
+            renderLegend();
+            renderGrid();
+            rebuildScene();
+            animate();
+
+            document.getElementById('btn-clear').addEventListener('click', clearAll);
+            document.getElementById('btn-example1').addEventListener('click', loadExample1);
+            document.getElementById('btn-example2').addEventListener('click', loadExample2);
+            document.getElementById('btn-reset-view').addEventListener('click', resetView);
+            document.getElementById('btn-add-cube').addEventListener('click', () => addCube());
+            document.getElementById('btn-remove-cube').addEventListener('click', () => removeCube());
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'a' || e.key === 'A') { e.preventDefault(); addCube(); }
+                if (e.key === 'd' || e.key === 'D') { e.preventDefault(); removeCube(); }
+                if (e.key === 'r' || e.key === 'R') resetView();
+                if (e.key === 'c' || e.key === 'C') { if (e.ctrlKey || e.metaKey) return; clearAll(); }
+                if (e.key === '1') loadExample1();
+                if (e.key === '2') loadExample2();
+                if (e.key === 'ArrowUp' && selectedRow < GRID_SIZE-1) { e.preventDefault(); selectedRow++; renderGrid(); }
+                if (e.key === 'ArrowDown' && selectedRow > 0) { e.preventDefault(); selectedRow--; renderGrid(); }
+                if (e.key === 'ArrowLeft' && selectedCol > 0) { e.preventDefault(); selectedCol--; renderGrid(); }
+                if (e.key === 'ArrowRight' && selectedCol < GRID_SIZE-1) { e.preventDefault(); selectedCol++; renderGrid(); }
+            });
+
+            setTimeout(onResize, 50);
+        }
+
+        init();
+        console.log('🧊 正方体搭建工具已启动！');
+        console.log('💡 俯视图从下往上 = 3D从后到前，完全对应');
+        console.log('💡 左键增加方块，右键移除方块');
+    </script>
+
+</body>
+</html>

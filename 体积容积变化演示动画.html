@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>体积·容积变化实验室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(145deg, #c9e3f0 0%, #b5d6e8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 20px;
+        }
+        .lab-container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 70px;
+            padding: 30px 20px;
+            box-shadow: 0 25px 40px rgba(0, 35, 50, 0.35), inset 2px 2px 15px #f0fcff;
+        }
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 500;
+            color: #013f55;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px 0 #c6e2f0;
+            margin: 0 0 20px;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+        }
+        .experiment {
+            flex: 1 1 380px;
+            background: #e7f4fc;
+            border-radius: 60px;
+            padding: 20px 15px 25px;
+            box-shadow: inset 0 2px 10px white, 12px 14px 25px #7faec7;
+        }
+        .exp-title {
+            font-size: 1.9rem;
+            font-weight: 450;
+            color: #0a4357;
+            text-align: center;
+            padding: 0 15px 20px;
+        }
+        .canvas-holder {
+            background: #b9d7ea;
+            border-radius: 50px;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            box-shadow: inset 0 0 12px #5e93af;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border-radius: 30px;
+            background: #ffffff;
+            box-shadow: 0 14px 20px rgba(0, 35, 50, 0.4);
+        }
+        .slider-block {
+            background: #d2ebf9;
+            margin-top: 20px;
+            border-radius: 60px;
+            padding: 18px 22px 24px;
+            box-shadow: inset 0 1px 10px #b2d9ed, 0 8px 0 #367f9f;
+        }
+        .slider-header {
+            display: flex;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #003b4f;
+            padding: 0 5px 12px;
+        }
+        .slider-header span {
+            background: #acd8f0;
+            padding: 5px 25px;
+            border-radius: 60px;
+        }
+        input[type=range] {
+            width: 100%;
+            height: 16px;
+            background: #a3d0e9;
+            border-radius: 30px;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 36px;
+            height: 36px;
+            background: #fefefe;
+            border-radius: 50%;
+            box-shadow: 0 6px 10px #023647, 0 0 0 4px #c3e6ff;
+            border: 2px solid #2d7da0;
+            cursor: grab;
+        }
+    </style>
+</head>
+<body>
+<div class="lab-container">
+    <h1>🧪 体积 · 容积变化实验室</h1>
+
+    <div class="row">
+        <!-- 左侧：内壁增厚 -->
+        <div class="experiment">
+            <div class="exp-title">内壁变化</div>
+            <div class="canvas-holder">
+                <canvas id="canvasLeft" width="300" height="260"></canvas>
+            </div>
+            <div class="slider-block">
+                <div class="slider-header">
+                    <span>⬅️ 拖动滑块</span>
+                </div>
+                <input type="range" id="sliderLeft" min="0" max="7.5" step="0.1" value="0">
+            </div>
+        </div>
+
+        <!-- 右侧：外壁增厚 -->
+        <div class="experiment">
+            <div class="exp-title">外壁变化</div>
+            <div class="canvas-holder">
+                <canvas id="canvasRight" width="300" height="260"></canvas>
+            </div>
+            <div class="slider-block">
+                <div class="slider-header">
+                    <span>➡️ 拖动滑块</span>
+                </div>
+                <input type="range" id="sliderRight" min="0" max="8.0" step="0.1" value="0">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // 固定参数：底面直径16cm → 半径8cm，初始壁厚0.5cm → 初始内半径7.5cm
+        const BASE_OUTER_RADIUS = 8.0;        // 外半径 8 cm
+        const BASE_INNER_RADIUS = 7.5;        // 内半径 7.5 cm
+        const HEIGHT = 20.0;                   // 高 20 cm
+
+        // 缩放系数：1cm = 7px
+        const SCALE = 7;
+
+        // 画布引用
+        const canvasLeft = document.getElementById('canvasLeft');
+        const canvasRight = document.getElementById('canvasRight');
+        const ctxL = canvasLeft.getContext('2d');
+        const ctxR = canvasRight.getContext('2d');
+
+        // 滑块
+        const sliderLeft = document.getElementById('sliderLeft');
+        const sliderRight = document.getElementById('sliderRight');
+
+        // 颜色函数：壁厚比例越深颜色越深
+        function getWallColor(ratio) {
+            let r = 180 - 70 * ratio;
+            let g = 130 - 50 * ratio;
+            let b = 70 - 30 * ratio;
+            return `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
+        }
+
+        // 绘制三维圆柱
+        function drawCylinder(ctx, outerR_cm, innerR_cm, thickRatio) {
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+            const centerX = 150;
+            const topY = 60;
+            const bottomY = 200;
+
+            const outerR_px = outerR_cm * SCALE;
+            const innerR_px = innerR_cm * SCALE;
+
+            const outerRY_px = outerR_px * 0.25;
+            const innerRY_px = innerR_px * 0.25;
+
+            const wallColor = getWallColor(thickRatio);
+
+            ctx.fillStyle = wallColor;
+            ctx.strokeStyle = '#2c4e5e';
+            ctx.lineWidth = 1.5;
+
+            // 外圆柱体
+            // 顶面
+            ctx.beginPath();
+            ctx.ellipse(centerX, topY, outerR_px, outerRY_px, 0, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // 底面
+            ctx.beginPath();
+            ctx.ellipse(centerX, bottomY, outerR_px, outerRY_px, 0, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // 侧面
+            ctx.beginPath();
+            ctx.moveTo(centerX - outerR_px, topY);
+            ctx.quadraticCurveTo(centerX - outerR_px * 1.08, (topY + bottomY) / 2, centerX - outerR_px, bottomY);
+            ctx.lineTo(centerX + outerR_px, bottomY);
+            ctx.quadraticCurveTo(centerX + outerR_px * 1.08, (topY + bottomY) / 2, centerX + outerR_px, topY);
+            ctx.closePath();
+            ctx.fill();
+
+            // 外轮廓描边
+            ctx.strokeStyle = '#1f4a5a';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.ellipse(centerX, topY, outerR_px, outerRY_px, 0, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.ellipse(centerX, bottomY, outerR_px, outerRY_px, 0, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(centerX - outerR_px, topY);
+            ctx.lineTo(centerX - outerR_px, bottomY);
+            ctx.moveTo(centerX + outerR_px, topY);
+            ctx.lineTo(centerX + outerR_px, bottomY);
+            ctx.stroke();
+
+            // 内腔（白色挖空）
+            if (innerR_px > 1.2) {
+                ctx.fillStyle = '#ffffff';
+
+                // 内顶面
+                ctx.beginPath();
+                ctx.ellipse(centerX, topY, innerR_px, innerRY_px, 0, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // 内底面
+                ctx.beginPath();
+                ctx.ellipse(centerX, bottomY, innerR_px, innerRY_px, 0, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // 内侧面
+                ctx.beginPath();
+                ctx.moveTo(centerX - innerR_px, topY);
+                ctx.quadraticCurveTo(centerX - innerR_px * 1.03, (topY + bottomY) / 2, centerX - innerR_px, bottomY);
+                ctx.lineTo(centerX + innerR_px, bottomY);
+                ctx.quadraticCurveTo(centerX + innerR_px * 1.03, (topY + bottomY) / 2, centerX + innerR_px, topY);
+                ctx.closePath();
+                ctx.fill();
+
+                // 内轮廓
+                ctx.strokeStyle = '#a0b8c5';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.ellipse(centerX, topY, innerR_px, innerRY_px, 0, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(centerX, bottomY, innerR_px, innerRY_px, 0, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(centerX - innerR_px, topY);
+                ctx.lineTo(centerX - innerR_px, bottomY);
+                ctx.moveTo(centerX + innerR_px, topY);
+                ctx.lineTo(centerX + innerR_px, bottomY);
+                ctx.stroke();
+            } else if (innerR_px > 0.3) {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.ellipse(centerX, topY, innerR_px, innerRY_px, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(centerX, bottomY, innerR_px, innerRY_px, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        // 更新左侧（内壁增厚，外径固定）
+        function updateLeft() {
+            let add = parseFloat(sliderLeft.value);
+            let outerR = BASE_OUTER_RADIUS;
+            let innerR = Math.max(0, BASE_INNER_RADIUS - add);
+            let wallThick = outerR - innerR;
+            let maxWall = BASE_OUTER_RADIUS;
+            let ratio = wallThick / maxWall;
+            drawCylinder(ctxL, outerR, innerR, ratio);
+        }
+
+        // 更新右侧（外壁增厚，内径固定）
+        function updateRight() {
+            let add = parseFloat(sliderRight.value);
+            let innerR = BASE_INNER_RADIUS;
+            let outerR = BASE_OUTER_RADIUS + add;
+            let wallThick = outerR - innerR;
+            let maxWall = (BASE_OUTER_RADIUS + 8) - BASE_INNER_RADIUS;
+            let ratio = wallThick / maxWall;
+            drawCylinder(ctxR, outerR, innerR, ratio);
+        }
+
+        sliderLeft.addEventListener('input', updateLeft);
+        sliderRight.addEventListener('input', updateRight);
+
+        updateLeft();
+        updateRight();
+    })();
+</script>
+</body>
+</html>

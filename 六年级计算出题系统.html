@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>六年级计算出题系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #f1f5f9; font-family: 'Segoe UI', 'PingFang SC', Roboto, sans-serif; padding: 20px; color: #1e293b; }
+        .container { max-width: 1100px; margin: 0 auto; background: #ffffff; border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); padding: 28px 32px; }
+        h1 { font-size: 26px; border-left: 6px solid #3b82f6; padding-left: 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .subtitle { color: #64748b; font-size: 16px; font-weight: 400; }
+        .level-badge { background: #dbeafe; color: #1e40af; padding: 4px 18px; border-radius: 40px; font-weight: 700; font-size: 14px; }
+        .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 18px 0 24px 0; padding: 16px 20px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .toolbar .group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .btn { padding: 7px 18px; border: none; border-radius: 40px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s; background: #eef2f6; color: #1e293b; }
+        .btn-primary { background: #3b82f6; color: #fff; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-success { background: #10b981; color: #fff; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: #f59e0b; color: #fff; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-outline { background: transparent; border: 2px solid #cbd5e1; }
+        .btn-outline:hover { border-color: #94a3b8; background: #f1f5f9; }
+        .btn-sm { padding: 4px 14px; font-size: 13px; }
+        .timer-box { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; background: #1e293b; color: #f8fafc; padding: 4px 18px; border-radius: 40px; letter-spacing: 2px; margin-left: auto; }
+        .count-control { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; background: #f1f5f9; padding: 4px 14px 4px 10px; border-radius: 30px; }
+        .count-control label { font-weight: 600; font-size: 14px; color: #334155; }
+        .count-control input[type="number"] { width: 48px; padding: 4px 0 4px 6px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; background: #fff; outline: none; }
+        .count-control input[type="number"]:focus { border-color: #3b82f6; }
+        .section { margin-top: 28px; border-top: 2px dashed #e2e8f0; padding-top: 22px; }
+        .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: baseline; gap: 10px; }
+        .section-title small { font-weight: 400; font-size: 15px; color: #64748b; }
+        .grid-oral, .grid-calc, .grid-eq { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 25px; }
+        .q-item { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; padding: 8px 6px; border-bottom: 1px dashed #f1f5f9; font-size: 16px; line-height: 1.8; }
+        .q-item .num { font-weight: 600; color: #94a3b8; min-width: 28px; font-size: 15px; }
+        .q-item .latex { flex: 1; min-width: 80px; }
+        .q-item .tag-simple { font-size: 12px; background: #fef3c7; color: #b45309; padding: 0 10px; border-radius: 12px; font-weight: 600; }
+        .q-item input[type="text"] { width: 100px; padding: 4px 8px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 15px; outline: none; transition: 0.2s; background: #fafafa; }
+        .q-item input[type="text"]:focus { border-color: #3b82f6; background: #fff; }
+        .q-item .result-icon { font-size: 20px; width: 28px; text-align: center; font-weight: 700; }
+        .q-item .result-icon.correct { color: #10b981; }
+        .q-item .result-icon.wrong { color: #ef4444; }
+        .q-item .ans-show { color: #059669; font-weight: 600; background: #ecfdf5; padding: 0 12px; border-radius: 20px; font-size: 14px; display: none; }
+        .show-answers .q-item .ans-show { display: inline-block; }
+        .score-summary { margin-top: 20px; padding: 14px 20px; background: #f1f5f9; border-radius: 12px; font-size: 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        @media (max-width: 750px) {
+            .grid-oral, .grid-calc, .grid-eq { grid-template-columns: 1fr; }
+            .container { padding: 16px; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .timer-box { margin-left: 0; text-align: center; }
+            .q-item { flex-wrap: wrap; }
+            .q-item input[type="text"] { width: 80px; }
+            .count-control { justify-content: center; }
+        }
+        @media print {
+            .toolbar, .score-summary, .no-print { display: none !important; }
+            .q-item input[type="text"] { border: none; background: transparent; }
+            .q-item .ans-show { display: inline-block !important; color: #000 !important; background: #f0f0f0 !important; }
+            body { background: #fff; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <h1>📐 六年级计算出题系统 <span id="levelDisplay" class="level-badge">提高</span></h1>
+    <div class="toolbar no-print">
+        <div class="group">
+            <label>难度：</label>
+            <button class="btn btn-sm btn-outline" id="levelMedium">中等</button>
+            <button class="btn btn-sm btn-outline" id="levelHard" style="background:#dbeafe;border-color:#3b82f6;">提高</button>
+        </div>
+        <div class="group count-control">
+            <label>口算</label><input type="number" id="oralCount" value="10" min="1" max="50">
+            <label>脱式</label><input type="number" id="calcCount" value="12" min="1" max="50">
+            <label>方程</label><input type="number" id="eqCount" value="6" min="1" max="50">
+        </div>
+        <div class="group">
+            <button class="btn btn-primary" id="generateBtn">🔄 生成新题</button>
+            <button class="btn btn-success" id="toggleAnsBtn">📖 显示答案</button>
+            <button class="btn btn-warning" id="checkBtn">✅ 批改</button>
+        </div>
+        <div class="group" style="margin-left:auto;">
+            <span class="timer-box" id="timerDisplay">00:00</span>
+            <button class="btn btn-sm btn-outline" id="timerStartBtn">▶ 开始</button>
+            <button class="btn btn-sm btn-outline" id="timerResetBtn">↺ 重置</button>
+        </div>
+    </div>
+    <div id="questionArea"></div>
+    <div id="scoreArea" class="score-summary no-print" style="display:none;">
+        <span>📊 批改结果</span>
+        <span id="scoreText">正确：0 / 0</span>
+    </div>
+    <div style="margin-top:24px;text-align:center;color:#94a3b8;font-size:14px;">💡 支持分数 3/4 或带分数 1 1/2；按 Enter 快速批改</div>
+</div>
+
+<script>
+// ========================= 核心工具 =========================
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function gcd(a, b) {
+    a = Math.abs(a); b = Math.abs(b);
+    while (b) { [a, b] = [b, a % b]; }
+    return a;
+}
+
+function fracSimp(n, d) {
+    if (d === 0) return null;
+    if (d < 0) { n = -n; d = -d; }
+    if (n === 0) return null;
+    var g = gcd(Math.abs(n), Math.abs(d));
+    n = n / g; d = d / g;
+    if (d === 1) return null;
+    if (n === d) return null;
+    return { n: n, d: d };
+}
+
+function randProperFrac() {
+    for (var t = 0; t < 200; t++) {
+        var d = rand(4, 18);
+        var n = rand(2, d - 2);
+        var r = fracSimp(n, d);
+        if (r && r.n !== r.d) return r;
+    }
+    return { n: 3, d: 7 };
+}
+
+function randImproperFrac(wholeMax) {
+    for (var t = 0; t < 200; t++) {
+        var w = rand(3, wholeMax || 8);
+        var d = rand(3, 12);
+        var n = d * w + rand(2, d - 2);
+        var r = fracSimp(n, d);
+        if (r && r.n !== r.d) return r;
+    }
+    return { n: 7, d: 4 };
+}
+
+function randFrac() {
+    return rand(0, 1) === 0 ? randProperFrac() : randImproperFrac(6);
+}
+
+function randDecimal() {
+    return parseFloat((rand(15, 98) / 10).toFixed(2));
+}
+
+function randPercent() {
+    var p = rand(5, 95);
+    while (p % 10 === 0 || p === 0 || p === 100) p = rand(5, 95);
+    return p;
+}
+
+function fracLatex(n, d) {
+    if (d === 1) return '' + n;
+    return '\\frac{' + n + '}{' + d + '}';
+}
+
+function toFracString(val) {
+    if (Number.isInteger(val)) return '' + val;
+    var precision = 100000;
+    var num = Math.round(val * precision);
+    var den = precision;
+    var s = fracSimp(num, den);
+    if (!s || s.d === 1) return val.toFixed(4);
+    return '\\frac{' + s.n + '}{' + s.d + '}';
+}
+
+function parseUserInput(str) {
+    str = str.trim().replace(/\s+/g, ' ');
+    var val = parseFloat(str);
+    if (!isNaN(val)) return val;
+    var f = str.match(/^(\d+)\/(\d+)$/);
+    if (f) { var n=parseFloat(f[1]), d=parseFloat(f[2]); if (!isNaN(n)&&!isNaN(d)&&d!==0) return n/d; }
+    var m = str.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+    if (m) { var w=parseFloat(m[1]), n=parseFloat(m[2]), d=parseFloat(m[3]); if (!isNaN(w)&&!isNaN(n)&&!isNaN(d)&&d!==0) return w+n/d; }
+    return NaN;
+}
+
+// ========================= 口算（分数、小数、百分数混合） =========================
+function generateOral(level, count) {
+    var items = [];
+    var isHard = level === 'hard';
+
+    // 生成非整数：分数、小数、百分数
+    function randNonInt() {
+        var type = rand(0, 2);
+        if (type === 0) {
+            var f = randFrac();
+            return { value: f.n / f.d, latex: fracLatex(f.n, f.d), isInt: false };
+        } else if (type === 1) {
+            var v = randDecimal();
+            return { value: v, latex: '' + v, isInt: false };
+        } else {
+            var p = randPercent();
+            return { value: p / 100, latex: p + '\\%', isInt: false };
+        }
+    }
+
+    var ops = ['+', '-', '×', '÷'];
+
+    for (var i = 0; i < count; i++) {
+        var a, b, op, ans, latex;
+        var attempts = 0;
+        var isRatio = (i % 4 === 3);
+
+        do {
+            attempts++;
+            if (isRatio) {
+                a = randNonInt();
+                b = randNonInt();
+                while (Math.abs(a.value - b.value) < 0.001 || Math.abs(a.value) < 0.5 || Math.abs(b.value) < 0.5) {
+                    a = randNonInt();
+                    b = randNonInt();
+                }
+                ans = a.value / b.value;
+                latex = a.latex + ' : ' + b.latex;
+            } else {
+                a = randNonInt();
+                b = randNonInt();
+                while (a.value < 1.5 || b.value < 1.5 || Math.abs(a.value - 1) < 0.1 || Math.abs(b.value - 1) < 0.1) {
+                    a = randNonInt();
+                    b = randNonInt();
+                }
+                op = ops[rand(0, 3)];
+
+                if (op === '+') {
+                    ans = a.value + b.value;
+                    latex = a.latex + ' + ' + b.latex;
+                } else if (op === '-') {
+                    if (a.value <= b.value) { var t = a; a = b; b = t; }
+                    ans = a.value - b.value;
+                    latex = a.latex + ' - ' + b.latex;
+                } else if (op === '×') {
+                    ans = a.value * b.value;
+                    latex = a.latex + ' \\times ' + b.latex;
+                } else {
+                    if (b.value <= 0) b = randNonInt();
+                    ans = a.value / b.value;
+                    latex = a.latex + ' \\div ' + b.latex;
+                }
+            }
+        } while ((ans <= 0.3 || !isFinite(ans)) && attempts < 60);
+
+        if (ans <= 0.3 || !isFinite(ans)) { ans = 2.5; latex = '\\frac{7}{3} + \\frac{1}{6}'; }
+        items.push({ latex: latex, answer: ans });
+    }
+    return items;
+}
+
+// ========================= 脱式计算 =========================
+function generateCalc(level, count) {
+    var items = [];
+    var isHard = level === 'hard';
+
+    function randNum() {
+        var type = rand(0, 3);
+        if (type === 0) {
+            var f = randFrac();
+            return { value: f.n / f.d, latex: fracLatex(f.n, f.d) };
+        } else if (type === 1) {
+            var v = randDecimal();
+            return { value: v, latex: '' + v };
+        } else if (type === 2) {
+            var p = randPercent();
+            return { value: p / 100, latex: p + '\\%' };
+        } else {
+            var v = rand(3, isHard ? 20 : 12);
+            return { value: v, latex: '' + v };
+        }
+    }
+
+    function randNumNoInt() {
+        var type = rand(0, 2);
+        if (type === 0) {
+            var f = randFrac();
+            return { value: f.n / f.d, latex: fracLatex(f.n, f.d) };
+        } else if (type === 1) {
+            var v = randDecimal();
+            return { value: v, latex: '' + v };
+        } else {
+            var p = randPercent();
+            return { value: p / 100, latex: p + '\\%' };
+        }
+    }
+
+    var types = [
+        function() {
+            var a = randNumNoInt();
+            var b = randNumNoInt();
+            var c = randNum();
+            while (c.value < 2) c = randNum();
+            var ans = (a.value + b.value) * c.value;
+            return { latex: '\\left(' + a.latex + ' + ' + b.latex + '\\right) \\times ' + c.latex, answer: ans, simple: true };
+        },
+        function() {
+            var a = randNumNoInt();
+            var b = randNumNoInt();
+            while (a.value <= b.value * 1.1) { a = randNumNoInt(); b = randNumNoInt(); }
+            var c = randNum();
+            while (c.value < 2) c = randNum();
+            var ans = (a.value - b.value) * c.value;
+            return { latex: '\\left(' + a.latex + ' - ' + b.latex + '\\right) \\times ' + c.latex, answer: ans, simple: true };
+        },
+        function() {
+            var a = randNum();
+            var b = randNumNoInt();
+            var c = randNumNoInt();
+            while (a.value < 2) a = randNum();
+            var ans = a.value * (b.value + c.value);
+            return { latex: a.latex + ' \\times \\left(' + b.latex + ' + ' + c.latex + '\\right)', answer: ans, simple: true };
+        },
+        function() {
+            var a = randNum();
+            var b = randNumNoInt();
+            var c = randNumNoInt();
+            while (b.value <= c.value * 1.1) { b = randNumNoInt(); c = randNumNoInt(); }
+            while (a.value < 2) a = randNum();
+            var ans = a.value * (b.value - c.value);
+            return { latex: a.latex + ' \\times \\left(' + b.latex + ' - ' + c.latex + '\\right)', answer: ans, simple: true };
+        },
+        function() {
+            var a = randNumNoInt();
+            var b = randNum();
+            var c = randNum();
+            while (a.value < 1.5) a = randNumNoInt();
+            var ans = a.value * b.value + a.value * c.value;
+            return { latex: a.latex + ' \\times ' + b.latex + ' + ' + a.latex + ' \\times ' + c.latex, answer: ans, simple: true };
+        },
+        function() {
+            var a = randNumNoInt();
+            var b = randNum();
+            var c = randNum();
+            while (b.value <= c.value * 1.1) { c = randNum(); }
+            while (a.value < 1.5) a = randNumNoInt();
+            var ans = a.value * b.value - a.value * c.value;
+            return { latex: a.latex + ' \\times ' + b.latex + ' - ' + a.latex + ' \\times ' + c.latex, answer: ans, simple: true };
+        },
+        function() {
+            var p = randPercent();
+            var a = rand(80, isHard ? 280 : 150);
+            var ans = a / (1 - p/100);
+            return { latex: a + ' \\div (1 - ' + p + '\\%)', answer: ans, simple: false };
+        },
+        function() {
+            var p = randPercent();
+            var a = rand(80, isHard ? 280 : 150);
+            var ans = a / (1 + p/100);
+            return { latex: a + ' \\div (1 + ' + p + '\\%)', answer: ans, simple: false };
+        },
+        function() {
+            var a = randNum();
+            while (a.value < 3) a = randNum();
+            var ans = a.value;
+            return { latex: a.latex + ' \\times 2.5 \\times 0.4', answer: ans, simple: true };
+        },
+        function() {
+            var a = randNum();
+            while (a.value < 5) a = randNum();
+            var ans = a.value;
+            return { latex: a.latex + ' \\div 0.25 \\div 4', answer: ans, simple: true };
+        },
+        function() {
+            var a = randNumNoInt();
+            var b = randNumNoInt();
+            var c = randNumNoInt();
+            var d = randNumNoInt();
+            while (c.value <= d.value * 1.1) { c = randNumNoInt(); d = randNumNoInt(); }
+            var ans = (a.value + b.value) * (c.value - d.value);
+            return { latex: '\\left(' + a.latex + ' + ' + b.latex + '\\right) \\times \\left(' + c.latex + ' - ' + d.latex + '\\right)', answer: ans, simple: true };
+        },
+        function() {
+            var a = randNumNoInt();
+            var b = randNum();
+            var c = randNumNoInt();
+            var d = randNum();
+            while (a.value < 1.5 || c.value < 1.5) { a = randNumNoInt(); c = randNumNoInt(); }
+            var ans = a.value * b.value + c.value * d.value;
+            return { latex: a.latex + ' \\times ' + b.latex + ' + ' + c.latex + ' \\times ' + d.latex, answer: ans, simple: false };
+        },
+        function() {
+            var a = randNumNoInt();
+            var b = randNum();
+            var c = randNumNoInt();
+            var d = randNum();
+            while (b.value <= d.value * 1.1) { d = randNum(); }
+            while (a.value < 1.5 || c.value < 1.5) { a = randNumNoInt(); c = randNumNoInt(); }
+            var ans = a.value * b.value - c.value * d.value;
+            return { latex: a.latex + ' \\times ' + b.latex + ' - ' + c.latex + ' \\times ' + d.latex, answer: ans, simple: false };
+        }
+    ];
+
+    for (var i = 0; i < count; i++) {
+        var idx = i % types.length;
+        var result = types[idx]();
+        var ans = result.answer;
+        var latex = result.latex;
+        var attempts = 0;
+        while ((ans <= 0.5 || !isFinite(ans)) && attempts < 30) {
+            var r = types[rand(0, types.length - 1)]();
+            ans = r.answer;
+            latex = r.latex;
+            attempts++;
+        }
+        if (ans <= 0.5 || !isFinite(ans)) { ans = 3.5; latex = '\\frac{7}{2}'; }
+        items.push({ latex: latex, answer: ans, simple: result.simple });
+    }
+    return items;
+}
+
+// ========================= 解方程（用 ÷ 分数，不加多余括号） =========================
+function generateEquation(level, count) {
+    var items = [];
+    var isHard = level === 'hard';
+
+    function randFracSmall() {
+        for (var t = 0; t < 100; t++) {
+            var d = rand(3, 9);
+            var n = rand(2, d - 2);
+            var r = fracSimp(n, d);
+            if (r && r.n !== r.d) return r;
+        }
+        return { n: 3, d: 7 };
+    }
+
+    var types = [
+        // 1. a(x + b) = c
+        function() {
+            var a = randFracSmall();
+            var b = rand(3, isHard ? 12 : 8);
+            var c = rand(8, isHard ? 45 : 25);
+            var x = c / (a.n/a.d) - b;
+            while (x % 1 !== 0 || x <= 0) {
+                a = randFracSmall();
+                b = rand(3, isHard ? 12 : 8);
+                c = rand(8, isHard ? 45 : 25);
+                x = c / (a.n/a.d) - b;
+            }
+            return { latex: '\\frac{' + a.n + '}{' + a.d + '}(x + ' + b + ') = ' + c, answer: x };
+        },
+        // 2. a(x - b) = c，a为小数
+        function() {
+            var a = randDecimal();
+            var b = rand(3, isHard ? 12 : 8);
+            var c = rand(8, isHard ? 45 : 25);
+            var x = c / a + b;
+            while (x % 1 !== 0 || x <= 0) {
+                a = randDecimal();
+                b = rand(3, isHard ? 12 : 8);
+                c = rand(8, isHard ? 45 : 25);
+                x = c / a + b;
+            }
+            return { latex: a + '(x - ' + b + ') = ' + c, answer: x };
+        },
+        // 3. (x + a) ÷ (b/c) = d
+        function() {
+            var a = rand(3, isHard ? 14 : 8);
+            var b = randFracSmall();
+            var c = rand(4, isHard ? 16 : 10);
+            var x = c * (b.n/b.d) - a;
+            while (x % 1 !== 0 || x <= 0) {
+                a = rand(3, isHard ? 14 : 8);
+                b = randFracSmall();
+                c = rand(4, isHard ? 16 : 10);
+                x = c * (b.n/b.d) - a;
+            }
+            return { latex: '(x + ' + a + ') \\div \\frac{' + b.n + '}{' + b.d + '} = ' + c, answer: x };
+        },
+        // 4. a(x - b) + c = d
+        function() {
+            var a = randFracSmall();
+            var b = rand(3, isHard ? 10 : 6);
+            var c = rand(3, isHard ? 12 : 7);
+            var d = rand(8, isHard ? 35 : 20);
+            var x = (d - c) / (a.n/a.d) + b;
+            while (x % 1 !== 0 || x <= 0 || d <= c) {
+                a = randFracSmall();
+                b = rand(3, isHard ? 10 : 6);
+                c = rand(3, isHard ? 12 : 7);
+                d = rand(8, isHard ? 35 : 20);
+                x = (d - c) / (a.n/a.d) + b;
+            }
+            return { latex: '\\frac{' + a.n + '}{' + a.d + '}(x - ' + b + ') + ' + c + ' = ' + d, answer: x };
+        },
+        // 5. x ÷ (a/b) + c = d  （不加括号，除法优先）
+        function() {
+            var a = randFracSmall();
+            var b = rand(3, isHard ? 10 : 6);
+            var c = rand(5, isHard ? 20 : 12);
+            var x = (c - b) * (a.n/a.d);
+            while (x % 1 !== 0 || x <= 0 || c <= b) {
+                a = randFracSmall();
+                b = rand(3, isHard ? 10 : 6);
+                c = rand(5, isHard ? 20 : 12);
+                x = (c - b) * (a.n/a.d);
+            }
+            return { latex: 'x \\div \\frac{' + a.n + '}{' + a.d + '} + ' + b + ' = ' + c, answer: x };
+        },
+        // 6. a(x + b) = c(x - d)
+        function() {
+            var a = randFracSmall();
+            var b = rand(3, isHard ? 10 : 6);
+            var c = randFracSmall();
+            var d = rand(3, isHard ? 10 : 6);
+            var x = (a.n/a.d * b + c.n/c.d * d) / (c.n/c.d - a.n/a.d);
+            while (x % 1 !== 0 || x <= 0 || c.n/c.d <= a.n/a.d) {
+                a = randFracSmall();
+                b = rand(3, isHard ? 10 : 6);
+                c = randFracSmall();
+                d = rand(3, isHard ? 10 : 6);
+                x = (a.n/a.d * b + c.n/c.d * d) / (c.n/c.d - a.n/a.d);
+            }
+            return { latex: '\\frac{' + a.n + '}{' + a.d + '}(x + ' + b + ') = \\frac{' + c.n + '}{' + c.d + '}(x - ' + d + ')', answer: x };
+        },
+        // 7. 解比例 a : b = x : c
+        function() {
+            var a = randFracSmall();
+            var b = rand(3, isHard ? 10 : 6);
+            var c = rand(3, isHard ? 10 : 6);
+            var x = (a.n/a.d) * c / b;
+            while (x % 1 !== 0 || x <= 0) {
+                a = randFracSmall();
+                b = rand(3, isHard ? 10 : 6);
+                c = rand(3, isHard ? 10 : 6);
+                x = (a.n/a.d) * c / b;
+            }
+            return { latex: '\\frac{' + a.n + '}{' + a.d + '} : ' + b + ' = x : ' + c, answer: x };
+        },
+        // 8. 解比例 a : b = c : x，含百分数
+        function() {
+            var a = randFracSmall();
+            var b = rand(3, isHard ? 10 : 6);
+            var cPct = randPercent();
+            var c = cPct / 100;
+            var x = b * c / (a.n/a.d);
+            while (x % 1 !== 0 || x <= 0) {
+                a = randFracSmall();
+                b = rand(3, isHard ? 10 : 6);
+                cPct = randPercent();
+                c = cPct / 100;
+                x = b * c / (a.n/a.d);
+            }
+            return { latex: '\\frac{' + a.n + '}{' + a.d + '} : ' + b + ' = ' + cPct + '\\% : x', answer: x };
+        },
+        // 9. 解比例 a : x = b : c，含小数
+        function() {
+            var a = randDecimal();
+            var b = rand(3, isHard ? 10 : 6);
+            var c = rand(3, isHard ? 10 : 6);
+            var x = a * c / b;
+            while (x % 1 !== 0 || x <= 0) {
+                a = randDecimal();
+                b = rand(3, isHard ? 10 : 6);
+                c = rand(3, isHard ? 10 : 6);
+                x = a * c / b;
+            }
+            return { latex: a + ' : x = ' + b + ' : ' + c, answer: x };
+        },
+        // 10. a(x + b/c) = d，括号里为分数
+        function() {
+            var a = rand(2, isHard ? 5 : 3);
+            var b = randFracSmall();
+            var c = rand(8, isHard ? 40 : 20);
+            var x = c / a - (b.n/b.d);
+            while (x % 1 !== 0 || x <= 0) {
+                a = rand(2, isHard ? 5 : 3);
+                b = randFracSmall();
+                c = rand(8, isHard ? 40 : 20);
+                x = c / a - (b.n/b.d);
+            }
+            return { latex: a + '(x + \\frac{' + b.n + '}{' + b.d + '}) = ' + c, answer: x };
+        },
+        // 11. a(x - b) = c，括号里b为小数
+        function() {
+            var a = randFracSmall();
+            var b = randDecimal();
+            var c = rand(8, isHard ? 40 : 20);
+            var x = c / (a.n/a.d) + b;
+            while (x % 1 !== 0 || x <= 0) {
+                a = randFracSmall();
+                b = randDecimal();
+                c = rand(8, isHard ? 40 : 20);
+                x = c / (a.n/a.d) + b;
+            }
+            return { latex: '\\frac{' + a.n + '}{' + a.d + '}(x - ' + b + ') = ' + c, answer: x };
+        },
+        // 12. (x - a) ÷ (b/c) = d
+        function() {
+            var a = rand(3, isHard ? 14 : 8);
+            var b = randFracSmall();
+            var c = rand(4, isHard ? 16 : 10);
+            var x = c * (b.n/b.d) + a;
+            while (x % 1 !== 0 || x <= 0) {
+                a = rand(3, isHard ? 14 : 8);
+                b = randFracSmall();
+                c = rand(4, isHard ? 16 : 10);
+                x = c * (b.n/b.d) + a;
+            }
+            return { latex: '(x - ' + a + ') \\div \\frac{' + b.n + '}{' + b.d + '} = ' + c, answer: x };
+        },
+        // 13. x ÷ (a/b) - c = d  （不加括号）
+        function() {
+            var a = randFracSmall();
+            var b = rand(3, isHard ? 10 : 6);
+            var c = rand(5, isHard ? 20 : 12);
+            var x = (c + b) * (a.n/a.d);
+            while (x % 1 !== 0 || x <= 0) {
+                a = randFracSmall();
+                b = rand(3, isHard ? 10 : 6);
+                c = rand(5, isHard ? 20 : 12);
+                x = (c + b) * (a.n/a.d);
+            }
+            return { latex: 'x \\div \\frac{' + a.n + '}{' + a.d + '} - ' + b + ' = ' + c, answer: x };
+        }
+    ];
+
+    for (var i = 0; i < count; i++) {
+        var idx = i % types.length;
+        var result = types[idx]();
+        var ans = result.answer;
+        var latex = result.latex;
+        var attempts = 0;
+        while ((ans <= 0 || !isFinite(ans) || !Number.isInteger(ans)) && attempts < 30) {
+            var r = types[rand(0, types.length - 1)]();
+            ans = r.answer;
+            latex = r.latex;
+            attempts++;
+        }
+        if (ans <= 0 || !isFinite(ans) || !Number.isInteger(ans)) {
+            ans = 7;
+            latex = '3(x + 2) = 27';
+        }
+        items.push({ latex: latex, answer: ans });
+    }
+    return items;
+}
+
+// ========================= 渲染 =========================
+var currentLevel = 'hard';
+var showAns = false;
+
+function renderQuestions(level) {
+    var oralCount = Math.max(1, parseInt(document.getElementById('oralCount').value) || 10);
+    var calcCount = Math.max(1, parseInt(document.getElementById('calcCount').value) || 12);
+    var eqCount = Math.max(1, parseInt(document.getElementById('eqCount').value) || 6);
+
+    var oral = generateOral(level, oralCount);
+    var calc = generateCalc(level, calcCount);
+    var eqs = generateEquation(level, eqCount);
+
+    var html = '';
+    var idx = 0;
+
+    html += '<div class="section"><div class="section-title">一、直接写出得数 <small>（' + oralCount + '道，含求比值）</small></div><div class="grid-oral">';
+    for (var i = 0; i < oral.length; i++) {
+        var q = oral[i];
+        html += buildItem(++idx, q.latex, q.answer, false);
+    }
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="section-title">二、脱式计算（能简算的要简算） <small>（' + calcCount + '道，3步）</small></div><div class="grid-calc">';
+    for (var j = 0; j < calc.length; j++) {
+        var q2 = calc[j];
+        var tag = q2.simple ? '<span class="tag-simple">简算</span>' : '';
+        html += buildItem(++idx, q2.latex, q2.answer, false, tag);
+    }
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="section-title">三、解方程 <small>（' + eqCount + '道，含解比例）</small></div><div class="grid-eq">';
+    for (var k = 0; k < eqs.length; k++) {
+        var q3 = eqs[k];
+        html += buildItem(++idx, q3.latex, q3.answer, true);
+    }
+    html += '</div></div>';
+
+    document.getElementById('questionArea').innerHTML = html;
+    document.getElementById('scoreArea').style.display = 'none';
+    document.getElementById('levelDisplay').textContent = level === 'hard' ? '提高' : '中等';
+
+    if (window.katex) {
+        var latexEls = document.querySelectorAll('.latex');
+        for (var m = 0; m < latexEls.length; m++) {
+            try {
+                katex.render(latexEls[m].textContent.trim(), latexEls[m], { throwOnError: false });
+            } catch (e) {}
+        }
+    }
+
+    if (showAns) {
+        document.getElementById('questionArea').classList.add('show-answers');
+        document.getElementById('toggleAnsBtn').textContent = '🙈 隐藏答案';
+    } else {
+        document.getElementById('questionArea').classList.remove('show-answers');
+        document.getElementById('toggleAnsBtn').textContent = '📖 显示答案';
+    }
+    clearCheckState();
+}
+
+function buildItem(idx, latex, answer, isEquation, extraTag) {
+    if (extraTag === undefined) extraTag = '';
+    var ansDisplay = isEquation ? 'x = ' + toFracString(answer) : toFracString(answer);
+    return '<div class="q-item" data-idx="' + idx + '">' +
+        '<span class="num">' + idx + '.</span>' +
+        '<span class="latex">' + latex + '</span>' + extraTag +
+        '<input type="text" class="answer-input" placeholder="答案" data-answer="' + answer + '">' +
+        '<span class="result-icon"></span>' +
+        '<span class="ans-show"> = ' + ansDisplay + '</span>' +
+        '</div>';
+}
+
+function clearCheckState() {
+    var icons = document.querySelectorAll('.result-icon');
+    for (var i = 0; i < icons.length; i++) {
+        icons[i].textContent = '';
+        icons[i].className = 'result-icon';
+    }
+    var inputs = document.querySelectorAll('.answer-input');
+    for (var j = 0; j < inputs.length; j++) {
+        inputs[j].style.borderColor = '#d1d5db';
+        inputs[j].style.background = '#fafafa';
+    }
+    document.getElementById('scoreArea').style.display = 'none';
+}
+
+// ========================= 批改 =========================
+function checkAnswers() {
+    var inputs = document.querySelectorAll('.answer-input');
+    var correct = 0;
+    var total = inputs.length;
+    for (var i = 0; i < inputs.length; i++) {
+        var input = inputs[i];
+        var raw = input.value.trim();
+        var correctVal = parseFloat(input.dataset.answer);
+        var icon = input.parentElement.querySelector('.result-icon');
+        if (raw === '') {
+            icon.textContent = '⏳';
+            icon.className = 'result-icon';
+            input.style.borderColor = '#d1d5db';
+            continue;
+        }
+        var userNum = parseUserInput(raw);
+        if (isNaN(userNum)) {
+            icon.textContent = '❌';
+            icon.className = 'result-icon wrong';
+            input.style.borderColor = '#ef4444';
+            input.style.background = '#fef2f2';
+            continue;
+        }
+        if (Math.abs(userNum - correctVal) < 1e-9) {
+            correct++;
+            icon.textContent = '✅';
+            icon.className = 'result-icon correct';
+            input.style.borderColor = '#10b981';
+            input.style.background = '#f0fdf4';
+        } else {
+            icon.textContent = '❌';
+            icon.className = 'result-icon wrong';
+            input.style.borderColor = '#ef4444';
+            input.style.background = '#fef2f2';
+        }
+    }
+    var area = document.getElementById('scoreArea');
+    area.style.display = 'flex';
+    document.getElementById('scoreText').textContent = '正确：' + correct + ' / ' + total;
+}
+
+// ========================= 计时器 =========================
+var timerSeconds = 0;
+var timerInterval = null;
+var timerRunning = false;
+
+function updateTimerDisplay() {
+    var m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+    var s = String(timerSeconds % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = m + ':' + s;
+}
+
+function startTimer() {
+    if (timerRunning) return;
+    timerRunning = true;
+    document.getElementById('timerStartBtn').textContent = '⏸ 暂停';
+    timerInterval = setInterval(function() {
+        timerSeconds++;
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function pauseTimer() {
+    if (!timerRunning) return;
+    timerRunning = false;
+    clearInterval(timerInterval);
+    document.getElementById('timerStartBtn').textContent = '▶ 继续';
+}
+
+function resetTimer() {
+    pauseTimer();
+    timerSeconds = 0;
+    updateTimerDisplay();
+    document.getElementById('timerStartBtn').textContent = '▶ 开始';
+    timerRunning = false;
+}
+
+// ========================= 事件绑定 =========================
+document.getElementById('generateBtn').addEventListener('click', function() {
+    renderQuestions(currentLevel);
+    resetTimer();
+    var inputs = document.querySelectorAll('.answer-input');
+    for (var i = 0; i < inputs.length; i++) { inputs[i].value = ''; }
+    clearCheckState();
+});
+
+document.getElementById('toggleAnsBtn').addEventListener('click', function() {
+    showAns = !showAns;
+    if (showAns) {
+        document.getElementById('questionArea').classList.add('show-answers');
+        this.textContent = '🙈 隐藏答案';
+    } else {
+        document.getElementById('questionArea').classList.remove('show-answers');
+        this.textContent = '📖 显示答案';
+    }
+});
+
+document.getElementById('checkBtn').addEventListener('click', checkAnswers);
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.classList.contains('answer-input')) {
+        e.preventDefault();
+        checkAnswers();
+    }
+});
+
+document.getElementById('timerStartBtn').addEventListener('click', function() {
+    timerRunning ? pauseTimer() : startTimer();
+});
+
+document.getElementById('timerResetBtn').addEventListener('click', resetTimer);
+
+document.getElementById('levelMedium').addEventListener('click', function() {
+    currentLevel = 'medium';
+    this.style.background = '#dbeafe';
+    this.style.borderColor = '#3b82f6';
+    document.getElementById('levelHard').style.background = 'transparent';
+    document.getElementById('levelHard').style.borderColor = '#cbd5e1';
+    renderQuestions(currentLevel);
+    resetTimer();
+    var inputs = document.querySelectorAll('.answer-input');
+    for (var i = 0; i < inputs.length; i++) { inputs[i].value = ''; }
+    clearCheckState();
+});
+
+document.getElementById('levelHard').addEventListener('click', function() {
+    currentLevel = 'hard';
+    this.style.background = '#dbeafe';
+    this.style.borderColor = '#3b82f6';
+    document.getElementById('levelMedium').style.background = 'transparent';
+    document.getElementById('levelMedium').style.borderColor = '#cbd5e1';
+    renderQuestions(currentLevel);
+    resetTimer();
+    var inputs = document.querySelectorAll('.answer-input');
+    for (var i = 0; i < inputs.length; i++) { inputs[i].value = ''; }
+    clearCheckState();
+});
+
+renderQuestions('hard');
+resetTimer();
+</script>
+</body>
+</html>

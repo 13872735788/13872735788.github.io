@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>羊吃草问题交互演示</title>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --bg-color: #ffffff;
+            --panel-bg: #f8f9fa;
+            --border: #e0e0e0;
+            --text-main: #333333;
+            --text-light: #666666;
+            --fence: #8B4513;
+            --grass-light: rgba(144, 238, 144, 0.2);
+            --grass-eaten: rgba(76, 175, 80, 0.4);
+            --rope: #A0522D;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: var(--text-light);
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .canvas-section {
+            flex: 1;
+            min-width: 320px;
+            max-width: 800px;
+            background: #fafcfb;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .hint {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #555;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            pointer-events: none;
+        }
+
+        .controls-section {
+            width: 350px;
+            background: var(--panel-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .control-group label span {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .math-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #eaeaea;
+            margin-top: 30px;
+        }
+
+        .math-panel h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 18px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .formula-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-family: 'Cambria', 'Times New Roman', serif;
+            font-size: 15px;
+            color: #444;
+        }
+        
+        .formula-name {
+            font-family: 'Segoe UI', sans-serif;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .total-row {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px dashed #ccc;
+            font-size: 18px;
+            font-weight: bold;
+            color: #e74c3c;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .controls-section {
+                width: 100%;
+                max-width: 800px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>羊吃草问题交互演示</h1>
+        <p>拖动下方的参数或直接在草地上拖动小羊，观察吃草面积的变化规律。</p>
+    </div>
+
+    <div class="container">
+        <div class="canvas-section">
+            <div class="hint">💡 提示: 拖动小羊移动</div>
+            <canvas id="simCanvas"></canvas>
+        </div>
+
+        <div class="controls-section">
+            <div class="control-group">
+                <label>羊圈宽度 (W) <span id="valW">120 m</span></label>
+                <input type="range" id="inputW" min="50" max="250" value="120">
+            </div>
+            <div class="control-group">
+                <label>羊圈长度 (H) <span id="valH">100 m</span></label>
+                <input type="range" id="inputH" min="50" max="250" value="100">
+            </div>
+            <div class="control-group">
+                <label>拴羊绳长 (R) <span id="valR">180 m</span></label>
+                <input type="range" id="inputR" min="50" max="350" value="180">
+            </div>
+
+            <div class="math-panel">
+                <h3>总面积计算</h3>
+                <div class="formula-row">
+                    <span class="formula-name">① 基础扇形 (3/4圆):<br>¾ π R²</span>
+                    <span id="s1">0.00</span>
+                </div>
+                <div class="formula-row">
+                    <span class="formula-name">② 右侧拐角 (1/4圆):<br>¼ π (R-W)²</span>
+                    <span id="s2">0.00</span>
+                </div>
+                <div class="formula-row">
+                    <span class="formula-name">③ 下方拐角 (1/4圆):<br>¼ π (R-H)²</span>
+                    <span id="s3">0.00</span>
+                </div>
+                <div class="total-row">
+                    <span>总吃草面积 S:</span>
+                    <span id="sTotal">0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Canvas Internal Resolution
+        const CW = 800;
+        const CH = 650;
+        canvas.width = CW;
+        canvas.height = CH;
+
+        // Tether point (Top-Left of sheepfold)
+        const CX = 350;
+        const CY = 250;
+
+        // State
+        let W = parseInt(document.getElementById('inputW').value);
+        let H = parseInt(document.getElementById('inputH').value);
+        let R = parseInt(document.getElementById('inputR').value);
+        
+        // Initial sheep position (straight up)
+        let sheep = { x: CX, y: CY - R };
+        let isDragging = false;
+
+        // DOM Elements
+        const valW = document.getElementById('valW');
+        const valH = document.getElementById('valH');
+        const valR = document.getElementById('valR');
+        const elS1 = document.getElementById('s1');
+        const elS2 = document.getElementById('s2');
+        const elS3 = document.getElementById('s3');
+        const elSTotal = document.getElementById('sTotal');
+
+        function updateMath() {
+            const area1 = 0.75 * Math.PI * R * R;
+            const area2 = R > W ? 0.25 * Math.PI * Math.pow(R - W, 2) : 0;
+            const area3 = R > H ? 0.25 * Math.PI * Math.pow(R - H, 2) : 0;
+            const total = area1 + area2 + area3;
+
+            elS1.textContent = area1.toFixed(1);
+            elS2.textContent = area2.toFixed(1);
+            elS3.textContent = area3.toFixed(1);
+            elSTotal.textContent = total.toFixed(1) + " m²";
+        }
+
+        function constrainPoint(px, py) {
+            // 1. Prevent entering rect
+            if (px > CX && px < CX + W && py > CY && py < CY + H) {
+                let dL = px - CX;
+                let dR = CX + W - px;
+                let dT = py - CY;
+                let dB = CY + H - py;
+                let min = Math.min(dL, dR, dT, dB);
+                if (min === dL) px = CX;
+                else if (min === dR) px = CX + W;
+                else if (min === dT) py = CY;
+                else py = CY + H;
+            }
+
+            // 2. Determine Pivot and Max Radius
+            let pivot = { x: CX, y: CY };
+            let maxR = R;
+
+            if (px >= CX + W && py >= CY) { // Wrap 1 (Right)
+                pivot = { x: CX + W, y: CY };
+                maxR = R - W;
+                if (maxR <= 0) return { x: CX + W, y: CY };
+            } else if (px >= CX && px <= CX + W && py >= CY + H) { // Wrap 2 (Bottom)
+                pivot = { x: CX, y: CY + H };
+                maxR = R - H;
+                if (maxR <= 0) return { x: CX, y: CY + H };
+            } else if (px < CX && py >= CY + H) { // Main Zone bottom left part
+                pivot = { x: CX, y: CY };
+                maxR = R;
+            } else { // Main Zone
+                pivot = { x: CX, y: CY };
+                maxR = R;
+            }
+
+            let dx = px - pivot.x;
+            let dy = py - pivot.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist > maxR) {
+                let a = Math.atan2(dy, dx);
+                px = pivot.x + maxR * Math.cos(a);
+                py = pivot.y + maxR * Math.sin(a);
+            }
+            return { x: px, y: py };
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, CW, CH);
+
+            // --- 1. Draw Static Max Reachable Area (Light Background) ---
+            ctx.fillStyle = 'rgba(144, 238, 144, 0.15)';
+            ctx.strokeStyle = 'rgba(76, 175, 80, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+
+            // Main Sector
+            ctx.beginPath();
+            ctx.moveTo(CX, CY);
+            ctx.arc(CX, CY, R, 0, Math.PI / 2, true);
+            ctx.fill(); ctx.stroke();
+
+            // Wrap 1 Sector
+            if (R > W) {
+                ctx.beginPath();
+                ctx.moveTo(CX + W, CY);
+                ctx.arc(CX + W, CY, R - W, 0, Math.PI / 2, false);
+                ctx.fill(); ctx.stroke();
+            }
+
+            // Wrap 2 Sector
+            if (R > H) {
+                ctx.beginPath();
+                ctx.moveTo(CX, CY + H);
+                ctx.arc(CX, CY + H, R - H, Math.PI / 2, 0, true);
+                ctx.fill(); ctx.stroke();
+            }
+            ctx.setLineDash([]);
+
+            // --- 2. Draw Dynamic Swept Area based on sheep pos ---
+            ctx.fillStyle = 'rgba(76, 175, 80, 0.45)';
+            
+            if (sheep.x >= CX + W && sheep.y >= CY) {
+                // In Wrap 1: Fill entire main sector
+                ctx.beginPath();
+                ctx.moveTo(CX, CY);
+                ctx.arc(CX, CY, R, 0, Math.PI / 2, true);
+                ctx.fill();
+                // Fill partial wrap 1
+                if (R > W) {
+                    let a = Math.atan2(sheep.y - CY, sheep.x - (CX + W));
+                    ctx.beginPath();
+                    ctx.moveTo(CX + W, CY);
+                    ctx.arc(CX + W, CY, R - W, 0, a, false);
+                    ctx.fill();
+                }
+            } else if (sheep.x >= CX && sheep.x <= CX + W && sheep.y >= CY + H) {
+                // In Wrap 2: Fill entire main sector
+                ctx.beginPath();
+                ctx.moveTo(CX, CY);
+                ctx.arc(CX, CY, R, 0, Math.PI / 2, true);
+                ctx.fill();
+                // Fill partial wrap 2
+                if (R > H) {
+                    let a = Math.atan2(sheep.y - (CY + H), sheep.x - CX);
+                    ctx.beginPath();
+                    ctx.moveTo(CX, CY + H);
+                    ctx.arc(CX, CY + H, R - H, Math.PI / 2, a, true);
+                    ctx.fill();
+                }
+            } else {
+                // In Main Sector: Fill partial
+                let dx = sheep.x - CX;
+                let dy = sheep.y - CY;
+                let angle = Math.atan2(dy, dx);
+                let sweepAngle = angle > 0 ? angle - 2 * Math.PI : angle;
+                
+                ctx.beginPath();
+                ctx.moveTo(CX, CY);
+                ctx.arc(CX, CY, R, 0, sweepAngle, true);
+                ctx.fill();
+            }
+
+            // --- 3. Draw Sheepfold (Rectangle) ---
+            ctx.fillStyle = '#deb887';
+            ctx.fillRect(CX, CY, W, H);
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(CX, CY, W, H);
+            
+            // Draw fence inner lines for texture
+            ctx.beginPath();
+            for(let i=10; i<W; i+=15) { ctx.moveTo(CX+i, CY); ctx.lineTo(CX+i, CY+H); }
+            for(let i=10; i<H; i+=15) { ctx.moveTo(CX, CY+i); ctx.lineTo(CX+W, CY+i); }
+            ctx.strokeStyle = 'rgba(139, 69, 19, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // --- 4. Draw Rope ---
+            ctx.beginPath();
+            ctx.moveTo(CX, CY); // Tether point
+            
+            let pivotX = CX;
+            let pivotY = CY;
+            
+            if (sheep.x >= CX + W && sheep.y >= CY) {
+                ctx.lineTo(CX + W, CY); // Bend at TR
+                pivotX = CX + W;
+                pivotY = CY;
+            } else if (sheep.x >= CX && sheep.x <= CX + W && sheep.y >= CY + H) {
+                ctx.lineTo(CX, CY + H); // Bend at BL
+                pivotX = CX;
+                pivotY = CY + H;
+            }
+            
+            ctx.lineTo(sheep.x, sheep.y);
+            ctx.strokeStyle = '#A0522D';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Draw Tether Pin
+            ctx.beginPath();
+            ctx.arc(CX, CY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#d35400';
+            ctx.fill();
+
+            // Draw Corner Pins if rope bends
+            if (pivotX !== CX || pivotY !== CY) {
+                ctx.beginPath();
+                ctx.arc(pivotX, pivotY, 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#d35400';
+                ctx.fill();
+            }
+
+            // --- 5. Draw Sheep ---
+            ctx.beginPath();
+            ctx.arc(sheep.x, sheep.y, 14, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Sheep details (face)
+            ctx.fillStyle = '#333';
+            ctx.beginPath(); ctx.arc(sheep.x - 4, sheep.y - 2, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(sheep.x + 4, sheep.y - 2, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(sheep.x, sheep.y + 4, 3, 0, Math.PI, false); ctx.stroke();
+        }
+
+        // --- Event Listeners ---
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX = evt.clientX;
+            let clientY = evt.clientY;
+            
+            if(evt.touches && evt.touches.length > 0) {
+                clientX = evt.touches[0].clientX;
+                clientY = evt.touches[0].clientY;
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function handleDown(e) {
+            const pos = getMousePos(e);
+            const dist = Math.hypot(pos.x - sheep.x, pos.y - sheep.y);
+            // generous hit area
+            if (dist < 30) {
+                isDragging = true;
+                if(e.type === 'touchstart') e.preventDefault();
+            }
+        }
+
+        function handleMove(e) {
+            if (!isDragging) return;
+            e.preventDefault(); // prevent scrolling on touch
+            const pos = getMousePos(e);
+            sheep = constrainPoint(pos.x, pos.y);
+            requestAnimationFrame(draw);
+        }
+
+        function handleUp() {
+            isDragging = false;
+        }
+
+        canvas.addEventListener('mousedown', handleDown);
+        canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleUp);
+        
+        canvas.addEventListener('touchstart', handleDown, {passive: false});
+        canvas.addEventListener('touchmove', handleMove, {passive: false});
+        window.addEventListener('touchend', handleUp);
+
+        // Sliders
+        function onSliderChange() {
+            W = parseInt(document.getElementById('inputW').value);
+            H = parseInt(document.getElementById('inputH').value);
+            R = parseInt(document.getElementById('inputR').value);
+            
+            valW.textContent = W + " m";
+            valH.textContent = H + " m";
+            valR.textContent = R + " m";
+
+            // Re-constrain sheep if sliders moved it out of bounds
+            sheep = constrainPoint(sheep.x, sheep.y);
+            
+            updateMath();
+            requestAnimationFrame(draw);
+        }
+
+        document.getElementById('inputW').addEventListener('input', onSliderChange);
+        document.getElementById('inputH').addEventListener('input', onSliderChange);
+        document.getElementById('inputR').addEventListener('input', onSliderChange);
+
+        // Init
+        updateMath();
+        draw();
+
+        // Handle window resize gracefully
+        window.addEventListener('resize', () => {
+            requestAnimationFrame(draw);
+        });
+
+    </script>
+</body>
+</html>

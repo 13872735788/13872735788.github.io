@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>🧊 观察物体 · 三视图探索</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, system-ui, sans-serif;
+            background: #eef2f7;
+            overflow: hidden;
+            height: 100vh;
+            user-select: none;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #ffffff;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.06);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #1a2a4a, #2d4a7a);
+            color: #fff;
+            flex-shrink: 0;
+            border-bottom: 3px solid #f5a623;
+            z-index: 10;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header h1 small {
+            font-size: 15px;
+            font-weight: 400;
+            opacity: 0.75;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-actions .info-badge {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-actions .info-badge .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2a8f5c;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+
+        .scene-wrap {
+            flex: 1;
+            position: relative;
+            background: #e8edf4;
+            overflow: hidden;
+            min-width: 0;
+        }
+        #three-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: grab;
+        }
+        #three-container:active {
+            cursor: grabbing;
+        }
+
+        .scene-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            white-space: nowrap;
+        }
+        .scene-hint strong {
+            color: #f5a623;
+        }
+
+        .panel {
+            width: 340px;
+            min-width: 280px;
+            max-width: 400px;
+            background: #ffffff;
+            border-left: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 14px 18px 10px 18px;
+            border-bottom: 2px solid #eef2f7;
+            font-weight: 700;
+            font-size: 16px;
+            color: #1a2a4a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            background: #fafbfc;
+        }
+        .panel-header .icon {
+            font-size: 18px;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        .panel-page {
+            position: absolute;
+            inset: 0;
+            padding: 14px 16px 10px 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .panel-page::-webkit-scrollbar {
+            width: 4px;
+        }
+        .panel-page::-webkit-scrollbar-track {
+            background: #f0f4f8;
+        }
+        .panel-page::-webkit-scrollbar-thumb {
+            background: #c5cedb;
+            border-radius: 10px;
+        }
+
+        .view-grids {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
+        .view-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 8px 14px;
+            border: 1px solid #eef2f7;
+            transition: border 0.2s;
+        }
+        .view-item:hover {
+            border-color: #d0d9e6;
+        }
+        .view-item .label {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a2a4a;
+            width: 64px;
+            flex-shrink: 0;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .view-item .label .sub {
+            font-weight: 400;
+            font-size: 11px;
+            color: #8896a8;
+            display: block;
+        }
+        .view-item canvas {
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            image-rendering: pixelated;
+            width: 100%;
+            aspect-ratio: 1/1;
+            max-width: 120px;
+            border: 2px solid #dde3ec;
+            transition: border 0.2s;
+        }
+        .view-item canvas:hover {
+            border-color: #b0bdcf;
+        }
+        .view-item .badge {
+            font-size: 11px;
+            color: #8896a8;
+            margin-left: auto;
+            padding: 2px 12px;
+            background: #eef2f7;
+            border-radius: 20px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px 0 2px 0;
+            border-top: 1px solid #eef2f7;
+            margin-top: auto;
+            flex-shrink: 0;
+            align-items: center;
+        }
+        .toolbar .btn {
+            padding: 6px 18px;
+            border: none;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            background: #eef2f7;
+            color: #2b3a67;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .toolbar .btn:hover {
+            background: #dde3ec;
+            transform: translateY(-1px);
+        }
+        .toolbar .btn:active {
+            transform: scale(0.96);
+        }
+        .toolbar .btn.primary {
+            background: #1a2a4a;
+            color: #fff;
+        }
+        .toolbar .btn.primary.active {
+            background: #f5a623;
+            color: #1a2a4a;
+            box-shadow: 0 2px 12px rgba(245, 166, 35, 0.3);
+        }
+        .toolbar .btn.warning {
+            background: #f5a623;
+            color: #1a2a4a;
+        }
+        .toolbar .btn.warning:hover {
+            background: #e0960a;
+        }
+        .toolbar .spacer {
+            flex: 1;
+        }
+        .toolbar .status {
+            font-size: 12px;
+            color: #8896a8;
+            padding: 4px 14px;
+            background: #f0f4f8;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .toolbar .status .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .toolbar .status .dot.green {
+            background: #2a8f5c;
+        }
+        .toolbar .status .dot.red {
+            background: #d45a5a;
+        }
+
+        .counter {
+            font-size: 12px;
+            color: #8896a8;
+            padding: 4px 12px;
+            background: #f0f4f8;
+            border-radius: 40px;
+            white-space: nowrap;
+        }
+        .counter strong {
+            color: #1a2a4a;
+            font-size: 14px;
+        }
+
+        @media (max-width: 860px) {
+            .main {
+                flex-direction: column;
+            }
+            .panel {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                height: 44vh;
+                border-left: none;
+                border-top: 1px solid #e2e8f0;
+            }
+            .scene-wrap {
+                height: 56vh;
+            }
+            .view-item canvas {
+                max-width: 90px;
+            }
+            .header h1 {
+                font-size: 18px;
+            }
+            .header h1 small {
+                font-size: 12px;
+            }
+            .scene-hint {
+                font-size: 12px;
+                padding: 6px 16px;
+                white-space: normal;
+            }
+            .header-actions .info-badge {
+                font-size: 11px;
+                padding: 4px 12px;
+            }
+        }
+        @media (max-width: 500px) {
+            .header {
+                padding: 6px 12px;
+            }
+            .header h1 {
+                font-size: 16px;
+            }
+            .header h1 small {
+                display: none;
+            }
+            .header-actions .info-badge {
+                font-size: 10px;
+                padding: 3px 10px;
+            }
+            .panel {
+                height: 48vh;
+            }
+            .panel-page {
+                padding: 10px 10px 6px 10px;
+            }
+            .view-item {
+                padding: 4px 8px;
+                gap: 6px;
+            }
+            .view-item .label {
+                width: 44px;
+                font-size: 13px;
+            }
+            .view-item .label .sub {
+                font-size: 10px;
+            }
+            .view-item canvas {
+                max-width: 64px;
+            }
+            .view-item .badge {
+                font-size: 10px;
+                padding: 0 8px;
+            }
+            .toolbar .btn {
+                font-size: 12px;
+                padding: 4px 12px;
+            }
+            .toolbar .status {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            .scene-hint {
+                font-size: 10px;
+                padding: 4px 12px;
+                bottom: 10px;
+            }
+            .counter {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            .counter strong {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <header class="header">
+            <h1>🧊 观察物体 <small>三视图探索器</small></h1>
+            <div class="header-actions">
+                <span class="info-badge">
+                    <span class="dot"></span>
+                    <span id="cubeCounter">方块: <strong>0</strong></span>
+                </span>
+            </div>
+        </header>
+
+        <div class="main">
+            <div class="scene-wrap">
+                <div id="three-container"></div>
+                <div class="scene-hint">
+                    🖱 <strong>拖拽</strong>旋转 · 滚轮缩放 · <span id="hintAction">点击地面放置方块</span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="icon">📊</span> 三视图
+                    <span style="font-weight:400;font-size:12px;color:#8896a8;margin-left:auto;">自动更新</span>
+                </div>
+
+                <div class="panel-content">
+                    <div class="panel-page active">
+                        <div class="view-grids">
+                            <div class="view-item">
+                                <span class="label">正视图 <span class="sub">正面</span></span>
+                                <canvas id="frontViewCanvas" width="120" height="120"></canvas>
+                                <span class="badge">X‑Y</span>
+                            </div>
+                            <div class="view-item">
+                                <span class="label">左视图 <span class="sub">左侧</span></span>
+                                <canvas id="leftViewCanvas" width="120" height="120"></canvas>
+                                <span class="badge">Z‑Y</span>
+                            </div>
+                            <div class="view-item">
+                                <span class="label">俯视图 <span class="sub">顶部</span></span>
+                                <canvas id="topViewCanvas" width="120" height="120"></canvas>
+                                <span class="badge">X‑Z</span>
+                            </div>
+                        </div>
+
+                        <div class="toolbar">
+                            <button class="btn primary active" id="addBtn"><span class="icon">➕</span> 添加</button>
+                            <button class="btn" id="removeBtn"><span class="icon">➖</span> 移除</button>
+                            <button class="btn warning" id="resetBtn"><span class="icon">🔄</span> 重置</button>
+                            <span class="spacer"></span>
+                            <span class="status" id="modeStatus"><span class="dot green"></span> 添加模式</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ================================================================
+        // 导入
+        // ================================================================
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // ================================================================
+        // 常量
+        // ================================================================
+        const GRID = 5;
+        const CUBE_SIZE = 1;
+        const HALF = GRID / 2;
+
+        // ================================================================
+        // DOM 引用
+        // ================================================================
+        const container = document.getElementById('three-container');
+        const frontCanvas = document.getElementById('frontViewCanvas');
+        const leftCanvas = document.getElementById('leftViewCanvas');
+        const topCanvas = document.getElementById('topViewCanvas');
+
+        const addBtn = document.getElementById('addBtn');
+        const removeBtn = document.getElementById('removeBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const modeStatus = document.getElementById('modeStatus');
+        const hintAction = document.getElementById('hintAction');
+        const cubeCounter = document.getElementById('cubeCounter');
+
+        // ================================================================
+        // 状态
+        // ================================================================
+        let model = createEmptyModel();
+        let currentTool = 'add';
+
+        // Three.js 对象
+        let scene, camera, renderer, controls, labelRenderer;
+        let cubeGroup, groundMesh;
+        let cubeMeshes = [];
+        let raycaster = new THREE.Raycaster();
+        let isDragging = false;
+        let pointerDownPos = { x: 0, y: 0 };
+
+        // ================================================================
+        // 工具函数
+        // ================================================================
+        function createEmptyModel() {
+            return Array.from({ length: GRID }, () =>
+                Array.from({ length: GRID }, () => Array(GRID).fill(false))
+            );
+        }
+
+        function countCubes() {
+            let cnt = 0;
+            for (let x = 0; x < GRID; x++) {
+                for (let y = 0; y < GRID; y++) {
+                    for (let z = 0; z < GRID; z++) {
+                        if (model[x][y][z]) cnt++;
+                    }
+                }
+            }
+            return cnt;
+        }
+
+        function updateCounter() {
+            cubeCounter.innerHTML = `方块: <strong>${countCubes()}</strong>`;
+        }
+
+        // ================================================================
+        // 初始化 Three.js
+        // ================================================================
+        function initThree() {
+            const rect = container.getBoundingClientRect();
+            const width = rect.width || container.clientWidth || 600;
+            const height = rect.height || container.clientHeight || 400;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xe8edf4);
+
+            camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+            camera.position.set(9, 7, 11);
+            camera.lookAt(HALF - 0.5, 1.5, HALF - 0.5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(HALF - 0.5, 1.0, HALF - 0.5);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.minDistance = 3;
+            controls.maxDistance = 28;
+            controls.maxPolarAngle = Math.PI / 2.05;
+            controls.update();
+
+            // 光照
+            const ambient = new THREE.AmbientLight(0x8899bb, 0.5);
+            scene.add(ambient);
+
+            const dirLight = new THREE.DirectionalLight(0xffeedd, 2.0);
+            dirLight.position.set(10, 18, 8);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 40;
+            dirLight.shadow.camera.left = -12;
+            dirLight.shadow.camera.right = 12;
+            dirLight.shadow.camera.top = 12;
+            dirLight.shadow.camera.bottom = -12;
+            scene.add(dirLight);
+
+            const fill = new THREE.DirectionalLight(0x99ccff, 0.5);
+            fill.position.set(-6, 4, -10);
+            scene.add(fill);
+
+            const rim = new THREE.DirectionalLight(0xffffff, 0.3);
+            rim.position.set(-4, 2, 10);
+            scene.add(rim);
+
+            createGround();
+            createGridHelper();
+
+            cubeGroup = new THREE.Group();
+            scene.add(cubeGroup);
+
+            // 标签渲染器
+            labelRenderer = new CSS2DRenderer();
+            labelRenderer.setSize(width, height);
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0';
+            labelRenderer.domElement.style.left = '0';
+            labelRenderer.domElement.style.pointerEvents = 'none';
+            container.appendChild(labelRenderer.domElement);
+
+            addAxisLabels();
+
+            // 事件
+            renderer.domElement.addEventListener('pointerdown', onPointerDown);
+            renderer.domElement.addEventListener('pointerup', onPointerUp);
+            window.addEventListener('resize', onResize);
+
+            renderScene();
+            updateAllViews();
+            updateCounter();
+            animate();
+        }
+
+        function createGround() {
+            const geo = new THREE.PlaneGeometry(GRID + 2, GRID + 2);
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0xd5dde8,
+                roughness: 0.85,
+                metalness: 0.0,
+                transparent: true,
+                opacity: 0.5,
+                side: THREE.DoubleSide,
+            });
+            groundMesh = new THREE.Mesh(geo, mat);
+            groundMesh.rotation.x = -Math.PI / 2;
+            groundMesh.position.set(HALF - 0.5, -0.01, HALF - 0.5);
+            groundMesh.receiveShadow = true;
+            groundMesh.name = 'ground';
+            scene.add(groundMesh);
+
+            const group = new THREE.Group();
+            const lineMat = new THREE.LineBasicMaterial({
+                color: 0x8899bb,
+                transparent: true,
+                opacity: 0.25,
+            });
+            for (let i = 0; i <= GRID; i++) {
+                const p1 = [
+                    new THREE.Vector3(i - 0.5, 0, -0.5),
+                    new THREE.Vector3(i - 0.5, 0, GRID - 0.5),
+                ];
+                const g1 = new THREE.BufferGeometry().setFromPoints(p1);
+                const l1 = new THREE.Line(g1, lineMat);
+                group.add(l1);
+
+                const p2 = [
+                    new THREE.Vector3(-0.5, 0, i - 0.5),
+                    new THREE.Vector3(GRID - 0.5, 0, i - 0.5),
+                ];
+                const g2 = new THREE.BufferGeometry().setFromPoints(p2);
+                const l2 = new THREE.Line(g2, lineMat);
+                group.add(l2);
+            }
+            scene.add(group);
+        }
+
+        function createGridHelper() {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0x2b3a67,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.05,
+            });
+            for (let x = 0; x < GRID; x++) {
+                for (let z = 0; z < GRID; z++) {
+                    const geo = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.position.set(x, 0.5, z);
+                    group.add(mesh);
+                }
+            }
+            scene.add(group);
+        }
+
+        function addAxisLabels() {
+            const makeLabel = (text, pos, color = '#2b3a67') => {
+                const div = document.createElement('div');
+                div.textContent = text;
+                div.style.color = color;
+                div.style.fontSize = '15px';
+                div.style.fontWeight = '700';
+                div.style.textShadow = '0 1px 6px rgba(255,255,255,0.8)';
+                div.style.fontFamily = 'sans-serif';
+                div.style.background = 'rgba(255,255,255,0.6)';
+                div.style.padding = '0 6px';
+                div.style.borderRadius = '4px';
+                const label = new CSS2DObject(div);
+                label.position.copy(pos);
+                scene.add(label);
+                return label;
+            };
+            makeLabel('X', new THREE.Vector3(GRID + 0.3, -0.2, -0.2), '#c0392b');
+            makeLabel('Y', new THREE.Vector3(-0.2, GRID + 0.3, -0.2), '#27ae60');
+            makeLabel('Z', new THREE.Vector3(-0.2, -0.2, GRID + 0.3), '#2980b9');
+        }
+
+        function renderScene() {
+            while (cubeGroup.children.length) {
+                const child = cubeGroup.children[0];
+                child.geometry?.dispose();
+                child.material?.dispose();
+                cubeGroup.remove(child);
+            }
+            cubeMeshes = [];
+
+            for (let x = 0; x < GRID; x++) {
+                for (let y = 0; y < GRID; y++) {
+                    for (let z = 0; z < GRID; z++) {
+                        if (model[x][y][z]) {
+                            createCube(x, y, z);
+                        }
+                    }
+                }
+            }
+
+            updateAllViews();
+            updateCounter();
+        }
+
+        function createCube(x, y, z) {
+            const size = CUBE_SIZE * 0.94;
+            const geo = new THREE.BoxGeometry(size, size, size);
+            const hue = 0.55 + y * 0.03;
+            const color = new THREE.Color().setHSL(hue, 0.55, 0.42 + y * 0.055);
+            const mat = new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: 0.30,
+                metalness: 0.05,
+                envMapIntensity: 0.2,
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y + 0.5, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.userData = { gridX: x, gridY: y, gridZ: z };
+            mesh.name = 'cube';
+            cubeGroup.add(mesh);
+            cubeMeshes.push(mesh);
+
+            const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(size, size, size));
+            const edgeMat = new THREE.LineBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.12,
+            });
+            const edge = new THREE.LineSegments(edgeGeo, edgeMat);
+            edge.position.copy(mesh.position);
+            cubeGroup.add(edge);
+        }
+
+        // ================================================================
+        // 点击交互
+        // ================================================================
+        function getPointerNDC(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            return new THREE.Vector2(x, y);
+        }
+
+        function onPointerDown(event) {
+            isDragging = false;
+            pointerDownPos.x = event.clientX;
+            pointerDownPos.y = event.clientY;
+
+            const moveHandler = (e) => {
+                const dx = e.clientX - pointerDownPos.x;
+                const dy = e.clientY - pointerDownPos.y;
+                if (Math.sqrt(dx * dx + dy * dy) > 6) {
+                    isDragging = true;
+                }
+            };
+            const upHandler = (e) => {
+                document.removeEventListener('pointermove', moveHandler);
+                document.removeEventListener('pointerup', upHandler);
+                if (!isDragging) {
+                    handleClick(e);
+                }
+                isDragging = false;
+            };
+            document.addEventListener('pointermove', moveHandler);
+            document.addEventListener('pointerup', upHandler);
+        }
+
+        function onPointerUp(event) {}
+
+        function handleClick(event) {
+            if (event.button !== 0) return;
+
+            const p = getPointerNDC(event);
+            raycaster.setFromCamera(p, camera);
+
+            const targets = [groundMesh, ...cubeMeshes];
+            const intersects = raycaster.intersectObjects(targets);
+
+            if (intersects.length === 0) return;
+
+            const hit = intersects[0];
+            const obj = hit.object;
+
+            if (obj.name === 'ground') {
+                const point = hit.point;
+                let gx = Math.round(point.x);
+                let gz = Math.round(point.z);
+                if (gx < 0 || gx >= GRID || gz < 0 || gz >= GRID) return;
+
+                if (currentTool === 'add') {
+                    let topY = -1;
+                    for (let y = 0; y < GRID; y++) {
+                        if (model[gx][y][gz]) topY = y;
+                    }
+                    const newY = topY + 1;
+                    if (newY < GRID) {
+                        model[gx][newY][gz] = true;
+                        renderScene();
+                    }
+                } else {
+                    for (let y = GRID - 1; y >= 0; y--) {
+                        if (model[gx][y][gz]) {
+                            model[gx][y][gz] = false;
+                            renderScene();
+                            break;
+                        }
+                    }
+                }
+            } else if (obj.name === 'cube') {
+                const { gridX, gridY, gridZ } = obj.userData;
+                if (currentTool === 'add') {
+                    const normal = hit.face.normal.clone();
+                    normal.transformDirection(obj.matrixWorld);
+                    const dx = Math.round(normal.x);
+                    const dy = Math.round(normal.y);
+                    const dz = Math.round(normal.z);
+                    const nx = gridX + dx;
+                    const ny = gridY + dy;
+                    const nz = gridZ + dz;
+                    if (nx >= 0 && nx < GRID && ny >= 0 && ny < GRID && nz >= 0 && nz < GRID) {
+                        if (!model[nx][ny][nz]) {
+                            model[nx][ny][nz] = true;
+                            renderScene();
+                        }
+                    }
+                } else {
+                    model[gridX][gridY][gridZ] = false;
+                    renderScene();
+                }
+            }
+        }
+
+        // ================================================================
+        // 三视图计算与绘制
+        // ================================================================
+        function computeView(view) {
+            const result = createEmptyGrid();
+
+            if (view === 'front') {
+                for (let x = 0; x < GRID; x++) {
+                    for (let y = 0; y < GRID; y++) {
+                        let has = false;
+                        for (let z = 0; z < GRID; z++) {
+                            if (model[x][y][z]) { has = true; break; }
+                        }
+                        result[x][y] = has;
+                    }
+                }
+            } else if (view === 'left') {
+                for (let z = 0; z < GRID; z++) {
+                    for (let y = 0; y < GRID; y++) {
+                        let has = false;
+                        for (let x = 0; x < GRID; x++) {
+                            if (model[x][y][z]) { has = true; break; }
+                        }
+                        result[z][y] = has;
+                    }
+                }
+            } else if (view === 'top') {
+                for (let x = 0; x < GRID; x++) {
+                    for (let z = 0; z < GRID; z++) {
+                        let has = false;
+                        for (let y = 0; y < GRID; y++) {
+                            if (model[x][y][z]) { has = true; break; }
+                        }
+                        result[x][z] = has;
+                    }
+                }
+            }
+            return result;
+        }
+
+        function createEmptyGrid() {
+            return Array.from({ length: GRID }, () => Array(GRID).fill(false));
+        }
+
+        function updateAllViews() {
+            drawView(frontCanvas, computeView('front'));
+            drawView(leftCanvas, computeView('left'));
+            drawView(topCanvas, computeView('top'));
+        }
+
+        function drawView(canvas, data) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const cell = w / GRID;
+
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#f5f7fa';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = '#c5d0dd';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= GRID; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * cell, 0);
+                ctx.lineTo(i * cell, h);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * cell);
+                ctx.lineTo(w, i * cell);
+                ctx.stroke();
+            }
+
+            for (let x = 0; x < GRID; x++) {
+                for (let y = 0; y < GRID; y++) {
+                    if (data[x][y]) {
+                        const px = x * cell;
+                        const py = (GRID - 1 - y) * cell;
+                        ctx.fillStyle = '#3a7bd5';
+                        ctx.shadowColor = 'rgba(58,123,213,0.25)';
+                        ctx.shadowBlur = 6;
+                        ctx.fillRect(px + 1, py + 1, cell - 2, cell - 2);
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = 'rgba(255,255,255,0.20)';
+                        ctx.fillRect(px + 2, py + 2, cell - 6, 2);
+                    }
+                }
+            }
+
+            ctx.strokeStyle = '#8899bb';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(0, 0, w, h);
+        }
+
+        // ================================================================
+        // 重置功能
+        // ================================================================
+        function resetAll() {
+            if (countCubes() === 0) return;
+            model = createEmptyModel();
+            renderScene();
+            modeStatus.innerHTML = `<span class="dot green"></span> 已重置`;
+            hintAction.textContent = '点击地面放置方块';
+            // 重置到添加模式
+            setTool('add');
+        }
+
+        // ================================================================
+        // 切换工具
+        // ================================================================
+        function setTool(tool) {
+            currentTool = tool;
+            if (tool === 'add') {
+                addBtn.classList.add('active');
+                removeBtn.classList.remove('active');
+                modeStatus.innerHTML = `<span class="dot green"></span> 添加模式`;
+                hintAction.textContent = '点击地面放置方块 · 点击方块表面堆叠';
+            } else {
+                removeBtn.classList.add('active');
+                addBtn.classList.remove('active');
+                modeStatus.innerHTML = `<span class="dot red"></span> 移除模式`;
+                hintAction.textContent = '点击方块移除 · 点击地面移除最高层';
+            }
+        }
+
+        // ================================================================
+        // 窗口 Resize
+        // ================================================================
+        function onResize() {
+            const rect = container.getBoundingClientRect();
+            const w = rect.width || container.clientWidth || 600;
+            const h = rect.height || container.clientHeight || 400;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            if (labelRenderer) {
+                labelRenderer.setSize(w, h);
+            }
+        }
+
+        // ================================================================
+        // 动画循环
+        // ================================================================
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+            if (labelRenderer) {
+                labelRenderer.render(scene, camera);
+            }
+        }
+
+        // ================================================================
+        // 初始化
+        // ================================================================
+        function init() {
+            initThree();
+
+            // 工具按钮
+            addBtn.addEventListener('click', () => setTool('add'));
+            removeBtn.addEventListener('click', () => setTool('remove'));
+
+            // 重置
+            resetBtn.addEventListener('click', resetAll);
+
+            // 默认状态
+            setTool('add');
+
+            setTimeout(onResize, 150);
+
+            console.log('🧊 观察物体 · 三视图探索器已启动！');
+            console.log('📖 在3D场景中搭建模型，右侧自动生成三视图');
+            console.log('💡 拖拽旋转 · 滚轮缩放 · 点击操作');
+        }
+
+        init();
+    </script>
+</body>
+</html>

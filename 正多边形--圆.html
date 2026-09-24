@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>正多边形 → 圆 | 慢速动画</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(145deg, #f5f9ff 0%, #e3edfa 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      padding: 16px;
+    }
+    .card {
+      max-width: 700px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 48px 48px 40px 40px;
+      box-shadow: 0 25px 45px -12px rgba(0, 20, 40, 0.35), 0 2px 8px rgba(0,0,0,0.04);
+      padding: 24px 24px 30px;
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+    .sub {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      margin-bottom: 20px;
+      color: #1f4970;
+      border-bottom: 1px solid rgba(60, 100, 150, 0.15);
+      padding-bottom: 14px;
+    }
+    .info-panel {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: #1f4b74;
+      color: white;
+      padding: 6px 18px;
+      border-radius: 60px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      box-shadow: 0 2px 6px rgba(0,30,60,0.15);
+    }
+    .badge span {
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin: 0 4px;
+    }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex: 1 1 260px;
+    }
+    .slider-container label {
+      font-weight: 450;
+      color: #1f3d5a;
+      white-space: nowrap;
+    }
+    input[type="range"] {
+      flex: 1;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: linear-gradient(90deg, #32668a, #7aa9d9);
+      border-radius: 8px;
+      outline: none;
+      min-width: 100px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0, 30, 60, 0.3);
+      border: 2px solid #1e507a;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.08);
+      background: #f5faff;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      border: 2px solid #1e507a;
+      cursor: pointer;
+    }
+    .canvas-wrapper {
+      background: white;
+      border-radius: 36px;
+      box-shadow: inset 0 4px 12px rgba(0,0,0,0.02), 0 12px 28px -10px rgba(0, 40, 70, 0.2);
+      padding: 10px;
+      margin: 10px 0 16px;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      touch-action: none;
+      cursor: grab;
+    }
+    canvas:active {
+      cursor: grabbing;
+    }
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px 20px;
+      margin-top: 10px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 60px;
+      font-weight: 500;
+      color: #1b3f5e;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(60, 110, 170, 0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.15s ease;
+      cursor: pointer;
+      font-size: 0.95rem;
+      background: #f3f9ff;
+    }
+    .btn:hover {
+      background: #e1effa;
+      border-color: #4180b0;
+      box-shadow: 0 6px 12px rgba(30, 80, 130, 0.12);
+      transform: translateY(-1px);
+    }
+    .btn:active {
+      transform: scale(0.96);
+      background: #d0e3f5;
+    }
+    .btn-primary {
+      background: #1d4d77;
+      border-color: #1d4d77;
+      color: white;
+      box-shadow: 0 4px 10px rgba(20, 70, 120, 0.25);
+    }
+    .btn-primary:hover {
+      background: #25658f;
+      border-color: #25658f;
+      color: white;
+    }
+    .btn-primary:active {
+      background: #133b5a;
+    }
+    .btn-step {
+      min-width: 72px;
+      justify-content: center;
+    }
+    .stat {
+      font-size: 0.95rem;
+      background: rgba(0,0,0,0.02);
+      padding: 6px 16px;
+      border-radius: 60px;
+      color: #1a3f5a;
+      border: 1px solid rgba(0,0,0,0.03);
+      backdrop-filter: blur(2px);
+    }
+    .stat strong {
+      font-weight: 600;
+      color: #0a2a44;
+    }
+    @media (max-width: 500px) {
+      .card { padding: 14px; }
+      .badge { font-size: 0.8rem; padding: 4px 12px; }
+      .btn { padding: 6px 14px; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="card" role="main">
+  <div class="sub">
+    <div class="info-panel">
+      <span class="badge">边数 <span id="sideCountDisplay">3</span></span>
+      <span class="stat">近似度 <strong id="circleApprox">0.0</strong>%</span>
+    </div>
+    <div class="slider-container">
+      <label for="sidesSlider">边数</label>
+      <input type="range" id="sidesSlider" min="3" max="200" value="3" step="1">
+    </div>
+  </div>
+
+  <div class="canvas-wrapper">
+    <canvas id="polyCanvas" width="600" height="600"></canvas>
+  </div>
+
+  <div class="control-row">
+    <div class="btn-group">
+      <button class="btn" id="resetBtn" aria-label="重置为三角形">🔺 三角形</button>
+      <button class="btn btn-step" id="step1Btn" aria-label="步进 +1">+1</button>
+      <button class="btn btn-step" id="step5Btn" aria-label="步进 +5">+5</button>
+      <button class="btn btn-primary" id="animateBtn" aria-label="播放动画">▶ 动画</button>
+    </div>
+    <span class="stat" id="polygonName">正三角形</span>
+  </div>
+</div>
+
+<script>
+  (function(){
+    const canvas = document.getElementById('polyCanvas');
+    const ctx = canvas.getContext('2d');
+    const slider = document.getElementById('sidesSlider');
+    const sideDisplay = document.getElementById('sideCountDisplay');
+    const approxDisplay = document.getElementById('circleApprox');
+    const polygonNameEl = document.getElementById('polygonName');
+
+    let currentSides = 3;
+    let animationId = null;
+    let animDirection = 1;
+    let animRunning = false;
+
+    const W = 600, H = 600;
+    const cx = 300, cy = 300;
+    // 缩小半径，确保图形完整显示
+    const radius = 200;
+
+    function drawPolygon(sides) {
+      ctx.clearRect(0, 0, W, H);
+
+      // 参考圆
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(80, 130, 190, 0.15)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (sides < 3) sides = 3;
+      const angleStep = (2 * Math.PI) / sides;
+      const startAngle = -Math.PI / 2;
+
+      ctx.beginPath();
+      for (let i = 0; i < sides; i++) {
+        const angle = startAngle + i * angleStep;
+        const x = cx + radius * Math.cos(angle);
+        const y = cy + radius * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+
+      const gradient = ctx.createRadialGradient(cx-30, cy-30, 20, cx, cy, radius+20);
+      gradient.addColorStop(0, '#d9e9fc');
+      gradient.addColorStop(0.7, '#b2cfe8');
+      gradient.addColorStop(1, '#8fb3d4');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      ctx.strokeStyle = '#14466e';
+      ctx.lineWidth = 2.4;
+      ctx.shadowColor = 'rgba(20, 60, 110, 0.15)';
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = '#0f3957';
+      for (let i = 0; i < sides; i++) {
+        const angle = startAngle + i * angleStep;
+        const x = cx + radius * Math.cos(angle);
+        const y = cy + radius * Math.sin(angle);
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, 2 * Math.PI);
+        ctx.fillStyle = '#0e3f61';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(0,40,80,0.2)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3, 0, 2 * Math.PI);
+      ctx.fillStyle = '#1a4a6e';
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = 'rgba(0,0,0,0.1)';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      const names = {
+        3: '正三角形', 4: '正方形', 5: '正五边形', 6: '正六边形',
+        7: '正七边形', 8: '正八边形', 9: '正九边形', 10: '正十边形',
+        12: '正十二边形', 16: '正十六边形', 20: '正二十边形',
+        30: '正三十边形', 50: '正五十边形', 100: '正一百边形', 200: '正二百边形'
+      };
+      let name = names[sides] || `正${sides}边形`;
+      if (sides >= 120) name = `正${sides}边形 (近似圆)`;
+      polygonNameEl.textContent = name;
+
+      const areaPoly = (sides / 2) * radius * radius * Math.sin((2 * Math.PI) / sides);
+      const areaCircle = Math.PI * radius * radius;
+      let ratio = (areaPoly / areaCircle) * 100;
+      if (sides < 3) ratio = 0;
+      if (ratio > 99.99) ratio = 100;
+      approxDisplay.textContent = ratio.toFixed(2);
+    }
+
+    function updateSides(value) {
+      let sides = Math.min(200, Math.max(3, Math.round(value)));
+      currentSides = sides;
+      slider.value = sides;
+      sideDisplay.textContent = sides;
+      drawPolygon(sides);
+    }
+
+    function animateStep() {
+      if (!animRunning) return;
+
+      let next = currentSides + 1 * animDirection;
+      if (next > 200) {
+        next = 200;
+        animDirection = -1;
+      } else if (next < 3) {
+        next = 3;
+        animDirection = 1;
+      }
+      updateSides(next);
+
+      animationId = setTimeout(() => {
+        animateStep();
+      }, 1000);
+    }
+
+    function startAnimation() {
+      if (animRunning) {
+        stopAnimation();
+      }
+      animRunning = true;
+      animDirection = 1;
+      document.getElementById('animateBtn').textContent = '⏹ 停止';
+      document.getElementById('animateBtn').classList.add('btn-primary');
+      animateStep();
+    }
+
+    function stopAnimation() {
+      animRunning = false;
+      if (animationId) {
+        clearTimeout(animationId);
+        animationId = null;
+      }
+      document.getElementById('animateBtn').textContent = '▶ 动画';
+      document.getElementById('animateBtn').classList.remove('btn-primary');
+    }
+
+    function toggleAnimation() {
+      if (animRunning) {
+        stopAnimation();
+      } else {
+        startAnimation();
+      }
+    }
+
+    function resetToTriangle() {
+      stopAnimation();
+      updateSides(3);
+    }
+
+    function stepForward(step = 1) {
+      if (animRunning) stopAnimation();
+      let next = Math.min(200, currentSides + step);
+      updateSides(next);
+    }
+
+    slider.addEventListener('input', function(e) {
+      if (animRunning) stopAnimation();
+      const val = parseInt(e.target.value, 10);
+      updateSides(val);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', resetToTriangle);
+    document.getElementById('step1Btn').addEventListener('click', () => stepForward(1));
+    document.getElementById('step5Btn').addEventListener('click', () => stepForward(5));
+    document.getElementById('animateBtn').addEventListener('click', toggleAnimation);
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
+    updateSides(3);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && animRunning) {
+        stopAnimation();
+      }
+    });
+
+    window.addEventListener('beforeunload', function() {
+      if (animationId) clearTimeout(animationId);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        resetToTriangle();
+      } else if (e.key === ' ' || e.key === 'Space') {
+        e.preventDefault();
+        toggleAnimation();
+      } else if (e.key === 'ArrowRight' || e.key === '=') {
+        e.preventDefault();
+        stepForward(1);
+      } else if (e.key === '+') {
+        e.preventDefault();
+        stepForward(5);
+      }
+    });
+  })();
+</script>
+</body>
+</html>

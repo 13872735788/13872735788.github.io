@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏯 古算探秘 · 中外经典 25 题</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: '华文楷体', 'KaiTi', 'Microsoft YaHei', serif;
+            background: #f3efe6 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.08"><path d="M10 10 L30 10 L20 30 Z M50 10 L70 10 L60 30 Z M90 10 L95 10 L92 30 Z M10 50 L20 50 L15 70 Z M50 50 L70 50 L60 70 Z M90 50 L95 50 L92 70 Z M10 90 L30 90 L20 100 Z M50 90 L70 90 L60 100 Z M90 90 L95 90 L92 100 Z" stroke="%23806040" stroke-width="1" fill="none"/></svg>');
+            min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .container {
+            max-width: 1100px; width:100%; background:#fcf9f2; border:8px double #8b7355; border-radius:30px;
+            box-shadow:0 20px 40px rgba(0,0,0,0.3), 0 0 0 2px #dacbb8 inset; padding:30px 25px; position:relative;
+        }
+        .container::before {
+            content: "✦ 算经拾遗 ✦"; position:absolute; top:-15px; left:50%; transform:translateX(-50%);
+            background:#fcf9f2; padding:0 20px; font-size:18px; color:#7a5a3a; letter-spacing:4px;
+            border:1px solid #b8a088; border-radius:20px; box-shadow:0 2px 6px rgba(0,0,0,0.1);
+        }
+        h1 { text-align:center; font-size:32px; color:#5d3f2b; margin-bottom:8px; text-shadow:2px 2px 0 #dacbb8; letter-spacing:6px; }
+        .subtitle { text-align:center; color:#7f6a53; font-size:16px; border-bottom:1px dashed #ccb99e; padding-bottom:18px; margin-bottom:20px; }
+        .controls {
+            display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-bottom:25px;
+        }
+        .controls select, .controls button {
+            padding:10px 22px; font-size:18px; font-family:inherit; border:2px solid #b8a088; border-radius:40px;
+            background:#faf6ef; color:#3d2a1b; cursor:pointer; transition:0.2s; box-shadow:0 3px 0 #b8a088;
+        }
+        .controls select:hover, .controls button:hover { transform:translateY(-2px); box-shadow:0 5px 0 #b8a088; }
+        .controls select:active, .controls button:active { transform:translateY(2px); box-shadow:0 1px 0 #b8a088; }
+        .controls button { background:#dacbb8; font-weight:bold; }
+        .controls button:disabled { opacity:0.5; transform:none; box-shadow:0 3px 0 #b8a088; cursor:not-allowed; }
+        .filter-group {
+            display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:15px;
+        }
+        .filter-group label { font-size:18px; color:#5d3f2b; display:flex; align-items:center; gap:6px; }
+        .filter-group select { padding:8px 20px; font-size:18px; border-radius:40px; border:2px solid #b8a088; background:#faf6ef; }
+        .status-bar {
+            display:flex; justify-content:space-between; background:#e8ddcf; padding:10px 20px; border-radius:50px;
+            margin-bottom:25px; font-size:18px; color:#3d2a1b; border:1px solid #b8a088; flex-wrap:wrap;
+        }
+        .status-bar span { display:flex; align-items:center; gap:6px; }
+        .question-area {
+            background:#fffbf5; border:2px solid #dacbb8; border-radius:30px; padding:25px 30px;
+            min-height:300px; box-shadow:inset 0 0 20px rgba(180,150,120,0.2); margin-bottom:20px;
+        }
+        .question-title { font-size:26px; font-weight:bold; color:#5d3f2b; display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+        .question-title .emoji-big { font-size:36px; }
+        .question-type {
+            display:inline-block; background:#dacbb8; padding:4px 16px; border-radius:30px; font-size:16px; color:#3d2a1b; margin-bottom:10px;
+        }
+        .question-intro {
+            font-size:17px; color:#5d3f2b; background:#f3ede4; padding:12px 18px; border-radius:15px; margin-bottom:15px; border-left:4px solid #8b7355;
+            line-height:1.7;
+        }
+        .question-intro strong { color:#8b4513; }
+        .question-text {
+            font-size:20px; line-height:1.8; color:#3d2a1b; background:#f3ede4; padding:15px 20px;
+            border-radius:20px; border-left:6px solid #b8a088; margin-bottom:20px;
+        }
+        .question-text .highlight { color:#b22222; font-weight:bold; }
+        .input-group {
+            display:flex; flex-wrap:wrap; gap:15px; align-items:center; margin:18px 0;
+        }
+        .input-group label { font-size:20px; color:#5d3f2b; }
+        .input-group input {
+            flex:1 1 180px; padding:8px 16px; font-size:20px; border:2px solid #b8a088; border-radius:30px;
+            background:#fefcf7; outline:none; transition:0.2s;
+        }
+        .input-group input:focus { border-color:#8b7355; box-shadow:0 0 0 3px #dacbb8; }
+        .input-group button {
+            padding:8px 30px; font-size:20px; border-radius:40px; background:#8b7355; border:none;
+            color:#fff; font-weight:bold; cursor:pointer; transition:0.2s; box-shadow:0 3px 0 #5d3f2b;
+        }
+        .input-group button:hover { background:#7a6246; transform:translateY(-2px); box-shadow:0 5px 0 #5d3f2b; }
+        .input-group button:active { transform:translateY(2px); box-shadow:0 1px 0 #5d3f2b; }
+        .feedback {
+            margin-top:20px; padding:18px 22px; border-radius:20px; background:#f3ede4;
+            border-left:8px solid #8b7355; display:none;
+        }
+        .feedback.show { display:block; animation:fadeSlide 0.4s ease; }
+        @keyframes fadeSlide { 0%{opacity:0;transform:translateY(10px);} 100%{opacity:1;transform:translateY(0);} }
+        .feedback .result { font-size:22px; font-weight:bold; margin-bottom:10px; }
+        .feedback .result.correct { color:#2e7d32; }
+        .feedback .result.wrong { color:#c62828; }
+        .feedback .steps {
+            font-size:18px; line-height:2.0; color:#2d2a24; background:#fffaf2; padding:15px 20px;
+            border-radius:15px; margin-top:10px; white-space:pre-wrap; border:1px dashed #b8a088;
+            display:none;
+        }
+        .feedback .steps.show { display:block; }
+        .canvas-wrapper {
+            text-align:center; margin:10px 0; background:#f8f4ec; border-radius:15px; padding:10px; border:1px solid #dacbb8;
+        }
+        .canvas-wrapper canvas { max-width:100%; border-radius:10px; background:#fcf9f2; }
+        .canvas-controls {
+            display:flex; gap:10px; justify-content:center; margin-top:8px; flex-wrap:wrap;
+        }
+        .canvas-controls button {
+            padding:6px 18px; font-size:16px; border-radius:30px; border:2px solid #b8a088;
+            background:#faf6ef; cursor:pointer; transition:0.2s; font-family:inherit;
+        }
+        .canvas-controls button:hover { background:#dacbb8; transform:translateY(-2px); }
+        .footer { text-align:center; margin-top:25px; color:#7f6a53; font-size:15px; border-top:1px solid #dacbb8; padding-top:18px; }
+        .footer small { opacity:0.7; }
+        @media (max-width:600px) {
+            .container { padding:20px 12px; }
+            h1 { font-size:24px; }
+            .question-title { font-size:20px; }
+            .question-text { font-size:17px; }
+            .question-intro { font-size:15px; }
+            .input-group input { font-size:17px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📜 古算 · 探秘</h1>
+    <div class="subtitle"></div>
+
+    <div class="status-bar">
+        <span>🏆 积分：<strong id="scoreDisplay">0</strong></span>
+        <span>📌 已挑战：<strong id="attemptDisplay">0</strong> 题</span>
+        <span>✅ 正确率：<strong id="correctRate">0%</strong></span>
+    </div>
+
+    <div class="filter-group">
+        <label>📂 类型筛选：
+            <select id="typeSelect">
+                <option value="all">🌍 全部</option>
+                <option value="中国古算">🏮 中国古算</option>
+                <option value="希腊数学">🏛️ 希腊数学</option>
+                <option value="印度数学">🕌 印度数学</option>
+                <option value="阿拉伯数学">🐪 阿拉伯数学</option>
+                <option value="西方数学">⚜️ 西方数学</option>
+            </select>
+        </label>
+        <label>📝 选择题目：
+            <select id="questionSelect"></select>
+        </label>
+    </div>
+
+    <div class="controls">
+        <button id="resetBtn">🔄 重置本题</button>
+        <button id="showAnswerBtn">📖 显示完整解答</button>
+    </div>
+
+    <div class="question-area" id="questionArea">
+        <div class="question-title">
+            <span class="emoji-big" id="qEmoji">🐔</span>
+            <span id="qTitle">鸡兔同笼</span>
+        </div>
+        <div class="question-type" id="qType">中国古算</div>
+        <div class="question-intro" id="qIntro"></div>
+        <div class="question-text" id="qText"></div>
+        <div class="canvas-wrapper" id="canvasWrapper" style="display:none;">
+            <canvas id="animCanvas" width="500" height="350"></canvas>
+            <div class="canvas-controls">
+                <button id="playAnimBtn">▶️ 播放动画</button>
+                <button id="resetAnimBtn">⟲ 重置</button>
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="userAnswer">📝 输入答案：</label>
+            <input type="text" id="userAnswer" placeholder="请输入答案..." autofocus>
+            <button id="submitBtn">⚡ 验算</button>
+        </div>
+        <div class="feedback" id="feedback">
+            <div class="result" id="resultMsg"></div>
+            <div class="steps" id="stepsDisplay"></div>
+        </div>
+    </div>
+    <div class="footer"><small>✦ 答错可修改后再次提交 · 点击「显示完整解答」查看多种方法 + 图形辅助 ✦</small></div>
+</div>
+
+<script>
+    // ===================== 题库（25题） =====================
+    const problems = [
+        {   // 1 鸡兔同笼（有动画）
+            id:0, title:'鸡兔同笼', emoji:'🐔', type:'中国古算',
+            intro:'📖 出自《孙子算经》（约公元4世纪），是中国古代最著名的数学趣题之一。',
+            text:'笼中共有头 <span class="highlight">35</span> 个，足 <span class="highlight">94</span> 只，问鸡兔各几何？',
+            answer:'鸡23 兔12',
+            hasAnim:true, animId:'chickenRabbit',
+            steps:`【方法一 · 假设法】
+           假设全是鸡，足数 = 35×2 = 70只，比94少24只。
+           每换一只兔，脚多2只，所以兔 = 24÷2 = 12只。
+           鸡 = 35-12 = 23只。
+           
+           【方法二 · 方程法】
+           设鸡x只，兔y只：x+y=35，2x+4y=94，解得x=23，y=12。
+           
+           🎯 答案：鸡23只，兔12只。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n||n.length<2)return false; const a=+n[0],b=+n[1]; return (a===23&&b===12)||(a===12&&b===23); }
+        },
+        {   // 2 百钱百鸡
+            id:1, title:'百钱百鸡', emoji:'🐓', type:'中国古算',
+            intro:'📖 出自《张丘建算经》（约公元5世纪），不定方程经典。',
+            text:'公鸡每只 <span class="highlight">5</span> 文，母鸡每只 <span class="highlight">3</span> 文，小鸡 <span class="highlight">3</span> 只 <span class="highlight">1</span> 文。用 <span class="highlight">100</span> 文买 <span class="highlight">100</span> 只鸡，求公鸡、母鸡、小鸡各多少？',
+            answer:'公鸡4 母鸡18 小鸡78',
+            hasAnim:false,
+            steps:`【方法一 · 枚举试算法】
+           设公鸡x，母鸡y，小鸡z：x+y+z=100，5x+3y+z/3=100
+           化简：7x+4y=100，试x=4：y=18，z=78 ✓
+           
+           【方法二 · 列表法】x=4→y=18→z=78；x=8→y=11→z=81；x=12→y=4→z=84
+           
+           🎯 一组解：公鸡4只，母鸡18只，小鸡78只。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n||n.length<3)return false; const a=+n[0],b=+n[1],c=+n[2]; const sets=[[4,18,78],[8,11,81],[12,4,84]]; for(let s of sets){ if( (a===s[0]&&b===s[1]&&c===s[2]) || (a===s[0]&&b===s[2]&&c===s[1]) || (a===s[1]&&b===s[0]&&c===s[2]) || (a===s[1]&&b===s[2]&&c===s[0]) || (a===s[2]&&b===s[0]&&c===s[1]) || (a===s[2]&&b===s[1]&&c===s[0]) ) return true; } return false; }
+        },
+        {   // 3 韩信点兵
+            id:2, title:'韩信点兵', emoji:'🏹', type:'中国古算',
+            intro:'📖 源自《孙子算经》，中国剩余定理的雏形。',
+            text:'士兵列队，每 <span class="highlight">3</span> 人一排余 <span class="highlight">2</span> 人，每 <span class="highlight">5</span> 人一排余 <span class="highlight">3</span> 人，每 <span class="highlight">7</span> 人一排余 <span class="highlight">2</span> 人。问最少有多少士兵？',
+            answer:'23',
+            hasAnim:false,
+            steps:`【方法一 · 逐一筛选法】
+           7人一排余2：9,16,23,30,37...
+           23÷5=4余3 ✓，23÷3=7余2 ✓
+           
+           【方法二 · 中国剩余定理】N≡2(mod3)，N≡3(mod5)，N≡2(mod7)，最小N=23
+           
+           🎯 答案：23个士兵。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===23; }
+        },
+        {   // 4 ★ 勾股定理（修正动画）
+            id:3, title:'勾股定理（求斜边）', emoji:'📐', type:'中国古算',
+            intro:'📖 中国最早记载于《周髀算经》（约公元前100年），西方称为毕达哥拉斯定理。勾三股四弦五，是几何学的基石之一。',
+            text:'直角三角形两直角边分别为 <span class="highlight">3</span> 和 <span class="highlight">4</span>，求斜边长。',
+            answer:'5',
+            hasAnim:true, animId:'pythagoras',
+            steps:`【方法一 · 勾股定理公式】
+           斜边 c² = a² + b² = 3² + 4² = 9 + 16 = 25
+           c = √25 = 5
+           
+           【方法二 · 面积法（图形辅助）】
+           以三条边为边长的正方形面积关系：
+           大正方形面积 = 两个小正方形面积之和
+           即：5² = 3² + 4²
+           
+           🎯 答案：斜边长为5。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===5; }
+        },
+        {   // 5 物不知数
+            id:4, title:'物不知数（余数问题）', emoji:'🧮', type:'中国古算',
+            intro:'📖 出自《孙子算经》，中国剩余定理的经典表述。',
+            text:'一个数除以 <span class="highlight">3</span> 余 <span class="highlight">1</span>，除以 <span class="highlight">5</span> 余 <span class="highlight">2</span>，除以 <span class="highlight">7</span> 余 <span class="highlight">3</span>，求这个数最小是多少？',
+            answer:'52',
+            hasAnim:false,
+            steps:`【方法一 · 枚举法】除以7余3：10,17,24,31,38,45,52...
+           52÷5=10余2 ✓，52÷3=17余1 ✓
+           🎯 答案：52。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===52; }
+        },
+        {   // 6 盈不足
+            id:5, title:'盈不足（买卖问题）', emoji:'💰', type:'中国古算',
+            intro:'📖 出自《九章算术》，线性方程组早期应用。',
+            text:'买物，每人出 <span class="highlight">8</span> 文，则盈 <span class="highlight">3</span> 文；每人出 <span class="highlight">7</span> 文，则不足 <span class="highlight">4</span> 文。求人数和物价。',
+            answer:'人数7 物价53',
+            hasAnim:false,
+            steps:`【方法一 · 盈亏公式】
+           人数 = (3+4)÷(8-7) = 7人，物价 = 8×7-3 = 53文
+           🎯 答案：7人，物价53文。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n||n.length<2)return false; const a=+n[0],b=+n[1]; return (a===7&&b===53)||(a===53&&b===7); }
+        },
+        {   // 7 斐波那契兔子
+            id:6, title:'斐波那契兔子', emoji:'🐇', type:'西方数学',
+            intro:'📖 意大利数学家斐波那契在1202年《算盘书》中提出。',
+            text:'每月每对成年兔产一对小兔，小兔一个月后成年。最初有 <span class="highlight">1</span> 对幼兔，问 <span class="highlight">12</span> 个月后共有多少对兔子？',
+            answer:'144',
+            hasAnim:false,
+            steps:`【列表推演】1,1,2,3,5,8,13,21,34,55,89,144
+           🎯 答案：144对。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===144; }
+        },
+        {   // 8 棋盘麦粒
+            id:7, title:'棋盘麦粒（第8格）', emoji:'♟️', type:'印度数学',
+            intro:'📖 古印度舍罕王与宰相西萨的经典故事，体现指数增长。',
+            text:'国际象棋棋盘第 <span class="highlight">1</span> 格放 <span class="highlight">1</span> 粒麦，以后每格是前一格的 <span class="highlight">2</span> 倍。问第 <span class="highlight">8</span> 格有多少粒？',
+            answer:'128',
+            hasAnim:false,
+            steps:`【逐格翻倍】1→2→4→8→16→32→64→128
+           🎯 答案：128粒。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===128; }
+        },
+        {   // 9 欧几里得算法
+            id:8, title:'欧几里得算法', emoji:'📏', type:'希腊数学',
+            intro:'📖 古希腊数学家欧几里得在《几何原本》中提出辗转相除法。',
+            text:'用辗转相除法求 <span class="highlight">48</span> 和 <span class="highlight">18</span> 的最大公约数。',
+            answer:'6',
+            hasAnim:false,
+            steps:`【辗转相除】48÷18=2余12，18÷12=1余6，12÷6=2余0，gcd=6
+           🎯 答案：6。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===6; }
+        },
+        {   // 10 河内塔（有动画）
+            id:9, title:'河内塔（3盘）', emoji:'🗼', type:'西方数学',
+            intro:'📖 法国数学家卢卡斯提出，递归思想的绝佳入门。',
+            text:'3 个圆盘从一根柱子移到另一根，每次只能移一个，且大盘不能压小盘。求最少移动次数。',
+            answer:'7',
+            hasAnim:true, animId:'hanoi',
+            steps:`【公式法】移动n个盘 = 2^n - 1，3个盘 = 2^3 - 1 = 7次
+           🎯 答案：7次。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===7; }
+        },
+        {   // 11 丢番图年龄
+            id:10, title:'丢番图年龄', emoji:'🎂', type:'希腊数学',
+            intro:'📖 古希腊数学家丢番图的墓志铭，一元一次方程经典题。',
+            text:'丢番图的童年占 1/6，青年占 1/12，未婚期占 1/7，婚后 5 年得子，儿子寿命是父亲的一半，儿子死后父亲又活了 4 年。求丢番图寿命。',
+            answer:'84',
+            hasAnim:false,
+            steps:`【方程法】设寿命x：x/6+x/12+x/7+5+x/2+4=x，x=84
+           🎯 答案：84岁。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===84; }
+        },
+        {   // 12 古埃及分数
+            id:11, title:'古埃及分数', emoji:'🏺', type:'西方数学',
+            intro:'📖 古埃及人使用单位分数表示分数。',
+            text:'一个数，它的一半加三分之一等于 <span class="highlight">15</span>，求这个数。',
+            answer:'18',
+            hasAnim:false,
+            steps:`【通分法】x/2+x/3=15，5x/6=15，x=18
+           🎯 答案：18。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===18; }
+        },
+        {   // 13 矩形面积（有动画）
+            id:12, title:'矩形面积（和差问题）', emoji:'▭', type:'西方数学',
+            intro:'📖 古代巴比伦数学典型问题，用和差公式求面积。',
+            text:'一个矩形，长与宽之和为 <span class="highlight">12</span>，之差为 <span class="highlight">2</span>，求面积。',
+            answer:'35',
+            hasAnim:true, animId:'rectangle',
+            steps:`【和差公式】长=(12+2)/2=7，宽=(12-2)/2=5，面积=7×5=35
+           🎯 答案：35。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===35; }
+        },
+        {   // 14 平方和
+            id:13, title:'平方和（3和4）', emoji:'🔲', type:'希腊数学',
+            intro:'📖 毕达哥拉斯学派发现勾股数。',
+            text:'求 <span class="highlight">3</span> 的平方与 <span class="highlight">4</span> 的平方之和。',
+            answer:'25',
+            hasAnim:false,
+            steps:`【直接计算】3²+4²=9+16=25
+           🎯 答案：25。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===25; }
+        },
+        {   // 15 相遇问题（有动画）
+            id:14, title:'相遇问题（行程）', emoji:'🚶', type:'中国古算',
+            intro:'📖 中国古代算术中的典型行程问题。',
+            text:'甲日行 <span class="highlight">7</span> 里，乙日行 <span class="highlight">5</span> 里，两人相距 <span class="highlight">60</span> 里同时相向而行，几日相遇？',
+            answer:'5',
+            hasAnim:true, animId:'meet',
+            steps:`【相对速度】速度和=7+5=12里/日，时间=60÷12=5日
+           🎯 答案：5日。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===5; }
+        },
+        {   // 16 百羊问题
+            id:15, title:'百羊问题', emoji:'🐑', type:'中国古算',
+            intro:'📖 出自《算法统宗》（1592年），程大位著。',
+            text:'一群羊，若加上同样多，再加一半，再加四分之一，再加 <span class="highlight">1</span> 只，正好 <span class="highlight">100</span> 只。求原来多少只羊？',
+            answer:'36',
+            hasAnim:false,
+            steps:`【方程法】设原来x只：x+x+x/2+x/4+1=100，11x/4=99，x=36
+           🎯 答案：36只。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===36; }
+        },
+        {   // 17 两位数谜题
+            id:16, title:'两位数谜题', emoji:'🔢', type:'中国古算',
+            intro:'📖 中国古代趣味数字谜题。',
+            text:'一个两位数，十位与个位之和为 <span class="highlight">10</span>，个位比十位大 <span class="highlight">4</span>，求这个数。',
+            answer:'37',
+            hasAnim:false,
+            steps:`【方程法】设十位x：x+(x+4)=10，x=3，这个数=37
+           🎯 答案：37。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===37; }
+        },
+        {   // 18 简单一次方程
+            id:17, title:'简单一次方程', emoji:'⚖️', type:'阿拉伯数学',
+            intro:'📖 阿拉伯数学家花拉子密在《代数学》中系统研究一次方程。',
+            text:'一个数的 <span class="highlight">2</span> 倍加 <span class="highlight">3</span> 等于这个数的 <span class="highlight">3</span> 倍减 <span class="highlight">5</span>，求这个数。',
+            answer:'8',
+            hasAnim:false,
+            steps:`【方程法】2x+3=3x-5，x=8
+           🎯 答案：8。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===8; }
+        },
+        {   // 19 连续整数求和
+            id:18, title:'连续整数求和', emoji:'➕', type:'希腊数学',
+            intro:'📖 毕达哥拉斯学派研究过三角数。',
+            text:'三个连续整数之和为 <span class="highlight">24</span>，求中间那个数。',
+            answer:'8',
+            hasAnim:false,
+            steps:`【方程法】设中间数x：(x-1)+x+(x+1)=24，x=8
+           🎯 答案：8。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===8; }
+        },
+        {   // 20 自平方方程
+            id:19, title:'自平方方程', emoji:'✖️', type:'印度数学',
+            intro:'📖 古印度数学家阿耶波多研究过类似二次方程。',
+            text:'一个数，它的平方等于它本身加 <span class="highlight">12</span>，求这个正数。',
+            answer:'4',
+            hasAnim:false,
+            steps:`【因式分解】x²=x+12→(x-4)(x+3)=0→x=4
+           🎯 答案：4。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===4; }
+        },
+        {   // 21 阿拉伯遗产
+            id:20, title:'阿拉伯遗产问题', emoji:'🐪', type:'阿拉伯数学',
+            intro:'📖 流传于阿拉伯世界的经典分马问题。',
+            text:'一人有 <span class="highlight">17</span> 匹马，遗嘱：大儿子得 <span class="highlight">1/2</span>，二儿子得 <span class="highlight">1/3</span>，三儿子得 <span class="highlight">1/9</span>，且不能宰杀。问各得多少匹？',
+            answer:'9 6 2',
+            hasAnim:false,
+            steps:`【借一法】借1匹→18匹，大儿子9匹，二儿子6匹，三儿子2匹，剩1匹归还
+           🎯 答案：9、6、2匹。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n||n.length<3)return false; const a=+n[0],b=+n[1],c=+n[2]; return (a===9&&b===6&&c===2)||(a===9&&b===2&&c===6)||(a===6&&b===9&&c===2)||(a===6&&b===2&&c===9)||(a===2&&b===9&&c===6)||(a===2&&b===6&&c===9); }
+        },
+        {   // 22 骰子概率
+            id:21, title:'骰子概率', emoji:'🎲', type:'西方数学',
+            intro:'📖 16世纪卡尔达诺首次系统研究概率。',
+            text:'同时掷两颗骰子，求点数之和为 <span class="highlight">7</span> 有多少种情况？',
+            answer:'6',
+            hasAnim:false,
+            steps:`【列举法】(1,6)(2,5)(3,4)(4,3)(5,2)(6,1) 共6种
+           🎯 答案：6种。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===6; }
+        },
+        {   // 23 牛顿牛吃草
+            id:22, title:'牛顿牛吃草', emoji:'🐄', type:'西方数学',
+            intro:'📖 牛顿在《普遍算术》中提出，体现动态平衡思想。',
+            text:'一片牧场，可供 <span class="highlight">10</span> 头牛吃 <span class="highlight">20</span> 天，或供 <span class="highlight">15</span> 头牛吃 <span class="highlight">10</span> 天。问可供 <span class="highlight">25</span> 头牛吃多少天？',
+            answer:'5',
+            hasAnim:false,
+            steps:`【方程法】设原有草A，每天长B，每牛每天吃C：
+           A+20B=200C，A+10B=150C，解得B=5C，A=100C
+           25头牛吃t天：100+5t=25t，t=5
+           🎯 答案：5天。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===5; }
+        },
+        {   // 24 阿基米德与皇冠
+            id:23, title:'阿基米德与皇冠', emoji:'👑', type:'希腊数学',
+            intro:'📖 阿基米德用排水法判断皇冠是否掺假。',
+            text:'一块纯金和一块纯银在空气中各重 <span class="highlight">100</span> 克，金排开 <span class="highlight">5.2</span> 毫升，银排开 <span class="highlight">9.5</span> 毫升。皇冠重100克，排开 <span class="highlight">6.8</span> 毫升，求金的比例。',
+            answer:'68',
+            hasAnim:false,
+            steps:`【混合比例法】设金的比例x：5.2x+9.5(1-x)=6.8，x≈63%
+           🎯 答案：约63%。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; const val=+n[0]; return val>=60 && val<=66; }
+        },
+        {   // 25 孙子定理
+            id:24, title:'孙子定理（中国剩余定理）', emoji:'📜', type:'中国古算',
+            intro:'📖 秦九韶在《数书九章》中给出完整解法——"大衍求一术"。',
+            text:'有一个数，除以 <span class="highlight">2</span> 余 <span class="highlight">1</span>，除以 <span class="highlight">3</span> 余 <span class="highlight">2</span>，除以 <span class="highlight">5</span> 余 <span class="highlight">3</span>，求这个数最小是多少？',
+            answer:'23',
+            hasAnim:false,
+            steps:`【筛选法】除以5余3：8,13,18,23...，23÷3=7余2✓，23÷2=11余1✓
+           🎯 答案：23。`,
+            validate: (input)=>{ const n=input.match(/\d+/g); if(!n)return false; return +n[0]===23; }
+        }
+    ];
+
+    // ===================== 全局变量 =====================
+    let currentIndex = 0;
+    let score = 0;
+    let attempts = 0;
+    let correctCount = 0;
+    let animInterval = null;
+    let animFrame = 0;
+
+    const typeSelect = document.getElementById('typeSelect');
+    const selectEl = document.getElementById('questionSelect');
+    const qEmoji = document.getElementById('qEmoji');
+    const qTitle = document.getElementById('qTitle');
+    const qType = document.getElementById('qType');
+    const qIntro = document.getElementById('qIntro');
+    const qText = document.getElementById('qText');
+    const canvasWrapper = document.getElementById('canvasWrapper');
+    const animCanvas = document.getElementById('animCanvas');
+    const playAnimBtn = document.getElementById('playAnimBtn');
+    const resetAnimBtn = document.getElementById('resetAnimBtn');
+    const userAnswer = document.getElementById('userAnswer');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const showAnswerBtn = document.getElementById('showAnswerBtn');
+    const feedback = document.getElementById('feedback');
+    const resultMsg = document.getElementById('resultMsg');
+    const stepsDisplay = document.getElementById('stepsDisplay');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const attemptDisplay = document.getElementById('attemptDisplay');
+    const correctRate = document.getElementById('correctRate');
+
+    // ===================== ★ 修正后的勾股定理动画 =====================
+    function drawPythagoras(step) {
+        const ctx = animCanvas.getContext('2d');
+        const w = animCanvas.width, h = animCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        // 固定边长：a=3, b=4, c=5
+        const a = 3, b = 4, c = 5;
+        
+        // 动画进度：逐步绘制
+        const maxStep = 180;
+        const progress = Math.min(step / maxStep, 1);
+        // 缩放：让三角形在画布中央
+        const scale = 32;
+        const cx = 100, cy = 250;
+        
+        // ---- 左半部分：直角三角形 ----
+        // 绘制三角形（从0到完整）
+        const drawProgress = progress;
+        const currentA = a * drawProgress;
+        const currentB = b * drawProgress;
+        const currentC = Math.sqrt(currentA*currentA + currentB*currentB);
+        
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + currentB * scale, cy);
+        ctx.lineTo(cx, cy - currentA * scale);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(100, 180, 255, 0.2)';
+        ctx.fill();
+        ctx.strokeStyle = '#2980b9';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // 直角符号
+        if (drawProgress > 0.1) {
+            ctx.strokeStyle = '#2980b9';
+            ctx.lineWidth = 2;
+            const r = 15;
+            ctx.beginPath();
+            ctx.moveTo(cx + r, cy);
+            ctx.lineTo(cx + r, cy - r);
+            ctx.lineTo(cx, cy - r);
+            ctx.stroke();
+        }
+        
+        // 标注边长
+        ctx.font = '20px KaiTi';
+        ctx.fillStyle = '#b22222';
+        if (drawProgress > 0.3) {
+            const midX = (cx + cx + currentB * scale) / 2;
+            const midY = (cy + cy - currentA * scale) / 2;
+            ctx.fillText(`c = ${currentC.toFixed(1)}`, midX - 25, midY - 10);
+            ctx.fillText(`a = ${currentA.toFixed(1)}`, cx - 50, cy - currentA*scale/2 + 6);
+            ctx.fillText(`b = ${currentB.toFixed(1)}`, cx + currentB*scale/2 - 25, cy + 30);
+        }
+        
+        // ---- 右半部分：三个正方形面积 ----
+        const offsetX = 280;
+        const squareY = 50;
+        const maxSquareSize = 130;
+        const sizeA = a * 18, sizeB = b * 18, sizeC = c * 18;
+        const maxSize = Math.max(sizeA, sizeB, sizeC);
+        const scaleSq = maxSquareSize / maxSize;
+        const sa = sizeA * scaleSq * drawProgress;
+        const sb = sizeB * scaleSq * drawProgress;
+        const sc = sizeC * scaleSq * drawProgress;
+        
+        // 绘制 a² 正方形（红色）
+        ctx.fillStyle = 'rgba(231, 76, 60, 0.3)';
+        ctx.fillRect(offsetX, squareY + maxSquareSize - sa, sa, sa);
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(offsetX, squareY + maxSquareSize - sa, sa, sa);
+        ctx.font = '16px KaiTi';
+        ctx.fillStyle = '#e74c3c';
+        if (drawProgress > 0.2) {
+            ctx.fillText(`a²=${(a*a).toFixed(0)}`, offsetX + 15, squareY + maxSquareSize - sa/2 + 6);
+            ctx.fillText(`=9`, offsetX + 30, squareY + maxSquareSize - sa/2 + 30);
+        }
+        
+        // 绘制 b² 正方形（绿色）
+        const bOffsetX = offsetX + maxSquareSize + 20;
+        ctx.fillStyle = 'rgba(46, 204, 113, 0.3)';
+        ctx.fillRect(bOffsetX, squareY + maxSquareSize - sb, sb, sb);
+        ctx.strokeStyle = '#2ecc71';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(bOffsetX, squareY + maxSquareSize - sb, sb, sb);
+        ctx.fillStyle = '#2ecc71';
+        if (drawProgress > 0.2) {
+            ctx.fillText(`b²=${(b*b).toFixed(0)}`, bOffsetX + 15, squareY + maxSquareSize - sb/2 + 6);
+            ctx.fillText(`=16`, bOffsetX + 30, squareY + maxSquareSize - sb/2 + 30);
+        }
+        
+        // 绘制 c² 正方形（蓝色）- 放在下方
+        const cOffsetX = offsetX + maxSquareSize/2 - sc/2;
+        const cOffsetY = squareY + maxSquareSize + 30;
+        ctx.fillStyle = 'rgba(41, 128, 185, 0.3)';
+        ctx.fillRect(cOffsetX, cOffsetY + maxSquareSize - sc, sc, sc);
+        ctx.strokeStyle = '#2980b9';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(cOffsetX, cOffsetY + maxSquareSize - sc, sc, sc);
+        ctx.fillStyle = '#2980b9';
+        ctx.font = '18px KaiTi';
+        if (drawProgress > 0.2) {
+            ctx.fillText(`c²=${(c*c).toFixed(0)}`, cOffsetX + 20, cOffsetY + maxSquareSize - sc/2 + 6);
+            ctx.fillText(`=25`, cOffsetX + 35, cOffsetY + maxSquareSize - sc/2 + 32);
+        }
+        
+        // 标注等式
+        ctx.font = '20px KaiTi';
+        ctx.fillStyle = '#2d2a24';
+        if (drawProgress > 0.5) {
+            ctx.fillText('a² + b² = c²', offsetX + 40, squareY - 10);
+            ctx.fillStyle = '#2980b9';
+            ctx.fillText('9 + 16 = 25', offsetX + 50, squareY - 40);
+        }
+        
+        // 完成标记
+        if (drawProgress >= 1) {
+            ctx.font = '24px KaiTi';
+            ctx.fillStyle = '#2e7d32';
+            ctx.fillText('✅ 3² + 4² = 5²', offsetX + 30, squareY + maxSquareSize + maxSquareSize + 20);
+        }
+        
+        // 标题
+        ctx.font = '18px KaiTi';
+        ctx.fillStyle = '#3d2a1b';
+        ctx.fillText('直角三角形', cx-50, cy-200);
+        ctx.fillText('面积关系', offsetX+50, squareY-70);
+    }
+
+    // 2. 鸡兔同笼动画
+    function drawChickenRabbit(step) {
+        const ctx = animCanvas.getContext('2d');
+        const w = animCanvas.width, h = animCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const total = 35;
+        const maxStep = 200;
+        const progress = Math.min(step / maxStep, 1);
+        const rabbitCount = Math.round(progress * 12);
+        const chickenCount = 35 - rabbitCount;
+        
+        ctx.font = '20px KaiTi';
+        ctx.fillStyle = '#3d2a1b';
+        ctx.fillText(`🐔 鸡 ${chickenCount} 只  🐰 兔 ${rabbitCount} 只`, 150, 40);
+        ctx.fillText(`脚数：${chickenCount*2 + rabbitCount*4} 只 (目标94)`, 160, 75);
+        
+        const cols = 10;
+        const startX = 40, startY = 110, gap = 38;
+        for (let i = 0; i < total; i++) {
+            const row = Math.floor(i / cols);
+            const col = i % cols;
+            const x = startX + col * gap;
+            const y = startY + row * gap;
+            ctx.font = '26px sans-serif';
+            if (i < chickenCount) {
+                ctx.fillText('🐔', x, y);
+            } else {
+                ctx.fillText('🐰', x, y);
+            }
+        }
+        
+        if (step < maxStep) {
+            ctx.font = '18px KaiTi';
+            ctx.fillStyle = '#b22222';
+            ctx.fillText(`🔄 把鸡换成兔... ${Math.round(progress*100)}%`, 160, h-20);
+        } else {
+            ctx.font = '20px KaiTi';
+            ctx.fillStyle = '#2e7d32';
+            ctx.fillText('✅ 兔12只，鸡23只，脚数=94 ✓', 140, h-20);
+        }
+    }
+
+    // 3. 河内塔动画
+    function drawHanoi(step) {
+        const ctx = animCanvas.getContext('2d');
+        const w = animCanvas.width, h = animCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const pillars = [
+            {x: 100, y: 280},
+            {x: 250, y: 280},
+            {x: 400, y: 280}
+        ];
+        const moves = [
+            {from:0, to:2}, {from:0, to:1}, {from:2, to:1},
+            {from:0, to:2}, {from:1, to:0}, {from:1, to:2},
+            {from:0, to:2}
+        ];
+        const totalMoves = moves.length;
+        const moveIndex = Math.min(Math.floor(step / 25), totalMoves - 1);
+        const progress = (step % 25) / 25;
+        
+        for (let p of pillars) {
+            ctx.fillStyle = '#8b7355';
+            ctx.fillRect(p.x-4, p.y-150, 8, 150);
+            ctx.fillRect(p.x-30, p.y+2, 60, 6);
+        }
+        
+        const disks = [
+            {size: 30, color: '#e74c3c', pos: 0},
+            {size: 50, color: '#3498db', pos: 0},
+            {size: 70, color: '#2ecc71', pos: 0}
+        ];
+        
+        for (let i = 0; i <= moveIndex; i++) {
+            if (i < moves.length) {
+                const m = moves[i];
+                let diskIdx = -1;
+                for (let d = disks.length-1; d >= 0; d--) {
+                    if (disks[d].pos === m.from) { diskIdx = d; break; }
+                }
+                if (diskIdx >= 0) {
+                    if (i === moveIndex) {
+                        const fromX = pillars[m.from].x;
+                        const toX = pillars[m.to].x;
+                        const curX = fromX + (toX - fromX) * progress;
+                        disks[diskIdx].pos = -1;
+                        ctx.fillStyle = disks[diskIdx].color;
+                        const s = disks[diskIdx].size;
+                        ctx.fillRect(curX - s/2, 160 - progress*80, s, 18);
+                        ctx.strokeStyle = '#333';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(curX - s/2, 160 - progress*80, s, 18);
+                    } else {
+                        disks[diskIdx].pos = m.to;
+                    }
+                }
+            }
+        }
+        
+        for (let p = 0; p < 3; p++) {
+            let stack = [];
+            for (let d of disks) {
+                if (d.pos === p) stack.push(d);
+            }
+            let yOffset = 0;
+            for (let d of stack) {
+                const x = pillars[p].x;
+                ctx.fillStyle = d.color;
+                const s = d.size;
+                ctx.fillRect(x - s/2, 280 - 18 - yOffset, s, 18);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x - s/2, 280 - 18 - yOffset, s, 18);
+                yOffset += 20;
+            }
+        }
+        
+        ctx.font = '18px KaiTi';
+        ctx.fillStyle = '#3d2a1b';
+        ctx.fillText('A', 90, 310);
+        ctx.fillText('B', 240, 310);
+        ctx.fillText('C', 390, 310);
+        ctx.fillText(`第 ${moveIndex+1}/${totalMoves} 步`, 180, 340);
+        if (moveIndex === totalMoves-1 && progress > 0.8) {
+            ctx.fillStyle = '#2e7d32';
+            ctx.fillText('✅ 完成！共7步', 180, 30);
+        }
+    }
+
+    // 4. 相遇问题动画
+    function drawMeet(step) {
+        const ctx = animCanvas.getContext('2d');
+        const w = animCanvas.width, h = animCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const totalDist = 60;
+        const maxTime = 5;
+        const time = (step % 200) / 200 * maxTime;
+        const distA = Math.min(time * 7, totalDist);
+        const distB = Math.min(time * 5, totalDist);
+        const remaining = totalDist - distA - distB;
+        
+        ctx.fillStyle = '#dacbb8';
+        ctx.fillRect(50, 160, 400, 10);
+        
+        const ax = 50 + distA / totalDist * 400;
+        ctx.font = '36px sans-serif';
+        ctx.fillText('🚶', ax-15, 145);
+        ctx.font = '14px KaiTi';
+        ctx.fillStyle = '#b22222';
+        ctx.fillText('甲 7里/日', ax-20, 190);
+        
+        const bx = 450 - distB / totalDist * 400;
+        ctx.font = '36px sans-serif';
+        ctx.fillText('🚶', bx-15, 145);
+        ctx.font = '14px KaiTi';
+        ctx.fillStyle = '#2980b9';
+        ctx.fillText('乙 5里/日', bx-20, 190);
+        
+        ctx.font = '18px KaiTi';
+        ctx.fillStyle = '#3d2a1b';
+        ctx.fillText(`↔ 相距 ${Math.max(0, Math.round(remaining))} 里`, 180, 230);
+        
+        if (remaining <= 0) {
+            ctx.font = '24px KaiTi';
+            ctx.fillStyle = '#2e7d32';
+            ctx.fillText('🎉 相遇啦！', 200, 280);
+        }
+        ctx.fillText(`已过 ${time.toFixed(1)} 日`, 200, 315);
+    }
+
+    // 5. 矩形面积动画
+    function drawRectangle(step) {
+        const ctx = animCanvas.getContext('2d');
+        const w = animCanvas.width, h = animCanvas.height;
+        ctx.clearRect(0, 0, w, h);
+        
+        const maxStep = 100;
+        const progress = Math.min(step / maxStep, 1);
+        const curLen = 1 + 6 * progress;
+        const curWid = 1 + 4 * progress;
+        
+        const scale = 20;
+        const cx = 200, cy = 150;
+        
+        ctx.fillStyle = 'rgba(100, 180, 255, 0.25)';
+        ctx.fillRect(cx, cy, curLen * scale, curWid * scale);
+        ctx.strokeStyle = '#2980b9';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(cx, cy, curLen * scale, curWid * scale);
+        
+        ctx.font = '18px KaiTi';
+        ctx.fillStyle = '#b22222';
+        ctx.fillText(`长 = ${Math.round(curLen*10)/10}`, cx + curLen*scale/2 - 30, cy - 12);
+        ctx.fillText(`宽 = ${Math.round(curWid*10)/10}`, cx - 55, cy + curWid*scale/2 + 6);
+        
+        ctx.font = '16px KaiTi';
+        ctx.fillStyle = '#3d2a1b';
+        ctx.fillText(`长+宽 = ${Math.round((curLen+curWid)*10)/10}  (目标12)`, 30, 40);
+        ctx.fillText(`长-宽 = ${Math.round((curLen-curWid)*10)/10}  (目标2)`, 30, 70);
+        ctx.fillText(`面积 = ${Math.round(curLen*curWid*10)/10}  (目标35)`, 30, 100);
+        
+        if (progress >= 1) {
+            ctx.font = '22px KaiTi';
+            ctx.fillStyle = '#2e7d32';
+            ctx.fillText('✅ 面积 = 35', 200, 330);
+        }
+    }
+
+    // ===================== 动画控制 =====================
+    function startAnimation(animId) {
+        if (animInterval) { clearInterval(animInterval); animInterval = null; }
+        animFrame = 0;
+        canvasWrapper.style.display = 'block';
+        playAnimBtn.textContent = '⏹ 停止';
+        
+        const drawFuncs = {
+            'pythagoras': drawPythagoras,
+            'chickenRabbit': drawChickenRabbit,
+            'hanoi': drawHanoi,
+            'meet': drawMeet,
+            'rectangle': drawRectangle
+        };
+        const drawFunc = drawFuncs[animId];
+        if (!drawFunc) return;
+        
+        drawFunc(0);
+        animInterval = setInterval(() => {
+            animFrame++;
+            drawFunc(animFrame);
+        }, 30);
+    }
+
+    function stopAnimation() {
+        if (animInterval) {
+            clearInterval(animInterval);
+            animInterval = null;
+        }
+        playAnimBtn.textContent = '▶️ 播放动画';
+    }
+
+    function resetAnimation() {
+        stopAnimation();
+        const p = problems[currentIndex];
+        if (p && p.hasAnim) {
+            const drawFuncs = {
+                'pythagoras': drawPythagoras,
+                'chickenRabbit': drawChickenRabbit,
+                'hanoi': drawHanoi,
+                'meet': drawMeet,
+                'rectangle': drawRectangle
+            };
+            const func = drawFuncs[p.animId];
+            if (func) { animFrame = 0; func(0); }
+        }
+    }
+
+    // ===================== 核心功能 =====================
+    function getFilteredIndices() {
+        const type = typeSelect.value;
+        if (type === 'all') return problems.map((_, i) => i);
+        return problems.map((p, i) => p.type === type ? i : -1).filter(i => i !== -1);
+    }
+
+    function populateSelect(filteredIndices) {
+        selectEl.innerHTML = '';
+        filteredIndices.forEach(idx => {
+            const p = problems[idx];
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = `${p.emoji} ${p.title}`;
+            selectEl.appendChild(opt);
+        });
+        if (filteredIndices.length > 0) {
+            selectEl.value = filteredIndices[0];
+            currentIndex = filteredIndices[0];
+        } else {
+            selectEl.innerHTML = '<option value="-1">无题目</option>';
+            currentIndex = -1;
+        }
+    }
+
+    function renderProblem(index) {
+        stopAnimation();
+        canvasWrapper.style.display = 'none';
+        if (index === -1 || index >= problems.length) {
+            qEmoji.textContent = '❓';
+            qTitle.textContent = '无题目';
+            qType.textContent = '';
+            qIntro.textContent = '请选择其他类型或题目。';
+            qText.innerHTML = '';
+            userAnswer.value = '';
+            feedback.classList.remove('show');
+            stepsDisplay.classList.remove('show');
+            return;
+        }
+        const p = problems[index];
+        currentIndex = index;
+        qEmoji.textContent = p.emoji;
+        qTitle.textContent = p.title;
+        qType.textContent = p.type;
+        qIntro.textContent = p.intro;
+        qText.innerHTML = p.text;
+        userAnswer.value = '';
+        feedback.classList.remove('show');
+        stepsDisplay.classList.remove('show');
+        selectEl.value = index;
+        
+        if (p.hasAnim) {
+            canvasWrapper.style.display = 'block';
+            const drawFuncs = {
+                'pythagoras': drawPythagoras,
+                'chickenRabbit': drawChickenRabbit,
+                'hanoi': drawHanoi,
+                'meet': drawMeet,
+                'rectangle': drawRectangle
+            };
+            const func = drawFuncs[p.animId];
+            if (func) { animFrame = 0; func(0); }
+            playAnimBtn.textContent = '▶️ 播放动画';
+        }
+    }
+
+    function updateStats() {
+        scoreDisplay.textContent = score;
+        attemptDisplay.textContent = attempts;
+        const rate = attempts === 0 ? 0 : Math.round((correctCount / attempts) * 100);
+        correctRate.textContent = rate + '%';
+    }
+
+    function checkAnswer() {
+        if (currentIndex === -1) { alert('当前没有题目，请选择其他类型。'); return; }
+        const p = problems[currentIndex];
+        const input = userAnswer.value.trim();
+        if (!input) {
+            alert('请先输入答案！');
+            return;
+        }
+        const isValid = p.validate(input);
+        attempts++;
+        if (isValid) {
+            score += 10;
+            correctCount++;
+            resultMsg.className = 'result correct';
+            resultMsg.textContent = '✅ 完全正确！ +10分 🎉';
+            stepsDisplay.classList.remove('show');
+            stepsDisplay.textContent = '';
+        } else {
+            resultMsg.className = 'result wrong';
+            resultMsg.textContent = '❌ 答案有误，请再想想，可以修改后重新提交。';
+            stepsDisplay.classList.remove('show');
+            stepsDisplay.textContent = '';
+        }
+        feedback.classList.add('show');
+        updateStats();
+    }
+
+    function showFullAnswer() {
+        if (currentIndex === -1) { alert('当前没有题目。'); return; }
+        const p = problems[currentIndex];
+        stepsDisplay.textContent = p.steps;
+        stepsDisplay.classList.add('show');
+        resultMsg.className = 'result correct';
+        resultMsg.textContent = '📖 多种方法 + 图形辅助解答：';
+        feedback.classList.add('show');
+        if (p.hasAnim && p.animId) {
+            startAnimation(p.animId);
+        }
+    }
+
+    // ===================== 事件绑定 =====================
+    submitBtn.addEventListener('click', checkAnswer);
+    userAnswer.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAnswer(); });
+
+    resetBtn.addEventListener('click', () => {
+        if (currentIndex === -1) return;
+        renderProblem(currentIndex);
+    });
+
+    showAnswerBtn.addEventListener('click', showFullAnswer);
+
+    playAnimBtn.addEventListener('click', () => {
+        if (currentIndex === -1) { alert('当前没有题目。'); return; }
+        const p = problems[currentIndex];
+        if (p.hasAnim && p.animId) {
+            if (animInterval) {
+                stopAnimation();
+            } else {
+                startAnimation(p.animId);
+            }
+        } else {
+            alert('本题没有动画演示。');
+        }
+    });
+
+    resetAnimBtn.addEventListener('click', resetAnimation);
+
+    typeSelect.addEventListener('change', () => {
+        const filtered = getFilteredIndices();
+        populateSelect(filtered);
+        if (filtered.length > 0) {
+            renderProblem(filtered[0]);
+        } else {
+            renderProblem(-1);
+        }
+    });
+
+    selectEl.addEventListener('change', (e) => {
+        const idx = parseInt(e.target.value);
+        if (idx >= 0) renderProblem(idx);
+    });
+
+    // ===================== 初始化 =====================
+    const allIndices = problems.map((_, i) => i);
+    populateSelect(allIndices);
+    renderProblem(allIndices[0]);
+    updateStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>🌳 安静作业长苹果</title>
+    <style>
+        /* ===== 全局样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #b3d9f2;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            margin: 0;
+            background: linear-gradient(180deg, #8fc7f0 0%, #b5ddf5 40%, #cce8f5 70%, #ddf0fa 100%);
+        }
+
+        .container {
+            max-width: 960px;
+            width: 100%;
+            background: transparent;
+            border-radius: 48px 48px 32px 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10), 0 6px 24px rgba(0, 0, 0, 0.06);
+            padding: 20px 24px 28px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+        }
+
+        /* ===== 顶部标题栏 ===== */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+            gap: 10px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e3c1e;
+            text-shadow: 0 2px 12px rgba(255, 255, 255, 0.6);
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
+            padding: 4px 18px 4px 12px;
+            border-radius: 40px;
+        }
+        .title-icon { font-size: 32px; }
+
+        .stats {
+            display: flex;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(6px);
+            padding: 6px 18px;
+            border-radius: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e3c1e;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .stats .num {
+            color: #c0392b;
+            font-size: 22px;
+            font-weight: 800;
+            min-width: 28px;
+            display: inline-block;
+            text-align: center;
+        }
+        .stats .num.goal { color: #1e6b3e; }
+
+        /* ===== 音量状态栏 ===== */
+        .volume-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(4px);
+            padding: 6px 16px 6px 14px;
+            border-radius: 40px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            flex-wrap: wrap;
+            margin: 4px 0 10px;
+            position: relative;
+            z-index: 2;
+        }
+        .volume-label {
+            font-weight: 600;
+            font-size: 16px;
+            color: #1e3c1e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .volume-track {
+            flex: 1;
+            min-width: 100px;
+            height: 10px;
+            background: rgba(200, 200, 200, 0.6);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .volume-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #6fcf97, #f2994a, #eb5757);
+            border-radius: 10px;
+            transition: width 0.15s ease;
+        }
+        .threshold-marker {
+            position: absolute;
+            top: -3px;
+            width: 3px;
+            height: 16px;
+            background: #2d3e2d;
+            border-radius: 2px;
+            transition: left 0.2s;
+            box-shadow: 0 0 4px rgba(0,0,0,0.2);
+        }
+        .status-badge {
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 15px;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        .status-badge.quiet {
+            background: #27ae60;
+            color: #fff;
+        }
+        .status-badge.loud {
+            background: #e74c3c;
+            color: #fff;
+            animation: pulseBadge 0.5s infinite alternate;
+        }
+        @keyframes pulseBadge {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.06); }
+        }
+
+        .noise-count {
+            font-weight: 700;
+            font-size: 17px;
+            color: #c0392b;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .noise-count .count-num {
+            min-width: 22px;
+            text-align: center;
+            background: rgba(192, 57, 43, 0.15);
+            padding: 0 8px;
+            border-radius: 30px;
+        }
+
+        .threshold-slider {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e3c1e;
+        }
+        .threshold-slider input[type="range"] {
+            width: 80px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(180, 180, 180, 0.6);
+            border-radius: 4px;
+            outline: none;
+        }
+        .threshold-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #1e3c1e;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+
+        /* ===== 画布区域 ===== */
+        .canvas-wrapper {
+            position: relative;
+            z-index: 1;
+            border-radius: 36px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+            background: transparent;
+            touch-action: none;
+            margin-bottom: 8px;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        #treeCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: transparent;
+            touch-action: none;
+            image-rendering: auto;
+            will-change: contents;
+        }
+
+        /* ===== 警告感叹号 ===== */
+        .warning-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            border-radius: 36px;
+            overflow: hidden;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .warning-overlay.show {
+            opacity: 1;
+        }
+        .warning-overlay .big-icon {
+            font-size: 120px;
+            font-weight: 900;
+            color: #e74c3c;
+            text-shadow: 0 0 40px rgba(231, 76, 60, 0.7), 0 0 80px rgba(231, 76, 60, 0.4), 0 4px 20px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 12px 30px;
+            border-radius: 80px;
+            border: 4px solid rgba(231, 76, 60, 0.5);
+            line-height: 1.2;
+            animation: warnPop 0.3s ease forwards;
+        }
+        @keyframes warnPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ===== 底部控制区 ===== */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 12px 16px;
+            margin: 8px 0 4px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.5px;
+            touch-action: manipulation;
+            user-select: none;
+            backdrop-filter: blur(2px);
+        }
+        .btn:active { transform: scale(0.94); }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-start {
+            background: linear-gradient(145deg, #56b45a, #3d9e41);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(61, 158, 65, 0.35);
+        }
+        .btn-start:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(61, 158, 65, 0.40); }
+
+        .btn-pause {
+            background: linear-gradient(145deg, #f1c40f, #d4a800);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(212, 168, 0, 0.35);
+        }
+        .btn-pause:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(212, 168, 0, 0.40); }
+
+        .btn-reset {
+            background: linear-gradient(145deg, #e67e7e, #c0392b);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(192, 57, 43, 0.30);
+        }
+        .btn-reset:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(192, 57, 43, 0.35); }
+
+        .btn-goal {
+            background: linear-gradient(145deg, #f39c12, #e67e22);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.30);
+            font-size: 16px;
+            padding: 8px 18px;
+        }
+        .btn-goal:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(243, 156, 18, 0.35); }
+
+        /* ===== 激励语 ===== */
+        .message-area {
+            text-align: center;
+            margin-top: 10px;
+            min-height: 48px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .message {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e3c1e;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            padding: 6px 24px;
+            border-radius: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s ease;
+            display: inline-block;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+        }
+
+        /* ===== 庆祝动画 ===== */
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .confetti {
+            position: absolute;
+            font-size: 40px;
+            animation: confettiFall linear forwards;
+            opacity: 0;
+        }
+        @keyframes confettiFall {
+            0% { opacity: 1; transform: translateY(-60px) rotate(0deg) scale(1); }
+            100% { opacity: 0; transform: translateY(110vh) rotate(720deg) scale(0.3); }
+        }
+        .celebration-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 60px;
+            font-weight: 900;
+            color: #f1c40f;
+            text-shadow: 0 8px 40px rgba(0, 0, 0, 0.3), 0 0 0 6px #fff, 0 0 0 12px rgba(241, 196, 15, 0.3);
+            z-index: 10000;
+            pointer-events: none;
+            animation: celebratePop 2.5s ease forwards;
+            text-align: center;
+            line-height: 1.3;
+            white-space: nowrap;
+        }
+        @keyframes celebratePop {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; }
+            30% { transform: translate(-50%, -50%) scale(1.3) rotate(3deg); opacity: 1; }
+            60% { transform: translate(-50%, -50%) scale(0.9) rotate(-2deg); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 700px) {
+            .container { padding: 14px 12px 18px; border-radius: 32px; }
+            .title { font-size: 20px; padding: 2px 12px 2px 8px; }
+            .title-icon { font-size: 24px; }
+            .stats { font-size: 14px; padding: 4px 12px; gap: 8px; }
+            .stats .num { font-size: 18px; min-width: 22px; }
+            .btn { padding: 8px 14px; font-size: 15px; }
+            .message { font-size: 18px; padding: 4px 16px; }
+            .volume-bar-wrap { padding: 4px 10px; gap: 6px; flex-wrap: wrap; }
+            .threshold-slider input[type="range"] { width: 60px; }
+            .warning-overlay .big-icon { font-size: 80px; padding: 8px 20px; }
+            .celebration-text { font-size: 36px; white-space: normal; padding: 0 20px; }
+        }
+        @media (max-width: 480px) {
+            .header { flex-direction: column; align-items: stretch; gap: 4px; }
+            .title { justify-content: center; font-size: 18px; }
+            .stats { justify-content: center; font-size: 13px; }
+            .btn { font-size: 13px; padding: 6px 12px; }
+            .volume-bar-wrap { flex-direction: column; align-items: stretch; }
+            .threshold-slider { justify-content: center; }
+            .message { font-size: 16px; }
+            .warning-overlay .big-icon { font-size: 60px; padding: 4px 14px; }
+            .celebration-text { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 标题 & 统计 -->
+        <div class="header">
+            <div class="title">
+                <span class="title-icon">🌳</span>
+                安静作业长苹果
+            </div>
+            <div class="stats">
+                <span>⏱️ <span class="num" id="timerDisplay">00:00</span></span>
+                <span>🍎 <span class="num" id="appleCount">0</span> / <span class="num goal" id="goalCount">30</span></span>
+            </div>
+        </div>
+
+        <!-- 音量状态栏 -->
+        <div class="volume-bar-wrap">
+            <div class="volume-label">🎤 音量</div>
+            <div class="volume-track" id="volumeTrack">
+                <div class="volume-fill" id="volumeFill" style="width:0%"></div>
+                <div class="threshold-marker" id="thresholdMarker" style="left:30%"></div>
+            </div>
+            <span class="status-badge quiet" id="statusBadge">🤫 安静</span>
+            <span class="noise-count">⚠️ 吵闹 <span class="count-num" id="noiseCount">0</span>/3</span>
+            <div class="threshold-slider">
+                <span>🔇</span>
+                <input type="range" id="thresholdSlider" min="0.01" max="0.25" step="0.005" value="0.08" />
+                <span>🔊</span>
+            </div>
+        </div>
+
+        <!-- 画布 + 警告层 -->
+        <div class="canvas-wrapper">
+            <canvas id="treeCanvas" width="840" height="560"></canvas>
+            <div class="warning-overlay" id="warningOverlay">
+                <div class="big-icon">❗</div>
+            </div>
+        </div>
+
+        <!-- 控制区 -->
+        <div class="controls">
+            <div class="btn-group">
+                <button class="btn btn-start" id="btnStart">▶ 开始</button>
+                <button class="btn btn-pause" id="btnPause" disabled>⏸ 暂停</button>
+                <button class="btn btn-reset" id="btnReset">🔄 重置</button>
+            </div>
+            <button class="btn btn-goal" id="btnSetGoal">🎯 目标</button>
+        </div>
+
+        <!-- 消息 -->
+        <div class="message-area">
+            <div class="message" id="messageDisplay">🌱 点击「开始」并允许麦克风，安静30秒长一个苹果！</div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  🍎  安 静 作 业 长 苹 果   —  完 整 逻 辑
+        //  ============================================================
+
+        // ---------- DOM ----------
+        const canvas = document.getElementById('treeCanvas');
+        const ctx = canvas.getContext('2d');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const appleCountEl = document.getElementById('appleCount');
+        const goalCountEl = document.getElementById('goalCount');
+        const messageDisplay = document.getElementById('messageDisplay');
+        const warningOverlay = document.getElementById('warningOverlay');
+        const volumeFill = document.getElementById('volumeFill');
+        const thresholdMarker = document.getElementById('thresholdMarker');
+        const statusBadge = document.getElementById('statusBadge');
+        const noiseCountEl = document.getElementById('noiseCount');
+        const thresholdSlider = document.getElementById('thresholdSlider');
+        const btnStart = document.getElementById('btnStart');
+        const btnPause = document.getElementById('btnPause');
+        const btnReset = document.getElementById('btnReset');
+        const btnSetGoal = document.getElementById('btnSetGoal');
+
+        // ---------- Canvas 尺寸 ----------
+        function resizeCanvas() {
+            const wrapper = canvas.parentElement;
+            const w = wrapper.clientWidth;
+            const ratio = 560 / 840;
+            canvas.width = 840;
+            canvas.height = 560;
+            canvas.style.width = w + 'px';
+            canvas.style.height = (w * ratio) + 'px';
+            drawScene();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // ---------- 树参数 ----------
+        const TREE = {
+            trunk: { x: 420, y: 430, w: 56, h: 140 },
+            crown: [
+                { x: 420, y: 190, r: 150 },
+                { x: 330, y: 215, r: 100 },
+                { x: 510, y: 215, r: 100 },
+                { x: 420, y: 130, r: 95 },
+                { x: 350, y: 270, r: 78 },
+                { x: 490, y: 270, r: 78 },
+                { x: 385, y: 155, r: 75 },
+                { x: 455, y: 155, r: 75 },
+            ],
+            appleMinR: 18,
+            appleMaxR: 24,
+        };
+
+        // ---------- 状态 ----------
+        const state = {
+            apples: [],
+            appleCount: 0,
+            goal: 30,
+            isRunning: false,
+            isPaused: false,
+            seconds: 0,
+            timerInterval: null,
+
+            audioContext: null,
+            analyser: null,
+            dataArray: null,
+            stream: null,
+            isAudioReady: false,
+
+            quietAccumulator: 0,
+            quietRequired: 30,
+
+            noiseCount: 0,
+            lastNoiseTime: 0,
+            currentVolume: 0,
+            threshold: 0.08,
+
+            animFrame: null,
+            goalReached: false,
+            celebrating: false,
+            lastTimestamp: 0,
+
+            warningHideTimer: null,
+            isWarningShowing: false,
+        };
+
+        // ============================================================
+        //  音 效 系 统
+        // ============================================================
+
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.initialized = false;
+            }
+
+            init() {
+                if (this.initialized) return;
+                try {
+                    this.ctx = new(window.AudioContext || window.webkitAudioContext)();
+                    this.initialized = true;
+                } catch (e) {
+                    console.warn('Web Audio API 不可用');
+                }
+            }
+
+            playWarning() {
+                if (!this.initialized) this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.setValueAtTime(660, now + 0.08);
+                    osc.frequency.setValueAtTime(880, now + 0.16);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                    const osc2 = this.ctx.createOscillator();
+                    const gain2 = this.ctx.createGain();
+                    osc2.type = 'square';
+                    osc2.frequency.setValueAtTime(1100, now + 0.3);
+                    gain2.gain.setValueAtTime(0.12, now + 0.3);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc2.connect(gain2);
+                    gain2.connect(this.ctx.destination);
+                    osc2.start(now + 0.3);
+                    osc2.stop(now + 0.5);
+                } catch (e) {}
+            }
+
+            playAppleGrow() {
+                if (!this.initialized) this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const notes = [523, 659, 784, 1047];
+                    for (let i = 0; i < notes.length; i++) {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(notes[i], now + i * 0.06);
+                        gain.gain.setValueAtTime(0.12 - i * 0.015, now + i * 0.06);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.06 + 0.15);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + i * 0.06);
+                        osc.stop(now + i * 0.06 + 0.15);
+                    }
+                } catch (e) {}
+            }
+
+            playAppleRemove() {
+                if (!this.initialized) this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const notes = [600, 500, 400, 300];
+                    for (let i = 0; i < notes.length; i++) {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(notes[i], now + i * 0.08);
+                        gain.gain.setValueAtTime(0.08 - i * 0.01, now + i * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.12);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + i * 0.08);
+                        osc.stop(now + i * 0.08 + 0.12);
+                    }
+                } catch (e) {}
+            }
+
+            playGoalReached() {
+                if (!this.initialized) this.init();
+                if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const notes = [523, 587, 659, 784, 880, 1047];
+                    for (let i = 0; i < notes.length; i++) {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(notes[i], now + i * 0.07);
+                        gain.gain.setValueAtTime(0.1, now + i * 0.07);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.07 + 0.2);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + i * 0.07);
+                        osc.stop(now + i * 0.07 + 0.2);
+                    }
+                } catch (e) {}
+            }
+
+            resume() {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+        }
+
+        const soundFX = new SoundFX();
+
+        // ---------- 工具 ----------
+        function random(min, max) { return Math.random() * (max - min) + min; }
+        function randomInt(min, max) { return Math.floor(random(min, max + 1)); }
+        function dist(x1, y1, x2, y2) { return Math.hypot(x2 - x1, y2 - y1); }
+
+        function isInCrown(x, y) {
+            for (const c of TREE.crown) {
+                if (dist(x, y, c.x, c.y) < c.r) return true;
+            }
+            return false;
+        }
+
+        function generateApplePosition(minDist = 28, maxAttempts = 600) {
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                const c = TREE.crown[randomInt(0, TREE.crown.length - 1)];
+                const angle = random(0, Math.PI * 2);
+                const radius = random(0, c.r * 0.92);
+                const x = c.x + Math.cos(angle) * radius;
+                const y = c.y + Math.sin(angle) * radius;
+                if (!isInCrown(x, y)) continue;
+                let tooClose = false;
+                for (const a of state.apples) {
+                    if (dist(x, y, a.x, a.y) < minDist) { tooClose = true; break; }
+                }
+                if (!tooClose) return { x, y };
+            }
+            return null;
+        }
+
+        // ============================================================
+        //  大 树 绘 制（干净融合，没有草）
+        // ============================================================
+
+        function drawScene() {
+            const W = canvas.width,
+                H = canvas.height;
+
+            // ---- 1. 蓝天 ----
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.75);
+            skyGrad.addColorStop(0, '#6bb3e8');
+            skyGrad.addColorStop(0.5, '#8fc9f5');
+            skyGrad.addColorStop(0.8, '#b3ddf5');
+            skyGrad.addColorStop(1, '#d4ecf7');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, W, H);
+
+            // ---- 2. 白云 ----
+            function drawCloud(cx, cy, scale) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
+                ctx.shadowBlur = 30;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 50 * scale, 0, Math.PI * 2);
+                ctx.arc(cx + 45 * scale, cy - 20 * scale, 60 * scale, 0, Math.PI * 2);
+                ctx.arc(cx + 90 * scale, cy - 10 * scale, 50 * scale, 0, Math.PI * 2);
+                ctx.arc(cx + 40 * scale, cy + 20 * scale, 45 * scale, 0, Math.PI * 2);
+                ctx.arc(cx + 70 * scale, cy + 15 * scale, 40 * scale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            ctx.shadowColor = 'rgba(255,255,255,0.15)';
+            ctx.shadowBlur = 20;
+            drawCloud(120, 80, 0.9);
+            drawCloud(700, 50, 1.2);
+            drawCloud(280, 120, 0.7);
+            drawCloud(550, 100, 0.8);
+            drawCloud(780, 140, 0.6);
+            ctx.shadowBlur = 0;
+
+            // ---- 3. 草地 ----
+            const grassY = 440;
+            const grad2 = ctx.createLinearGradient(0, grassY, 0, H);
+            grad2.addColorStop(0, '#7cb87c');
+            grad2.addColorStop(0.3, '#5f9e5f');
+            grad2.addColorStop(0.7, '#4a8c4a');
+            grad2.addColorStop(1, '#3d7a3d');
+            ctx.fillStyle = grad2;
+            ctx.beginPath();
+            ctx.moveTo(0, grassY);
+            for (let x = 0; x <= W; x += 5) {
+                const wave = Math.sin(x * 0.028 + 0.5) * 6 + Math.sin(x * 0.055 + 1.8) * 4;
+                ctx.lineTo(x, grassY + wave + 6);
+            }
+            ctx.lineTo(W, H);
+            ctx.lineTo(0, H);
+            ctx.closePath();
+            ctx.fill();
+
+            // ---- 4. 大树（底部自然融入草地） ----
+            const tx = TREE.trunk.x,
+                ty = TREE.trunk.y;
+            const tw = TREE.trunk.w,
+                th = TREE.trunk.h;
+
+            // 树干底部阴影（让树干看起来扎根在土里）
+            const shadowGrad = ctx.createRadialGradient(tx, ty + 14, 8, tx, ty + 14, 50);
+            shadowGrad.addColorStop(0, 'rgba(0,0,0,0.07)');
+            shadowGrad.addColorStop(0.6, 'rgba(0,0,0,0.03)');
+            shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = shadowGrad;
+            ctx.beginPath();
+            ctx.ellipse(tx, ty + 14, 50, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 树干 - 底部延伸到草地下面（y+16）
+            ctx.shadowColor = 'rgba(0,0,0,0.08)';
+            ctx.shadowBlur = 18;
+            ctx.shadowOffsetY = 6;
+
+            const trunkGrad = ctx.createLinearGradient(tx - tw / 2, 0, tx + tw / 2, 0);
+            trunkGrad.addColorStop(0, '#6d4c2a');
+            trunkGrad.addColorStop(0.25, '#8d6b3f');
+            trunkGrad.addColorStop(0.6, '#a07d4e');
+            trunkGrad.addColorStop(0.85, '#8d6b3f');
+            trunkGrad.addColorStop(1, '#5a3d1e');
+            ctx.fillStyle = trunkGrad;
+            ctx.beginPath();
+            // 底部延伸到 y+16，让树干埋入草地
+            const bottomWidth = tw / 2 + 12;
+            ctx.moveTo(tx - bottomWidth, ty + 16);
+            ctx.quadraticCurveTo(tx - tw / 2 - 12, ty - 4, tx - tw / 2 + 2, ty - 85);
+            ctx.quadraticCurveTo(tx - tw / 2 + 8, ty - 125, tx - 8, ty - 138);
+            ctx.quadraticCurveTo(tx, ty - 146, tx + 8, ty - 138);
+            ctx.quadraticCurveTo(tx + tw / 2 - 8, ty - 125, tx + tw / 2 - 2, ty - 85);
+            ctx.quadraticCurveTo(tx + tw / 2 + 12, ty - 4, tx + bottomWidth, ty + 16);
+            ctx.closePath();
+            ctx.fill();
+
+            // 树皮纹理
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = 'rgba(70, 45, 20, 0.25)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 16; i++) {
+                const yy = ty - 16 - i * 9;
+                const offset = Math.sin(i * 1.2 + 0.5) * 7;
+                ctx.beginPath();
+                ctx.moveTo(tx - tw / 2 + 8 + offset, yy);
+                ctx.quadraticCurveTo(tx + offset * 0.2, yy - 5, tx + tw / 2 - 8 + offset * 0.6, yy + 3);
+                ctx.stroke();
+            }
+
+            // ---- 5. 树冠 ----
+            ctx.shadowBlur = 28;
+            ctx.shadowColor = 'rgba(0,40,0,0.08)';
+            ctx.shadowOffsetY = 6;
+
+            const crownColors = ['#3b8f3b', '#4ca64c', '#5cb85c', '#3d9e3d', '#68c268', '#2d7a2d', '#4fb04f'];
+            const sortedCrown = [...TREE.crown].sort((a, b) => a.y - b.y);
+            for (const c of sortedCrown) {
+                const color = crownColors[Math.floor(Math.random() * crownColors.length)];
+                const grad3 = ctx.createRadialGradient(
+                    c.x - c.r * 0.2, c.y - c.r * 0.3, c.r * 0.1,
+                    c.x, c.y, c.r
+                );
+                grad3.addColorStop(0, lightenColor(color, 35));
+                grad3.addColorStop(0.6, color);
+                grad3.addColorStop(1, darkenColor(color, 25));
+                ctx.fillStyle = grad3;
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
+                for (let i = 0; i < 8; i++) {
+                    const angle = random(0, Math.PI * 2);
+                    const r2 = random(c.r * 0.2, c.r * 0.7);
+                    const hx = c.x + Math.cos(angle) * r2;
+                    const hy = c.y + Math.sin(angle) * r2 - c.r * 0.15;
+                    ctx.beginPath();
+                    ctx.arc(hx, hy, random(5, 14), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 28;
+                ctx.shadowColor = 'rgba(0,40,0,0.08)';
+            }
+
+            // 边缘小枝叶
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = 'rgba(0,40,0,0.04)';
+            for (let i = 0; i < 40; i++) {
+                const angle = random(0, Math.PI * 2);
+                const dist2 = random(20, 65);
+                const cx = 420 + Math.cos(angle) * (155 + dist2 * 0.25);
+                const cy = 190 + Math.sin(angle) * (140 + dist2 * 0.15);
+                if (cy > 360) continue;
+                ctx.fillStyle = `rgba(70, 160, 70, ${random(0.12, 0.30)})`;
+                ctx.beginPath();
+                ctx.arc(cx, cy, random(7, 18), 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+
+            // ---- 6. 画苹果 ----
+            drawAllApples();
+        }
+
+        // ---- 颜色工具 ----
+        function lightenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, (num >> 16) + amt);
+            const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+            const B = Math.min(255, (num & 0x0000FF) + amt);
+            return `#${(1 << 24 | R << 16 | G << 8 | B).toString(16).slice(1)}`;
+        }
+
+        function darkenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.max(0, (num >> 16) - amt);
+            const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
+            const B = Math.max(0, (num & 0x0000FF) - amt);
+            return `#${(1 << 24 | R << 16 | G << 8 | B).toString(16).slice(1)}`;
+        }
+
+        // ---- 绘制苹果 ----
+        function drawApple(apple) {
+            const { x, y, r, progress } = apple;
+            const p = Math.min(progress || 1, 1);
+            const currentR = r * (0.2 + 0.8 * p);
+            const alpha = Math.min(1, p * 2);
+            const green = Math.round(180 - 150 * p);
+            const red = Math.round(80 + 175 * p);
+            const col = `rgba(${red}, ${green}, 40, ${alpha})`;
+            const highlight = `rgba(255, 255, 255, ${0.25 * p})`;
+
+            ctx.shadowColor = 'rgba(0,0,0,0.10)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetY = 3;
+            ctx.fillStyle = col;
+            ctx.beginPath();
+            ctx.arc(x, y, currentR, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = highlight;
+            ctx.beginPath();
+            ctx.arc(x - currentR * 0.3, y - currentR * 0.3, currentR * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = `rgba(255,255,255,${0.35 * p})`;
+            ctx.beginPath();
+            ctx.arc(x - currentR * 0.2, y - currentR * 0.4, currentR * 0.12, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (p > 0.5) {
+                ctx.strokeStyle = `rgba(60, 120, 40, ${0.8 * p})`;
+                ctx.lineWidth = 1.8;
+                ctx.beginPath();
+                ctx.moveTo(x, y - currentR * 0.85);
+                const ang = -0.3 + Math.random() * 0.6;
+                ctx.quadraticCurveTo(
+                    x + Math.cos(ang) * currentR * 0.4,
+                    y - currentR * 1.2,
+                    x + Math.cos(ang + 0.5) * currentR * 0.5,
+                    y - currentR * 1.3
+                );
+                ctx.stroke();
+                ctx.fillStyle = `rgba(70, 160, 50, ${0.7 * p})`;
+                ctx.beginPath();
+                const lx = x + Math.cos(ang + 0.2) * currentR * 0.4;
+                const ly = y - currentR * 1.15;
+                ctx.ellipse(lx, ly, currentR * 0.2, currentR * 0.12, ang + 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        function drawAllApples() {
+            for (const apple of state.apples) {
+                drawApple(apple);
+            }
+        }
+
+        // ---------- 生长逻辑 ----------
+        function growApple() {
+            if (state.appleCount >= state.goal) {
+                if (!state.goalReached) {
+                    state.goalReached = true;
+                    soundFX.playGoalReached();
+                    triggerCelebration();
+                }
+                return false;
+            }
+            const pos = generateApplePosition(28, 600);
+            if (!pos) return false;
+            const r = random(TREE.appleMinR, TREE.appleMaxR);
+            const apple = {
+                x: pos.x,
+                y: pos.y,
+                r: r,
+                progress: 1,
+            };
+            state.apples.push(apple);
+            state.appleCount++;
+            soundFX.playAppleGrow();
+            updateUI();
+            updateMessage();
+
+            if (state.appleCount >= state.goal) {
+                state.goalReached = true;
+                soundFX.playGoalReached();
+                triggerCelebration();
+            }
+            return true;
+        }
+
+        function removeApple() {
+            if (state.apples.length === 0) return false;
+            state.apples.pop();
+            state.appleCount--;
+            soundFX.playAppleRemove();
+            updateUI();
+            updateMessage();
+            if (state.goalReached && state.appleCount < state.goal) {
+                state.goalReached = false;
+            }
+            return true;
+        }
+
+        // ---------- 音频 ----------
+        async function initAudio() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                state.stream = stream;
+                const audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                state.audioContext = audioContext;
+                const source = audioContext.createMediaStreamSource(stream);
+                const analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                state.analyser = analyser;
+                state.dataArray = new Uint8Array(analyser.frequencyBinCount);
+                state.isAudioReady = true;
+                soundFX.init();
+                if (soundFX.ctx) {
+                    soundFX.ctx.resume();
+                }
+                return true;
+            } catch (err) {
+                console.error('麦克风获取失败:', err);
+                alert('无法访问麦克风，请允许浏览器访问麦克风后重试。');
+                return false;
+            }
+        }
+
+        function getVolume() {
+            if (!state.analyser) return 0;
+            state.analyser.getByteTimeDomainData(state.dataArray);
+            let sum = 0;
+            for (let i = 0; i < state.dataArray.length; i++) {
+                const val = (state.dataArray[i] - 128) / 128;
+                sum += val * val;
+            }
+            return Math.sqrt(sum / state.dataArray.length);
+        }
+
+        // ---------- 警告显示 ----------
+        function showWarning() {
+            if (state.warningHideTimer) {
+                clearTimeout(state.warningHideTimer);
+                state.warningHideTimer = null;
+            }
+            if (state.isWarningShowing) {
+                state.warningHideTimer = setTimeout(() => {
+                    warningOverlay.classList.remove('show');
+                    state.isWarningShowing = false;
+                    state.warningHideTimer = null;
+                }, 2000);
+                return;
+            }
+            state.isWarningShowing = true;
+            warningOverlay.classList.add('show');
+            soundFX.playWarning();
+            state.warningHideTimer = setTimeout(() => {
+                warningOverlay.classList.remove('show');
+                state.isWarningShowing = false;
+                state.warningHideTimer = null;
+            }, 2000);
+        }
+
+        function resetWarning() {
+            if (state.warningHideTimer) {
+                clearTimeout(state.warningHideTimer);
+                state.warningHideTimer = null;
+            }
+            warningOverlay.classList.remove('show');
+            state.isWarningShowing = false;
+        }
+
+        // ---------- 主循环 ----------
+        function mainLoop(timestamp) {
+            if (!state.isRunning || state.isPaused) {
+                drawScene();
+                state.animFrame = requestAnimationFrame(mainLoop);
+                return;
+            }
+
+            const delta = state.lastTimestamp ? Math.min((timestamp - state.lastTimestamp) / 1000, 0.05) : 0.016;
+            state.lastTimestamp = timestamp;
+
+            const vol = getVolume();
+            state.currentVolume = vol;
+            const threshold = state.threshold;
+            const isLoud = vol > threshold;
+
+            const fillPercent = Math.min(vol / 0.3, 1) * 100;
+            volumeFill.style.width = fillPercent + '%';
+            const markerPercent = (threshold / 0.3) * 100;
+            thresholdMarker.style.left = Math.min(markerPercent, 100) + '%';
+
+            if (isLoud) {
+                statusBadge.textContent = '🔊 吵闹';
+                statusBadge.className = 'status-badge loud';
+                showWarning();
+
+                const now = performance.now();
+                if (now - state.lastNoiseTime > 400) {
+                    state.noiseCount++;
+                    state.lastNoiseTime = now;
+                    noiseCountEl.textContent = state.noiseCount;
+
+                    if (state.noiseCount >= 3) {
+                        state.noiseCount = 0;
+                        noiseCountEl.textContent = '0';
+                        const removed = removeApple();
+                        if (removed) {
+                            messageDisplay.innerHTML = '😱 吵闹达到3次！减少一个苹果！请保持安静！';
+                            setTimeout(() => updateMessage(), 2500);
+                        } else {
+                            messageDisplay.innerHTML = '⚠️ 已经没有苹果可以减少了！请保持安静！';
+                            setTimeout(() => updateMessage(), 2500);
+                        }
+                    }
+                }
+                state.quietAccumulator = 0;
+            } else {
+                statusBadge.textContent = '🤫 安静';
+                statusBadge.className = 'status-badge quiet';
+                state.quietAccumulator += delta;
+                if (state.quietAccumulator >= state.quietRequired && state.appleCount < state.goal) {
+                    state.quietAccumulator = 0;
+                    growApple();
+                    messageDisplay.innerHTML = '🍎 安静30秒！长出一个新苹果！继续加油！';
+                    setTimeout(() => updateMessage(), 2000);
+                }
+            }
+
+            drawScene();
+            state.animFrame = requestAnimationFrame(mainLoop);
+        }
+
+        // ---------- 启动/暂停/重置 ----------
+        async function startApp() {
+            if (state.isRunning && !state.isPaused) return;
+            if (state.isPaused) {
+                state.isPaused = false;
+                state.isRunning = true;
+                if (state.audioContext && state.audioContext.state === 'suspended') {
+                    await state.audioContext.resume();
+                }
+                soundFX.resume();
+                updateUI();
+                updateMessage();
+                startTimer();
+                return;
+            }
+
+            if (!state.isAudioReady) {
+                const ok = await initAudio();
+                if (!ok) return;
+            }
+            if (state.audioContext && state.audioContext.state === 'suspended') {
+                await state.audioContext.resume();
+            }
+            soundFX.resume();
+
+            state.isRunning = true;
+            state.isPaused = false;
+            state.goalReached = false;
+            state.quietAccumulator = 0;
+            state.noiseCount = 0;
+            state.lastNoiseTime = 0;
+            noiseCountEl.textContent = '0';
+            state.lastTimestamp = 0;
+            resetWarning();
+
+            startTimer();
+
+            if (state.animFrame) cancelAnimationFrame(state.animFrame);
+            state.animFrame = requestAnimationFrame(mainLoop);
+
+            updateUI();
+            updateMessage();
+            btnStart.disabled = true;
+            btnPause.disabled = false;
+        }
+
+        function pauseApp() {
+            if (!state.isRunning || state.isPaused) return;
+            state.isPaused = true;
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+            if (state.audioContext && state.audioContext.state === 'running') {
+                state.audioContext.suspend();
+            }
+            resetWarning();
+            updateUI();
+            updateMessage();
+            btnPause.disabled = true;
+            btnStart.disabled = false;
+            btnStart.textContent = '▶ 继续';
+        }
+
+        function resetApp() {
+            state.isRunning = false;
+            state.isPaused = false;
+            state.goalReached = false;
+            state.celebrating = false;
+            state.quietAccumulator = 0;
+            state.noiseCount = 0;
+            state.lastNoiseTime = 0;
+            state.apples = [];
+            state.appleCount = 0;
+            state.seconds = 0;
+            noiseCountEl.textContent = '0';
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+            if (state.animFrame) {
+                cancelAnimationFrame(state.animFrame);
+                state.animFrame = null;
+            }
+            if (state.audioContext && state.audioContext.state === 'running') {
+                state.audioContext.suspend();
+            }
+            if (state.stream) {
+                state.stream.getTracks().forEach(t => t.stop());
+                state.stream = null;
+                state.isAudioReady = false;
+            }
+            resetWarning();
+            document.querySelectorAll('.celebration, .celebration-text').forEach(el => el.remove());
+
+            drawScene();
+            updateUI();
+            updateMessage();
+            btnStart.disabled = false;
+            btnStart.textContent = '▶ 开始';
+            btnPause.disabled = true;
+            volumeFill.style.width = '0%';
+            statusBadge.textContent = '🤫 安静';
+            statusBadge.className = 'status-badge quiet';
+        }
+
+        // ---------- 计时器 ----------
+        function startTimer() {
+            clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                state.seconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = String(Math.floor(state.seconds / 60)).padStart(2, '0');
+            const s = String(state.seconds % 60).padStart(2, '0');
+            timerDisplay.textContent = `${m}:${s}`;
+        }
+
+        // ---------- UI ----------
+        function updateUI() {
+            appleCountEl.textContent = state.appleCount;
+            goalCountEl.textContent = state.goal;
+            updateTimerDisplay();
+            if (state.isRunning && !state.isPaused) {
+                btnStart.disabled = true;
+                btnPause.disabled = false;
+                btnStart.textContent = '▶ 开始';
+            } else if (state.isPaused) {
+                btnStart.disabled = false;
+                btnPause.disabled = true;
+                btnStart.textContent = '▶ 继续';
+            } else {
+                btnStart.disabled = false;
+                btnPause.disabled = true;
+                btnStart.textContent = '▶ 开始';
+            }
+            if (state.appleCount >= state.goal) {
+                btnStart.disabled = true;
+                btnPause.disabled = true;
+            }
+        }
+
+        function updateMessage() {
+            const count = state.appleCount;
+            const goal = state.goal;
+            if (state.goalReached && count >= goal) {
+                messageDisplay.innerHTML = '🎉 太棒啦！达到目标！你们太安静了！ 🌟';
+                return;
+            }
+            if (count === 0) {
+                if (state.isRunning && !state.isPaused) {
+                    messageDisplay.innerHTML = '🌱 安静作业… 保持安静30秒长一个苹果！';
+                } else if (state.isPaused) {
+                    messageDisplay.innerHTML = '⏸ 暂停中… 休息一下，待会继续！';
+                } else {
+                    messageDisplay.innerHTML = '🌱 点击「开始」并允许麦克风，安静30秒长一个苹果！';
+                }
+                return;
+            }
+            const msgs = [];
+            if (count < 5) msgs.push('🌱 安静作业，大树开始长苹果啦！继续加油！');
+            else if (count < 10) msgs.push('🌿 不错哦！苹果越来越多，继续安静！');
+            else if (count < 20) msgs.push('🌳 太棒了！苹果树越来越茂盛！继续安静！');
+            else if (count < goal) msgs.push('💪 加油！马上就到目标了！还差 ' + (goal - count) + ' 个！');
+            else msgs.push('🎉 恭喜！达到 ' + goal + ' 个苹果！超级安静！');
+            const msg = msgs[Math.floor(Math.random() * msgs.length)];
+            messageDisplay.innerHTML = msg;
+        }
+
+        // ---------- 庆祝 ----------
+        function triggerCelebration() {
+            if (state.celebrating) return;
+            state.celebrating = true;
+            const textDiv = document.createElement('div');
+            textDiv.className = 'celebration-text';
+            textDiv.textContent = '🎉 目标达成！ 🎉';
+            document.body.appendChild(textDiv);
+            const container = document.createElement('div');
+            container.className = 'celebration';
+            document.body.appendChild(container);
+            const emojis = ['🎉', '🌟', '⭐', '✨', '🎊', '❤️', '🍎', '🌳', '💪', '🏆'];
+            for (let i = 0; i < 80; i++) {
+                const span = document.createElement('span');
+                span.className = 'confetti';
+                span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                span.style.left = random(5, 95) + '%';
+                span.style.fontSize = random(24, 56) + 'px';
+                span.style.animationDuration = random(2, 5) + 's';
+                span.style.animationDelay = random(0, 2.5) + 's';
+                span.style.transform = `rotate(${random(0, 360)}deg)`;
+                container.appendChild(span);
+            }
+            setTimeout(() => textDiv.remove(), 2800);
+            setTimeout(() => { container.remove();
+                state.celebrating = false; }, 6000);
+            updateMessage();
+        }
+
+        // ---------- 设置目标 ----------
+        function setGoal() {
+            const current = state.goal;
+            const input = prompt(`当前目标: ${current} 个苹果\n请输入新的目标数量 (自定义，建议5~200):`, String(current));
+            if (input === null) return;
+            const val = parseInt(input);
+            if (isNaN(val) || val < 1 || val > 999) {
+                alert('请输入大于0的数字！');
+                return;
+            }
+            state.goal = val;
+            goalCountEl.textContent = val;
+            if (state.appleCount >= val && state.isRunning) {
+                state.goalReached = true;
+                soundFX.playGoalReached();
+                triggerCelebration();
+            } else {
+                state.goalReached = false;
+            }
+            updateUI();
+            updateMessage();
+        }
+
+        // ---------- 阈值滑动条 ----------
+        thresholdSlider.addEventListener('input', function() {
+            state.threshold = parseFloat(this.value);
+        });
+
+        // ---------- 初始化 ----------
+        function init() {
+            drawScene();
+            updateUI();
+            updateMessage();
+            resizeCanvas();
+            setTimeout(() => {
+                const p = (state.threshold / 0.3) * 100;
+                thresholdMarker.style.left = Math.min(p, 100) + '%';
+            }, 100);
+
+            btnStart.addEventListener('click', startApp);
+            btnPause.addEventListener('click', pauseApp);
+            btnReset.addEventListener('click', resetApp);
+            btnSetGoal.addEventListener('click', setGoal);
+            resetWarning();
+            soundFX.init();
+        }
+
+        init();
+        window.addEventListener('resize', resizeCanvas);
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && state.isRunning && !state.isPaused) {
+                if (!state.animFrame) {
+                    state.animFrame = requestAnimationFrame(mainLoop);
+                }
+            }
+        });
+
+        console.log('🌳 安静作业长苹果 已加载！');
+        console.log('📖 使用说明：');
+        console.log('  ▶ 点击「开始」并允许麦克风，安静30秒长一个苹果');
+        console.log('  ❗ 每次吵闹显示红色感叹号+音效，停留2秒后消失');
+        console.log('  🔊 长苹果和减少苹果都有对应音效');
+        console.log('  ⚠️ 吵闹累计3次，减少一个苹果，计数重置');
+        console.log('  🎚️ 拖动「音量阈值」调节敏感度');
+        console.log('  🎯 点击「目标」自定义苹果数量');
+    </script>
+
+</body>
+</html>
